@@ -1,29 +1,30 @@
 {
-    "format_version": 2,
-    "header": {
-        "description": "",
-        "min_engine_version": [
-            1,
-            18,
-            0
-        ],
-        "name": "resource_pack",
-        "uuid": "ff83897c-c675-4427-9d5a-840c1000279f",
-        "version": [
-            0,
-            0,
-            1
-        ]
-    },
-    "modules": [
-        {
-            "type": "resources",
-            "uuid": "cc43eadf-ad0e-48f6-b4fb-4c3232127f22",
-            "version": [
-                0,
-                0,
-                1
-            ]
-        }
+  "format_version": 2,
+  "header": {
+    "description": "resourcepackqewqRv3qNullGrRP",
+    "min_engine_version": [
+      1,
+      18,
+      0
+    ],
+    "name": "resourcepackqewqRv3qNullGrRP",
+    "uuid": "ff83897c-c675-4427-9d5a-840c1000279f",
+    "version": [
+      6,
+      7,
+      3
     ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "cc43eadf-ad0e-48f6-b4fb-4c3232127f22",
+      "version": [
+        6,
+        7,
+        3
+      ],
+      "description": "resourcepackqewqRv3qNullGrRP"
+    }
+  ]
 }

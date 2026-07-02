@@ -1,29 +1,42 @@
 {
-    "format_version": 2,
-    "header": {
-        "description": "",
-        "min_engine_version": [
-            1,
-            18,
-            0
-        ],
-        "name": "behavior_pack",
-        "uuid": "b010772b-2a00-4172-9881-13c7f40b7846",
-        "version": [
-            0,
-            0,
-            1
-        ]
-    },
-    "modules": [
-        {
-            "type": "data",
-            "uuid": "664ebcda-6f7d-4797-8671-aa80f3df53f4",
-            "version": [
-                0,
-                0,
-                1
-            ]
-        }
+  "format_version": 2,
+  "header": {
+    "description": "behaviorpackXFwwevzLNullGrBP",
+    "min_engine_version": [
+      1,
+      18,
+      0
+    ],
+    "name": "behaviorpackXFwwevzLNullGrBP",
+    "uuid": "b010772b-2a00-4172-9881-13c7f40b7846",
+    "version": [
+      6,
+      7,
+      3
     ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "664ebcda-6f7d-4797-8671-aa80f3df53f4",
+      "version": [
+        6,
+        7,
+        3
+      ],
+      "description": "behaviorpackXFwwevzLNullGrBP"
+    },
+    {
+      "type": "script",
+      "uuid": "7f40914c-dbb9-4c12-918d-24396342b571",
+      "version": [
+        6,
+        7,
+        3
+      ],
+      "language": "python",
+      "entry": "Diet_NullGr/modMain.py",
+      "description": "behaviorpackXFwwevzLNullGrBP"
+    }
+  ]
 }
