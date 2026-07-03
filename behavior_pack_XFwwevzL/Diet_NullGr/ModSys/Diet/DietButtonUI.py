@@ -111,7 +111,6 @@ class DietButtonUI(ScreenNode):
     def CorrectCurrentButtonPos(self):
         if not self.buttonControl:
             return
-        self.lastButtonGlobalPos = self.buttonControl.GetGlobalPosition()
         self.InitCollisionBox()
         pos = self.CorrectButtonGlobalPos(self.buttonControl.GetGlobalPosition())
         self.buttonControl.SetPosition(pos)
@@ -173,17 +172,20 @@ class DietButtonUI(ScreenNode):
         self.ResetTouchState()
         return shouldBlockClick
 
-    # 安全区来自当前屏幕视口；老运行时没有接口时退化为只依赖原生区域和无限边界。
+    # 安全区优先取引擎视口；老运行时没有视口接口时使用本 UI 根面板，避免保存坐标跑出屏幕右下角。
     def GetSafeArea(self):
         if hasattr(clientApi, 'GetScreenViewInfo'):
             viewInfo = clientApi.GetScreenViewInfo()
-            return (
-                viewInfo[2],
-                viewInfo[3],
-                viewInfo[2] + viewInfo[0],
-                viewInfo[3] + viewInfo[1]
-            )
-        return (0.0, 0.0, 32767.0, 32767.0)
+            if viewInfo:
+                return (
+                    viewInfo[2],
+                    viewInfo[3],
+                    viewInfo[2] + viewInfo[0],
+                    viewInfo[3] + viewInfo[1]
+                )
+        rootPos = self.GetGlobalPosition('/root')
+        rootSize = self.GetSize('/root')
+        return (rootPos[0], rootPos[1], rootPos[0] + rootSize[0], rootPos[1] + rootSize[1])
 
     # 收集原生 HUD 热区和安全区外边界，拖动纠正时把这些区域视为不可进入区域。
     def InitOriginCollisionBox(self):

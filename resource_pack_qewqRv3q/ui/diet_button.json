@@ -3,7 +3,11 @@
     "main": {
         "type": "screen",
         "render_game_behind": true,
+        "always_accepts_input": true,
+        "force_render_below": false,
         "is_showing_menu": false,
+        "load_screen_immediately": true,
+        "render_only_when_topmost": false,
         "absorbs_input": false,
         "should_steal_mouse": false,
         "controls": [
@@ -16,6 +20,7 @@
                         "100.0%+0.0px",
                         "100.0%+0.0px"
                     ],
+                    "layer": 30,
                     "controls": [
                         {
                             "open_button": {
@@ -30,6 +35,7 @@
                                     34,
                                     34
                                 ],
+                                "layer": 10,
                                 "draggable": "both",
                                 "button_mappings": [],
                                 "is_handle_button_move_event": true,
