@@ -26,6 +26,7 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "CommandEvent", self, self.CommandEvent)
         self.ListenForEvent(com.modName, com.csname, "DietClientReady", self, self.DietClientReady)
+        self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
         print("[DietNullGr] server ready")
 
     def AddServerPlayerEvent(self, args):
@@ -38,12 +39,29 @@ class DietServerSystem(ServerSystem):
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
+        Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
 
     def DietClientReady(self, args):
         playerId = args['__id__']
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
+        Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
+
+    def DietSettingUpdate(self, args):
+        playerId = args['__id__']
+        settingKey = args['key']
+        value = args['value']
+        if playerId not in self.playerDietData:
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+        # 通用设置开关先落服务端存档，再同步面板和设置控件，避免客户端本地状态先行造成计算分叉。
+        settingResult = Diet.applySetting(self.playerDietData[playerId], settingKey, value)
+        if settingResult['changed']:
+            Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)
+            Diet.syncToClient(self, playerId, self.playerDietData[playerId])
+            Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
+        if settingResult['message']:
+            Diet.sendMessage(playerId, compFactory, settingResult['message'], settingResult['color'])
 
     def DelServerPlayerEvent(self, args):
         playerId = args['id']
@@ -103,8 +121,10 @@ class DietServerSystem(ServerSystem):
         if commandResult['changed']:
             Diet.savePlayerData(entityId, self.playerDietData[entityId], compFactory)
             Diet.syncToClient(self, entityId, self.playerDietData[entityId])
+            Diet.syncSettingToClient(self, entityId, self.playerDietData[entityId])
         if commandResult['openUi']:
             Diet.syncToClient(self, entityId, self.playerDietData[entityId])
+            Diet.syncSettingToClient(self, entityId, self.playerDietData[entityId])
             self.NotifyToClient(entityId, "OpenDietScreen", {})
         if commandResult['message']:
             Diet.sendMessage(entityId, compFactory, commandResult['message'], commandResult['color'])

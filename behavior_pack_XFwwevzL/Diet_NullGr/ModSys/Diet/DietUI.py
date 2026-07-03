@@ -49,9 +49,18 @@ class DietUI(ScreenNode):
             barFill = self.GetBaseUIControl(rowPath + '/bar_fill').asImage()
             color = groupData['color']
             progress = groupData['value']
+            tracked = groupData['tracked']
             itemRenderer.SetUiItem(groupData['icon'], 0)
             nameLabel.SetText(groupData['name'])
-            percentLabel.SetText('{}%%'.format(int(progress * 100.0)))
-            nameLabel.SetTextColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
-            barFill.SetSpriteColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
-            barFill.SetSpriteClipRatio(1.0 - progress)
+            if tracked:
+                percentLabel.SetText('{}%%'.format(int(progress * 100.0)))
+                nameLabel.SetTextColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
+                percentLabel.SetTextColor((0.95, 0.95, 0.92))
+                barFill.SetSpriteColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
+                barFill.SetSpriteClipRatio(1.0 - progress)
+            else:
+                percentLabel.SetText('关闭')
+                nameLabel.SetTextColor((0.48, 0.48, 0.48))
+                percentLabel.SetTextColor((0.56, 0.56, 0.56))
+                barFill.SetSpriteColor((0.22, 0.22, 0.22))
+                barFill.SetSpriteClipRatio(1.0)

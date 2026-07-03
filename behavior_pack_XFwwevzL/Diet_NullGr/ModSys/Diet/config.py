@@ -14,6 +14,15 @@ buttonConfigKey = "Diet_NullGr_ButtonPos"
 buttonPosKey = "button_pos"
 buttonLongPressSeconds = 1.0
 buttonClickMoveLimit = 8.0
+settingItemId = "diet_nullgr"
+settingName = "均衡饮食"
+settingIconPath = "textures/ui/diet_nullgr/button"
+settingEventUpdate = "DietSettingUpdate"
+settingEventSync = "DietSettingSync"
+settingActiveKey = "diet_active"
+settingGroupPrefix = "diet_track_"
+settingTargetText = "自己"
+controlToggle = "toggle"
 
 serverSysKey = {
 }
@@ -78,6 +87,32 @@ groups = {
         "decayMultiplier": 1.0
     }
 }
+
+settingGroupKeys = {}
+for groupId in groupOrder:
+    settingGroupKeys[groupId] = settingGroupPrefix + groupId
+
+settingDefs = [
+    {
+        "key": settingActiveKey,
+        "name": "启用均衡饮食",
+        "control": controlToggle,
+        "default": True,
+        "priority": 10,
+        "groupId": ""
+    }
+]
+settingPriority = 20
+for groupId in groupOrder:
+    settingDefs.append({
+        "key": settingGroupKeys[groupId],
+        "name": "追踪{}".format(groups[groupId]["name"]),
+        "control": controlToggle,
+        "default": True,
+        "priority": settingPriority,
+        "groupId": groupId
+    })
+    settingPriority += 10
 
 dietTagGroups = {
     "diet/fruit": ["fruits"],

@@ -22,15 +22,26 @@ def createDefaultValues():
     return values
 
 
+# 创建五类营养追踪开关的默认状态，通用设置和服务端计算共用这份结构。
+def createDefaultTracking():
+    tracking = {}
+    for groupId in config.groupOrder:
+        tracking[groupId] = True
+    return tracking
+
+
 # 从 ModAttr 读取玩家饮食数据，ModAttr 负责跨存档恢复，内存数据只做本次会话的快速缓存。
 def loadPlayerData(playerId, compFactory, minecraftEnum):
     compModAttr = compFactory.CreateModAttr(playerId)
     compAttr = compFactory.CreateAttr(playerId)
     values = {}
+    tracking = {}
     for groupId in config.groupOrder:
         values[groupId] = clampDietValue(compModAttr.GetAttr(config.attrPrefix + groupId, config.groups[groupId]['defaultValue']))
+        tracking[groupId] = compModAttr.GetAttr(config.attrPrefix + 'track_' + groupId, True)
     return {
         'values': values,
+        'tracking': tracking,
         'active': compModAttr.GetAttr(config.attrPrefix + 'active', True),
         'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', ''),
         'prevHunger': compAttr.GetAttrValue(minecraftEnum.AttrType.HUNGER)
@@ -42,6 +53,7 @@ def savePlayerData(playerId, data, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     for groupId in config.groupOrder:
         compModAttr.SetAttr(config.attrPrefix + groupId, data['values'][groupId], needRestore=True)
+        compModAttr.SetAttr(config.attrPrefix + 'track_' + groupId, data['tracking'][groupId], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'active', data['active'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'eaten', data['eaten'], needRestore=True)
 
@@ -57,7 +69,8 @@ def buildClientData(data):
             'tooltip': groupConfig['tooltip'],
             'icon': groupConfig['icon'],
             'color': groupConfig['color'],
-            'value': data['values'][groupId]
+            'value': data['values'][groupId],
+            'tracked': data['tracking'][groupId]
         })
     return {
         'active': data['active'],
@@ -69,6 +82,23 @@ def buildClientData(data):
 # 服务端和客户端只通过这一条同步事件交换饮食数据，UI 打开、进食、衰减都会复用同一链路。
 def syncToClient(serverSys, playerId, data):
     serverSys.NotifyToClient(playerId, "DietSyncData", buildClientData(data))
+
+
+# 把通用设置状态压成客户端控件需要的键值，避免客户端直接推断服务端存档字段。
+def buildSettingValues(data):
+    values = {
+        config.settingActiveKey: data['active']
+    }
+    for groupId in config.groupOrder:
+        values[config.settingGroupKeys[groupId]] = data['tracking'][groupId]
+    return values
+
+
+# 通用设置控件和饮食面板共享服务端数据，任意数据变更后都从这里回填客户端控件默认值。
+def syncSettingToClient(serverSys, playerId, data):
+    serverSys.NotifyToClient(playerId, config.settingEventSync, {
+        'values': buildSettingValues(data)
+    })
 
 
 # 普通玩家反馈统一走聊天提示，命令和进食记录保持同一种表现。
@@ -172,8 +202,14 @@ def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
     foodGroupIds = getFoodGroupIds(itemName, itemAuxValue, compItem)
     if not foodGroupIds:
         return False
-    gainValues = calculateGain(hunger, nutrition, foodGroupIds)
+    trackedFoodGroupIds = []
     for groupId in foodGroupIds:
+        if data['tracking'][groupId]:
+            trackedFoodGroupIds.append(groupId)
+    if not trackedFoodGroupIds:
+        return False
+    gainValues = calculateGain(hunger, nutrition, trackedFoodGroupIds)
+    for groupId in trackedFoodGroupIds:
         data['values'][groupId] = clampDietValue(data['values'][groupId] + gainValues[groupId])
     addEatenFood(data, itemName)
     return True
@@ -183,13 +219,15 @@ def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
 def applyHungerDecay(data, foodDiff):
     activeCount = 0
     for groupId in config.groupOrder:
-        if data['values'][groupId] > 0.0:
+        if data['tracking'][groupId] and data['values'][groupId] > 0.0:
             activeCount += 1
     if activeCount <= 0:
         return
     scale = float(foodDiff) / float(activeCount)
     scale *= (1.0 - config.decayPenaltyPerGroup / 100.0) ** (activeCount - 1)
     for groupId in config.groupOrder:
+        if not data['tracking'][groupId]:
+            continue
         value = data['values'][groupId]
         decay = (config.expBase ** value) * scale * config.groups[groupId]['decayMultiplier'] / 100.0
         if decay > 0.0:
@@ -199,6 +237,8 @@ def applyHungerDecay(data, foodDiff):
 # 上游默认死亡惩罚为 AMOUNT 扣除 100%，这里等价为复活后回到各组默认值。
 def applyDeathPenalty(data):
     for groupId in config.groupOrder:
+        if not data['tracking'][groupId]:
+            continue
         value = data['values'][groupId] - config.deathPenaltyLoss
         if value < config.deathPenaltyMin:
             value = config.groups[groupId]['defaultValue']
@@ -211,17 +251,25 @@ def getMatchedEffects(data):
     matched = []
     balanced = True
     for groupId in ["proteins", "fruits", "vegetables", "grains"]:
-        if values[groupId] < 0.8:
+        if not data['tracking'][groupId] or values[groupId] < 0.8:
             balanced = False
     if balanced:
         matched.append("balanced")
-    if values['sugars'] >= 0.8:
+    if data['tracking']['sugars'] and values['sugars'] >= 0.8:
         matched.append("sugarRush")
     return matched
 
 
 # 将命中的饮食效果翻译成 UI 文本，空效果时明确显示暂无奖励。
 def buildEffectsText(data):
+    if not data['active']:
+        return "均衡饮食已关闭"
+    trackedCount = 0
+    for groupId in config.groupOrder:
+        if data['tracking'][groupId]:
+            trackedCount += 1
+    if trackedCount <= 0:
+        return "所有营养追踪已关闭"
     matched = getMatchedEffects(data)
     if not matched:
         return "当前没有饮食效果"
@@ -246,6 +294,42 @@ def applyEffects(playerId, data, compFactory):
         compEffect.AddEffectToEntity("hunger", 6, 2, True)
 
 
+# 百分比反馈统一经过 0-100 限制，命令消息和导出结果保持同一种显示。
+def formatDietPercent(value):
+    return int(clampDietValue(value) * 100.0)
+
+
+# 通用设置只改动服务端可信数据，再由服务端同步回填 UI，避免客户端开关状态和实际计算状态分叉。
+def applySetting(data, settingKey, value):
+    value = bool(value)
+    result = {'changed': False, 'message': '', 'color': '§a'}
+    if settingKey == config.settingActiveKey:
+        if data['active'] == value:
+            return result
+        data['active'] = value
+        result['changed'] = True
+        if value:
+            result['message'] = "均衡饮食已开启。目标：{}".format(config.settingTargetText)
+        else:
+            result['message'] = "均衡饮食已关闭。目标：{}".format(config.settingTargetText)
+        return result
+    for groupId in config.groupOrder:
+        if settingKey != config.settingGroupKeys[groupId]:
+            continue
+        if data['tracking'][groupId] == value:
+            return result
+        data['tracking'][groupId] = value
+        result['changed'] = True
+        if value:
+            result['message'] = "{}饮食追踪已开启。目标：{}".format(config.groups[groupId]['name'], config.settingTargetText)
+        else:
+            result['message'] = "{}饮食追踪已关闭。目标：{}".format(config.groups[groupId]['name'], config.settingTargetText)
+        return result
+    result['color'] = '§c'
+    result['message'] = "未知设置项: {}".format(settingKey)
+    return result
+
+
 # 处理 /diet 系列命令；命令属于玩家输入边界，这里会返回错误消息而不是让解析异常打断服务端。
 def handleCommand(command, data):
     text = command
@@ -263,17 +347,17 @@ def handleCommand(command, data):
     if action == "reset":
         data['values'] = createDefaultValues()
         result['changed'] = True
-        result['message'] = "均衡饮食数据已重置"
+        result['message'] = "均衡饮食数据已重置。目标：{}".format(config.settingTargetText)
         return result
     if action == "pause":
         data['active'] = False
         result['changed'] = True
-        result['message'] = "均衡饮食已暂停"
+        result['message'] = "均衡饮食已关闭。目标：{}".format(config.settingTargetText)
         return result
     if action == "resume":
         data['active'] = True
         result['changed'] = True
-        result['message'] = "均衡饮食已恢复"
+        result['message'] = "均衡饮食已开启。目标：{}".format(config.settingTargetText)
         return result
     if action == "export":
         result['message'] = buildExportText(data)
@@ -284,7 +368,7 @@ def handleCommand(command, data):
             result['color'] = '§c'
             result['message'] = "未知食物组: {}".format(groupId)
             return result
-        result['message'] = "{} = {}%".format(config.groups[groupId]['name'], int(data['values'][groupId] * 100.0))
+        result['message'] = "{}饮食指数为 {}%。目标：{}".format(config.groups[groupId]['name'], formatDietPercent(data['values'][groupId]), config.settingTargetText)
         return result
     if action in ["set", "add", "subtract"] and len(parts) >= 4:
         groupId = parts[-2]
@@ -300,14 +384,17 @@ def handleCommand(command, data):
             return result
         if amount > 1.0:
             amount = amount / 100.0
+        amountPercent = formatDietPercent(amount)
         if action == "set":
             data['values'][groupId] = clampDietValue(amount)
+            result['message'] = "{}饮食指数已设置为 {}%。目标：{}".format(config.groups[groupId]['name'], formatDietPercent(data['values'][groupId]), config.settingTargetText)
         elif action == "add":
             data['values'][groupId] = clampDietValue(data['values'][groupId] + amount)
+            result['message'] = "{}饮食指数已提高 {}%。目标：{}".format(config.groups[groupId]['name'], amountPercent, config.settingTargetText)
         else:
             data['values'][groupId] = clampDietValue(data['values'][groupId] - amount)
+            result['message'] = "{}饮食指数已降低 {}%。目标：{}".format(config.groups[groupId]['name'], amountPercent, config.settingTargetText)
         result['changed'] = True
-        result['message'] = "{} = {}%".format(config.groups[groupId]['name'], int(data['values'][groupId] * 100.0))
         return result
     result['color'] = '§c'
     result['message'] = "用法: /diet open|get|set|add|subtract|reset|pause|resume|export"
@@ -318,5 +405,8 @@ def handleCommand(command, data):
 def buildExportText(data):
     texts = []
     for groupId in config.groupOrder:
-        texts.append("{}:{}%".format(groupId, int(data['values'][groupId] * 100.0)))
+        if data['tracking'][groupId]:
+            texts.append("{}:{}%".format(groupId, formatDietPercent(data['values'][groupId])))
+        else:
+            texts.append("{}:关闭".format(groupId))
     return "Diet[" + ", ".join(texts) + "]"
