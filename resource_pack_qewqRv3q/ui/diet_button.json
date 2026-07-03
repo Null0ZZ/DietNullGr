@@ -1,0 +1,77 @@
+{
+    "namespace": "diet_button",
+    "main": {
+        "type": "screen",
+        "render_game_behind": true,
+        "is_showing_menu": false,
+        "absorbs_input": false,
+        "should_steal_mouse": false,
+        "controls": [
+            {
+                "root": {
+                    "type": "panel",
+                    "anchor_from": "top_left",
+                    "anchor_to": "top_left",
+                    "size": [
+                        "100.0%+0.0px",
+                        "100.0%+0.0px"
+                    ],
+                    "controls": [
+                        {
+                            "open_button": {
+                                "type": "button",
+                                "anchor_from": "right_middle",
+                                "anchor_to": "right_middle",
+                                "offset": [
+                                    -64,
+                                    -18
+                                ],
+                                "size": [
+                                    34,
+                                    34
+                                ],
+                                "draggable": "both",
+                                "button_mappings": [],
+                                "is_handle_button_move_event": true,
+                                "controls": [
+                                    {
+                                        "button_bg": {
+                                            "type": "image",
+                                            "texture": "textures/ui/diet_nullgr/button",
+                                            "nineslice_size": [
+                                                8,
+                                                8,
+                                                8,
+                                                8
+                                            ],
+                                            "size": [
+                                                34,
+                                                34
+                                            ],
+                                            "alpha": 0.92
+                                        }
+                                    },
+                                    {
+                                        "icon": {
+                                            "type": "custom",
+                                            "renderer": "inventory_item_renderer",
+                                            "anchor_from": "center",
+                                            "anchor_to": "center",
+                                            "size": [
+                                                22,
+                                                22
+                                            ],
+                                            "property_bag": {
+                                                "#item_id_aux": 131072
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

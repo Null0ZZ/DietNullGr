@@ -7,6 +7,13 @@ csPath = "Diet_NullGr.ModSys.Diet.Diet_cs.ClientSys"
 uiKey = "diet_screen"
 uiName = "diet_screen.main"
 uiPath = "Diet_NullGr.ModSys.Diet.DietUI.DietUI"
+buttonUiKey = "diet_button"
+buttonUiName = "diet_button.main"
+buttonUiPath = "Diet_NullGr.ModSys.Diet.DietButtonUI.DietButtonUI"
+buttonConfigKey = "Diet_NullGr_ButtonPos"
+buttonPosKey = "button_pos"
+buttonLongPressSeconds = 1.0
+buttonClickMoveLimit = 8.0
 
 serverSysKey = {
 }
