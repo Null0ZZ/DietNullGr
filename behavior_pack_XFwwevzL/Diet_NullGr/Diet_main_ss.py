@@ -65,7 +65,9 @@ class DietServerSystem(ServerSystem):
         if not data['active']:
             return
         itemName = itemDict['newItemName']
-        applied = Diet.applyFoodGain(data, itemName, hunger, nutrition)
+        itemAuxValue = itemDict['newAuxValue']
+        compItem = compFactory.CreateItem(serverApi.GetLevelId())
+        applied = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
         if not applied:
             return
         Diet.savePlayerData(playerId, data, compFactory)

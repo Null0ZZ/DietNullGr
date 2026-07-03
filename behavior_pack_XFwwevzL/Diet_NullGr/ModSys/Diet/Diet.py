@@ -2,6 +2,8 @@
 
 import Diet_NullGr.ModSys.Diet.config as config
 
+runtimeFoodGroups = {}
+
 
 # 将 Diet 原版 0.0-1.0 的营养值限制在合法范围，所有读写入口都经过这里，避免存档值越界。
 def clampDietValue(value):
@@ -87,6 +89,68 @@ def addEatenFood(data, itemName):
     data['eaten'] = ";".join(eatenList)
 
 
+# 校验外部联动传入的食物组，并按配置顺序去重，保证 UI、衰减和效果判断读取顺序一致。
+def normalizeFoodGroupIds(foodGroupIds):
+    selectedGroups = {}
+    for groupId in foodGroupIds:
+        if groupId not in config.groups:
+            print("[DietNullGr] 未知饮食类别: {}".format(groupId))
+            return []
+        selectedGroups[groupId] = True
+    normalizedGroupIds = []
+    for groupId in config.groupOrder:
+        if groupId in selectedGroups:
+            normalizedGroupIds.append(groupId)
+    return normalizedGroupIds
+
+
+# 外部模组手动注册物品饮食分类，适合不想改物品 JSON 或需要运行时决定分类的联动。
+def registerFoodGroups(itemName, foodGroupIds):
+    normalizedGroupIds = normalizeFoodGroupIds(foodGroupIds)
+    if not normalizedGroupIds:
+        return False
+    runtimeFoodGroups[itemName] = normalizedGroupIds
+    return True
+
+
+# 移除外部运行时注册的物品分类，只影响联动接口写入的数据，不会删掉本模组内置表。
+def removeRegisteredFood(itemName):
+    if itemName not in runtimeFoodGroups:
+        return False
+    del runtimeFoodGroups[itemName]
+    return True
+
+
+# 外部模组扩展 tag 到饮食分类的映射，便于一个自定义 tag 批量覆盖多种食物。
+def registerDietTag(tagName, foodGroupIds):
+    normalizedGroupIds = normalizeFoodGroupIds(foodGroupIds)
+    if not normalizedGroupIds:
+        return False
+    config.dietTagGroups[tagName] = normalizedGroupIds
+    return True
+
+
+# 进食时统一合并内置表、外部注册表和物品 JSON tag，三种联动方式共享同一套增量计算。
+def getFoodGroupIds(itemName, itemAuxValue, compItem):
+    selectedGroups = {}
+    if itemName in config.foodGroups:
+        for groupId in config.foodGroups[itemName]:
+            selectedGroups[groupId] = True
+    if itemName in runtimeFoodGroups:
+        for groupId in runtimeFoodGroups[itemName]:
+            selectedGroups[groupId] = True
+    itemTags = compItem.GetItemTags(itemName, itemAuxValue)
+    for tagName in itemTags:
+        if tagName in config.dietTagGroups:
+            for groupId in config.dietTagGroups[tagName]:
+                selectedGroups[groupId] = True
+    foodGroupIds = []
+    for groupId in config.groupOrder:
+        if groupId in selectedGroups:
+            foodGroupIds.append(groupId)
+    return foodGroupIds
+
+
 # 复刻上游 DietApiImpl.calculate：按饥饿值、营养值和食物组数量计算本次进食增量。
 def calculateGain(hunger, nutrition, foodGroupIds):
     groupCount = len(foodGroupIds)
@@ -104,10 +168,10 @@ def calculateGain(hunger, nutrition, foodGroupIds):
 
 
 # 玩家真正吃下食物后调用，未分类食物不改动数据，已分类食物按组叠加到 100% 上限。
-def applyFoodGain(data, itemName, hunger, nutrition):
-    if itemName not in config.foodGroups:
+def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
+    foodGroupIds = getFoodGroupIds(itemName, itemAuxValue, compItem)
+    if not foodGroupIds:
         return False
-    foodGroupIds = config.foodGroups[itemName]
     gainValues = calculateGain(hunger, nutrition, foodGroupIds)
     for groupId in foodGroupIds:
         data['values'][groupId] = clampDietValue(data['values'][groupId] + gainValues[groupId])

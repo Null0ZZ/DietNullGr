@@ -72,6 +72,19 @@ groups = {
     }
 }
 
+dietTagGroups = {
+    "diet/fruit": ["fruits"],
+    "diet/fruits": ["fruits"],
+    "diet/grain": ["grains"],
+    "diet/grains": ["grains"],
+    "diet/protein": ["proteins"],
+    "diet/proteins": ["proteins"],
+    "diet/vegetable": ["vegetables"],
+    "diet/vegetables": ["vegetables"],
+    "diet/sugar": ["sugars"],
+    "diet/sugars": ["sugars"]
+}
+
 foodGroups = {
     "minecraft:apple": ["fruits"],
     "minecraft:chorus_fruit": ["fruits"],
