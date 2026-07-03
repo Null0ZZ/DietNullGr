@@ -31,9 +31,8 @@ def createDefaultTracking():
 
 
 # 从 ModAttr 读取玩家饮食数据，ModAttr 负责跨存档恢复，内存数据只做本次会话的快速缓存。
-def loadPlayerData(playerId, compFactory, minecraftEnum):
+def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
-    compAttr = compFactory.CreateAttr(playerId)
     values = {}
     tracking = {}
     for groupId in config.groupOrder:
@@ -43,8 +42,7 @@ def loadPlayerData(playerId, compFactory, minecraftEnum):
         'values': values,
         'tracking': tracking,
         'active': compModAttr.GetAttr(config.attrPrefix + 'active', True),
-        'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', ''),
-        'prevHunger': compAttr.GetAttrValue(minecraftEnum.AttrType.HUNGER)
+        'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', '')
     }
 
 
@@ -222,9 +220,10 @@ def applyHungerDecay(data, foodDiff):
         if data['tracking'][groupId] and data['values'][groupId] > 0.0:
             activeCount += 1
     if activeCount <= 0:
-        return
+        return False
     scale = float(foodDiff) / float(activeCount)
     scale *= (1.0 - config.decayPenaltyPerGroup / 100.0) ** (activeCount - 1)
+    changed = False
     for groupId in config.groupOrder:
         if not data['tracking'][groupId]:
             continue
@@ -232,6 +231,8 @@ def applyHungerDecay(data, foodDiff):
         decay = (config.expBase ** value) * scale * config.groups[groupId]['decayMultiplier'] / 100.0
         if decay > 0.0:
             data['values'][groupId] = clampDietValue(value - decay)
+            changed = True
+    return changed
 
 
 # 上游默认死亡惩罚为 AMOUNT 扣除 100%，这里等价为复活后回到各组默认值。

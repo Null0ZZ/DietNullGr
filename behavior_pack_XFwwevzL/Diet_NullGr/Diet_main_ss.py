@@ -7,7 +7,6 @@ import Diet_NullGr.ModSys.Diet.Diet as Diet
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
-minecraftEnum = serverApi.GetMinecraftEnum()
 engineNamespace = serverApi.GetEngineNamespace()
 engineSystemName = serverApi.GetEngineSystemName()
 
@@ -22,6 +21,7 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "ClientLoadAddonsFinishServerEvent", self, self.ClientLoadAddonsFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerEatFoodServerEvent", self, self.PlayerEatFoodServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerDieEvent", self, self.PlayerDieEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "CommandEvent", self, self.CommandEvent)
@@ -32,19 +32,19 @@ class DietServerSystem(ServerSystem):
     def AddServerPlayerEvent(self, args):
         playerId = args['id']
         # 本地 MCDK 单机环境不会下发 Apollo 专用字段，本模块只依赖稳定的玩家 id 建立存档缓存。
-        self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+        self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
 
     def ClientLoadAddonsFinishServerEvent(self, args):
         playerId = args['playerId']
         if playerId not in self.playerDietData:
-            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
 
     def DietClientReady(self, args):
         playerId = args['__id__']
         if playerId not in self.playerDietData:
-            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
 
@@ -53,7 +53,7 @@ class DietServerSystem(ServerSystem):
         settingKey = args['key']
         value = args['value']
         if playerId not in self.playerDietData:
-            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         # 通用设置开关先落服务端存档，再同步面板和设置控件，避免客户端本地状态先行造成计算分叉。
         settingResult = Diet.applySetting(self.playerDietData[playerId], settingKey, value)
         if settingResult['changed']:
@@ -78,7 +78,7 @@ class DietServerSystem(ServerSystem):
         hunger = args['hunger']
         nutrition = args['nutrition']
         if playerId not in self.playerDietData:
-            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
         if not data['active']:
             return
@@ -92,6 +92,22 @@ class DietServerSystem(ServerSystem):
         Diet.syncToClient(self, playerId, data)
         Diet.sendMessage(playerId, compFactory, "均衡饮食: {} 已记录".format(itemName), "§a")
 
+    def PlayerHungerChangeServerEvent(self, args):
+        playerId = args['playerId']
+        hungerBefore = args['hungerBefore']
+        hunger = args['hunger']
+        if playerId not in self.playerDietData:
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
+        data = self.playerDietData[playerId]
+        if not data['active'] or hunger >= hungerBefore:
+            return
+        # 网易引擎已提供饥饿值变化事件，这里只在真实下降事件里执行 Diet 原版衰减，避免每 tick 轮询属性。
+        changed = Diet.applyHungerDecay(data, hungerBefore - hunger)
+        if not changed:
+            return
+        Diet.savePlayerData(playerId, data, compFactory)
+        Diet.syncToClient(self, playerId, data)
+
     def PlayerDieEvent(self, args):
         playerId = args['id']
         attacker = args['attacker']
@@ -102,7 +118,7 @@ class DietServerSystem(ServerSystem):
         if playerId not in self.deadPlayers:
             return
         if playerId not in self.playerDietData:
-            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         # 上游默认死亡惩罚会把所有饮食值按 AMOUNT 方式扣到最低值，这里在复活完成后处理，避免玩家死亡过程中的实体属性不可读。
         Diet.applyDeathPenalty(self.playerDietData[playerId])
         Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)
@@ -113,7 +129,7 @@ class DietServerSystem(ServerSystem):
         entityId = args['entityId']
         command = args['command']
         if entityId not in self.playerDietData:
-            self.playerDietData[entityId] = Diet.loadPlayerData(entityId, compFactory, minecraftEnum)
+            self.playerDietData[entityId] = Diet.loadPlayerData(entityId, compFactory)
         commandResult = Diet.handleCommand(command, self.playerDietData[entityId])
         if not commandResult['handled']:
             return
@@ -131,19 +147,13 @@ class DietServerSystem(ServerSystem):
 
     def OnScriptTickServer(self):
         self.tickCounter += 1
+        if self.tickCounter % config.effectRefreshTick != 0:
+            return
         for playerId in serverApi.GetPlayerList():
             if playerId not in self.playerDietData:
-                self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory, minecraftEnum)
+                self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
             data = self.playerDietData[playerId]
-            attrComp = compFactory.CreateAttr(playerId)
-            hunger = attrComp.GetAttrValue(minecraftEnum.AttrType.HUNGER)
-            if data['active'] and hunger < data['prevHunger']:
-                # Diet 原版只在饥饿条被消耗时衰减，本地记录上一帧饥饿值来复刻这一链路。
-                Diet.applyHungerDecay(data, data['prevHunger'] - hunger)
-                Diet.savePlayerData(playerId, data, compFactory)
-                Diet.syncToClient(self, playerId, data)
-            data['prevHunger'] = hunger
-            if data['active'] and self.tickCounter % config.effectRefreshTick == 0:
+            if data['active']:
                 Diet.applyEffects(playerId, data, compFactory)
 
     def Destroy(self):
