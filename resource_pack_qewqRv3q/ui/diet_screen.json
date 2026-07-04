@@ -157,6 +157,7 @@
                         0.92
                     ],
                     "font_size": "normal",
+                    "shadow": true,
                     "text": "0%",
                     "text_alignment": "right"
                 }
