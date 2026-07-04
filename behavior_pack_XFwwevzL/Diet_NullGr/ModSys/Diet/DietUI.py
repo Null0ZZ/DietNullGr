@@ -44,23 +44,27 @@ class DietUI(ScreenNode):
             groupData = groups[index]
             rowPath = '/root/row{}'.format(index)
             itemRenderer = self.GetBaseUIControl(rowPath + '/icon').asItemRenderer()
-            nameLabel = self.GetBaseUIControl('/root/row_name{}'.format(index)).asLabel()
-            percentLabel = self.GetBaseUIControl('/root/row_percent{}'.format(index)).asLabel()
+            nameLabel = self.GetBaseUIControl(rowPath + '/name').asLabel()
+            tooltipLabel = self.GetBaseUIControl(rowPath + '/tooltip').asLabel()
+            percentLabel = self.GetBaseUIControl(rowPath + '/percent').asLabel()
             barFill = self.GetBaseUIControl(rowPath + '/bar_fill').asImage()
             color = groupData['color']
             progress = groupData['value']
             tracked = groupData['tracked']
             itemRenderer.SetUiItem(groupData['icon'], 0)
             nameLabel.SetText(groupData['name'])
+            tooltipLabel.SetText(groupData['tooltip'])
             if tracked:
                 percentLabel.SetText('{}%%'.format(int(progress * 100.0)))
                 nameLabel.SetTextColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
+                tooltipLabel.SetTextColor((0.62, 0.6, 0.56))
                 percentLabel.SetTextColor((0.95, 0.95, 0.92))
                 barFill.SetSpriteColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
                 barFill.SetSpriteClipRatio(1.0 - progress)
             else:
                 percentLabel.SetText('关闭')
                 nameLabel.SetTextColor((0.48, 0.48, 0.48))
+                tooltipLabel.SetTextColor((0.42, 0.42, 0.42))
                 percentLabel.SetTextColor((0.56, 0.56, 0.56))
                 barFill.SetSpriteColor((0.22, 0.22, 0.22))
                 barFill.SetSpriteClipRatio(1.0)
