@@ -26,14 +26,12 @@ class DietButtonUI(ScreenNode):
         self.collisionBox = ()
 
     def Create(self):
-        self.buttonControl = self.GetBaseUIControl('/root/open_button').asButton()
+        self.buttonControl = self.GetBaseUIControl('/open_button').asButton()
         self.buttonControl.AddTouchEventParams({'isSwallow': True})
         self.buttonControl.SetButtonTouchDownCallback(self.ButtonTouchDown)
         self.buttonControl.SetButtonTouchMoveCallback(self.ButtonTouchMove)
         self.buttonControl.SetButtonTouchUpCallback(self.ButtonTouchUp)
         self.buttonControl.SetButtonTouchCancelCallback(self.ButtonTouchCancel)
-        iconControl = self.GetBaseUIControl('/root/open_button/icon').asItemRenderer()
-        iconControl.SetUiItem(config.groups['fruits']['icon'], 0)
         self.RestoreButtonPos()
         self.CorrectCurrentButtonPos()
 
@@ -183,9 +181,8 @@ class DietButtonUI(ScreenNode):
                     viewInfo[2] + viewInfo[0],
                     viewInfo[3] + viewInfo[1]
                 )
-        rootPos = self.GetGlobalPosition('/root')
-        rootSize = self.GetSize('/root')
-        return (rootPos[0], rootPos[1], rootPos[0] + rootSize[0], rootPos[1] + rootSize[1])
+        # 新版按钮 UI 已经移除旧的 /root 面板；老运行时拿不到视口时只保留 HUD 热区避让，避免访问不存在的根控件。
+        return (-32768.0, -32768.0, 32767.0, 32767.0)
 
     # 收集原生 HUD 热区和安全区外边界，拖动纠正时把这些区域视为不可进入区域。
     def InitOriginCollisionBox(self):

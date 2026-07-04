@@ -1,83 +1,65 @@
 {
-    "namespace": "diet_button",
     "main": {
         "type": "screen",
-        "render_game_behind": true,
+        "absorbs_input": false,
         "always_accepts_input": true,
         "force_render_below": false,
         "is_showing_menu": false,
         "load_screen_immediately": true,
+        "render_game_behind": true,
         "render_only_when_topmost": false,
-        "absorbs_input": false,
         "should_steal_mouse": false,
         "controls": [
             {
-                "root": {
-                    "type": "panel",
-                    "anchor_from": "top_left",
-                    "anchor_to": "top_left",
-                    "size": [
-                        "100.0%+0.0px",
-                        "100.0%+0.0px"
+                "open_button": {
+                    "type": "button",
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -64,
+                        -18
                     ],
-                    "layer": 30,
+                    "size": [
+                        16.0,
+                        16.0
+                    ],
+                    "draggable": "both",
+                    "layer": 10,
+                    "button_mappings": [],
+                    "is_handle_button_move_event": true,
                     "controls": [
                         {
-                            "open_button": {
-                                "type": "button",
-                                "anchor_from": "right_middle",
-                                "anchor_to": "right_middle",
-                                "offset": [
-                                    -64,
-                                    -18
-                                ],
+                            "button_bg": {
+                                "type": "image",
                                 "size": [
-                                    34,
-                                    34
+                                    20.0,
+                                    20.0
                                 ],
-                                "layer": 10,
-                                "draggable": "both",
-                                "button_mappings": [],
-                                "is_handle_button_move_event": true,
-                                "controls": [
-                                    {
-                                        "button_bg": {
-                                            "type": "image",
-                                            "texture": "textures/ui/diet_nullgr/button",
-                                            "nineslice_size": [
-                                                8,
-                                                8,
-                                                8,
-                                                8
-                                            ],
-                                            "size": [
-                                                34,
-                                                34
-                                            ],
-                                            "alpha": 0.92
-                                        }
-                                    },
-                                    {
-                                        "icon": {
-                                            "type": "custom",
-                                            "renderer": "inventory_item_renderer",
-                                            "anchor_from": "center",
-                                            "anchor_to": "center",
-                                            "size": [
-                                                22,
-                                                22
-                                            ],
-                                            "property_bag": {
-                                                "#item_id_aux": 131072
-                                            }
-                                        }
-                                    }
-                                ]
+                                "alpha": 0.92,
+                                "nineslice_size": [
+                                    4.0,
+                                    4.0,
+                                    4.0,
+                                    4.0
+                                ],
+                                "texture": "textures/ui/background_panel"
+                            }
+                        },
+                        {
+                            "image": {
+                                "type": "image",
+                                "size": [
+                                    16.0,
+                                    16.0
+                                ],
+                                "layer": 1,
+                                "texture": "textures/ui/hunger_effect"
                             }
                         }
                     ]
                 }
             }
         ]
-    }
+    },
+    "namespace": "diet_button"
 }
