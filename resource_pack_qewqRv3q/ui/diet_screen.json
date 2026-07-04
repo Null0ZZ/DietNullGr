@@ -1,10 +1,173 @@
 {
-    "namespace": "diet_screen",
+    "diet_row": {
+        "type": "panel",
+        "anchor_from": "center",
+        "anchor_to": "center",
+        "size": [
+            224,
+            22
+        ],
+        "controls": [
+            {
+                "row_bg": {
+                    "type": "image",
+                    "size": [
+                        224,
+                        22
+                    ],
+                    "nineslice_size": [
+                        4,
+                        4,
+                        4,
+                        4
+                    ]
+                }
+            },
+            {
+                "icon": {
+                    "type": "custom",
+                    "renderer": "inventory_item_renderer",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        8,
+                        0
+                    ],
+                    "size": [
+                        18,
+                        18
+                    ],
+                    "property_bag": {
+                        "#item_id_aux": 131072
+                    }
+                }
+            },
+            {
+                "name": {
+                    "type": "label",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        36,
+                        -1
+                    ],
+                    "size": [
+                        82,
+                        16
+                    ],
+                    "color": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "font_size": "normal",
+                    "text": "",
+                    "text_alignment": "left"
+                }
+            },
+            {
+                "tooltip": {
+                    "type": "label",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        32,
+                        6
+                    ],
+                    "size": [
+                        88,
+                        8
+                    ],
+                    "color": [
+                        0.62,
+                        0.6,
+                        0.56
+                    ],
+                    "font_size": "small",
+                    "text": "",
+                    "text_alignment": "left"
+                }
+            },
+            {
+                "bar_bg": {
+                    "type": "image",
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -39,
+                        -1
+                    ],
+                    "size": [
+                        102,
+                        5
+                    ],
+                    "texture": "textures/gui/diet_nullgr/icons",
+                    "uv": [
+                        20,
+                        0
+                    ],
+                    "uv_size": [
+                        102,
+                        5
+                    ]
+                }
+            },
+            {
+                "bar_fill": {
+                    "type": "image",
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -39,
+                        -1
+                    ],
+                    "size": [
+                        102,
+                        5
+                    ],
+                    "clip_direction": "left",
+                    "clip_ratio": 1.0,
+                    "texture": "textures/gui/diet_nullgr/icons",
+                    "uv": [
+                        20,
+                        5
+                    ],
+                    "uv_size": [
+                        102,
+                        5
+                    ]
+                }
+            },
+            {
+                "percent": {
+                    "type": "label",
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -5,
+                        0
+                    ],
+                    "size": [
+                        38,
+                        16
+                    ],
+                    "color": [
+                        0.95,
+                        0.95,
+                        0.92
+                    ],
+                    "font_size": "normal",
+                    "text": "0%",
+                    "text_alignment": "right"
+                }
+            }
+        ]
+    },
     "main": {
         "type": "screen",
-        "render_game_behind": true,
-        "is_showing_menu": true,
         "absorbs_input": true,
+        "is_showing_menu": true,
+        "render_game_behind": true,
         "should_steal_mouse": false,
         "controls": [
             {
@@ -14,23 +177,23 @@
                     "anchor_to": "center",
                     "size": [
                         248,
-                        176
+                        164.0
                     ],
                     "controls": [
                         {
                             "background": {
                                 "type": "image",
-                                "texture": "textures/ui/diet_nullgr/panel",
+                                "size": [
+                                    248,
+                                    "default"
+                                ],
                                 "nineslice_size": [
                                     8,
                                     8,
                                     8,
                                     8
                                 ],
-                                "size": [
-                                    248,
-                                    176
-                                ]
+                                "texture": "textures/ui/background_panel"
                             }
                         },
                         {
@@ -46,15 +209,15 @@
                                     160,
                                     12
                                 ],
-                                "text": "均衡饮食",
-                                "font_size": "normal",
-                                "text_alignment": "center",
-                                "shadow": false,
                                 "color": [
                                     0.96,
                                     0.94,
                                     0.86
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "shadow": false,
+                                "text": "均衡饮食",
+                                "text_alignment": "center"
                             }
                         },
                         {
@@ -63,8 +226,8 @@
                                 "anchor_from": "top_right",
                                 "anchor_to": "top_right",
                                 "offset": [
-                                    -10,
-                                    10
+                                    -7.0,
+                                    6.0
                                 ],
                                 "size": [
                                     18,
@@ -74,28 +237,11 @@
                                     {
                                         "close_bg": {
                                             "type": "image",
-                                            "texture": "textures/ui/diet_nullgr/button",
-                                            "size": [
-                                                18,
-                                                18
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "close_text": {
-                                            "type": "label",
-                                            "text": "X",
                                             "size": [
                                                 18,
                                                 18
                                             ],
-                                            "text_alignment": "center",
-                                            "font_size": "normal",
-                                            "color": [
-                                                0.95,
-                                                0.84,
-                                                0.76
-                                            ]
+                                            "texture": "textures/ui/close_button_default_light"
                                         }
                                     }
                                 ]
@@ -144,7 +290,6 @@
                         {
                             "row_name0": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -155,20 +300,20 @@
                                     76,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "left",
+                                "layer": 15,
                                 "color": [
                                     1,
                                     1,
                                     1
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "left"
                             }
                         },
                         {
                             "row_percent0": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -179,20 +324,20 @@
                                     44,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "right",
+                                "layer": 15,
                                 "color": [
                                     0.95,
                                     0.95,
                                     0.92
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "right"
                             }
                         },
                         {
                             "row_name1": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -203,20 +348,20 @@
                                     76,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "left",
+                                "layer": 15,
                                 "color": [
                                     1,
                                     1,
                                     1
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "left"
                             }
                         },
                         {
                             "row_percent1": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -227,20 +372,20 @@
                                     44,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "right",
+                                "layer": 15,
                                 "color": [
                                     0.95,
                                     0.95,
                                     0.92
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "right"
                             }
                         },
                         {
                             "row_name2": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -251,20 +396,20 @@
                                     76,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "left",
+                                "layer": 15,
                                 "color": [
                                     1,
                                     1,
                                     1
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "left"
                             }
                         },
                         {
                             "row_percent2": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -275,20 +420,20 @@
                                     44,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "right",
+                                "layer": 15,
                                 "color": [
                                     0.95,
                                     0.95,
                                     0.92
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "right"
                             }
                         },
                         {
                             "row_name3": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -299,20 +444,20 @@
                                     76,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "left",
+                                "layer": 15,
                                 "color": [
                                     1,
                                     1,
                                     1
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "left"
                             }
                         },
                         {
                             "row_percent3": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -323,20 +468,20 @@
                                     44,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "right",
+                                "layer": 15,
                                 "color": [
                                     0.95,
                                     0.95,
                                     0.92
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "right"
                             }
                         },
                         {
                             "row_name4": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -347,20 +492,20 @@
                                     76,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "left",
+                                "layer": 15,
                                 "color": [
                                     1,
                                     1,
                                     1
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "left"
                             }
                         },
                         {
                             "row_percent4": {
                                 "type": "label",
-                                "layer": 15,
                                 "anchor_from": "center",
                                 "anchor_to": "center",
                                 "offset": [
@@ -371,14 +516,15 @@
                                     44,
                                     16
                                 ],
-                                "text": "",
-                                "font_size": "normal",
-                                "text_alignment": "right",
+                                "layer": 15,
                                 "color": [
                                     0.95,
                                     0.95,
                                     0.92
-                                ]
+                                ],
+                                "font_size": "normal",
+                                "text": "",
+                                "text_alignment": "right"
                             }
                         },
                         {
@@ -394,14 +540,14 @@
                                     224,
                                     24
                                 ],
-                                "text": "当前没有饮食效果",
-                                "font_size": "small",
-                                "text_alignment": "center",
                                 "color": [
                                     0.76,
                                     0.73,
                                     0.66
-                                ]
+                                ],
+                                "font_size": "small",
+                                "text": "当前没有饮食效果",
+                                "text_alignment": "center"
                             }
                         }
                     ]
@@ -409,169 +555,5 @@
             }
         ]
     },
-    "diet_row": {
-        "type": "panel",
-        "anchor_from": "center",
-        "anchor_to": "center",
-        "size": [
-            224,
-            22
-        ],
-        "controls": [
-            {
-                "row_bg": {
-                    "type": "image",
-                    "texture": "textures/ui/diet_nullgr/row",
-                    "nineslice_size": [
-                        4,
-                        4,
-                        4,
-                        4
-                    ],
-                    "size": [
-                        224,
-                        22
-                    ]
-                }
-            },
-            {
-                "icon": {
-                    "type": "custom",
-                    "renderer": "inventory_item_renderer",
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "offset": [
-                        8,
-                        0
-                    ],
-                    "size": [
-                        18,
-                        18
-                    ],
-                    "property_bag": {
-                        "#item_id_aux": 131072
-                    }
-                }
-            },
-            {
-                "name": {
-                    "type": "label",
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "offset": [
-                        36,
-                        -1
-                    ],
-                    "size": [
-                        82,
-                        16
-                    ],
-                    "text": "",
-                    "font_size": "normal",
-                    "text_alignment": "left",
-                    "color": [
-                        1,
-                        1,
-                        1
-                    ]
-                }
-            },
-            {
-                "tooltip": {
-                    "type": "label",
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "offset": [
-                        32,
-                        6
-                    ],
-                    "size": [
-                        88,
-                        8
-                    ],
-                    "text": "",
-                    "font_size": "small",
-                    "text_alignment": "left",
-                    "color": [
-                        0.62,
-                        0.60,
-                        0.56
-                    ]
-                }
-            },
-            {
-                "bar_bg": {
-                    "type": "image",
-                    "texture": "textures/gui/diet_nullgr/icons",
-                    "anchor_from": "right_middle",
-                    "anchor_to": "right_middle",
-                    "offset": [
-                        -39,
-                        -1
-                    ],
-                    "size": [
-                        102,
-                        5
-                    ],
-                    "uv": [
-                        20,
-                        0
-                    ],
-                    "uv_size": [
-                        102,
-                        5
-                    ]
-                }
-            },
-            {
-                "bar_fill": {
-                    "type": "image",
-                    "texture": "textures/gui/diet_nullgr/icons",
-                    "anchor_from": "right_middle",
-                    "anchor_to": "right_middle",
-                    "offset": [
-                        -39,
-                        -1
-                    ],
-                    "size": [
-                        102,
-                        5
-                    ],
-                    "uv": [
-                        20,
-                        5
-                    ],
-                    "uv_size": [
-                        102,
-                        5
-                    ],
-                    "clip_direction": "left",
-                    "clip_ratio": 1.0
-                }
-            },
-            {
-                "percent": {
-                    "type": "label",
-                    "anchor_from": "right_middle",
-                    "anchor_to": "right_middle",
-                    "offset": [
-                        -5,
-                        0
-                    ],
-                    "size": [
-                        38,
-                        16
-                    ],
-                    "text": "0%",
-                    "font_size": "normal",
-                    "text_alignment": "right",
-                    "color": [
-                        0.95,
-                        0.95,
-                        0.92
-                    ]
-                }
-            }
-        ]
-    }
+    "namespace": "diet_screen"
 }
