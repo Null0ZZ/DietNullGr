@@ -111,7 +111,15 @@ class DietServerSystem(ServerSystem):
     def PlayerDieEvent(self, args):
         playerId = args['id']
         attacker = args['attacker']
+        if playerId in self.deadPlayers:
+            return
         self.deadPlayers[playerId] = True
+        if playerId not in self.playerDietData:
+            self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
+        # 死亡惩罚必须在死亡事件里立即落盘；玩家复活前退出或停服时，退出保存不会覆盖回未扣除的数据。
+        Diet.applyDeathPenalty(self.playerDietData[playerId])
+        Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)
+        Diet.syncToClient(self, playerId, self.playerDietData[playerId])
 
     def PlayerRespawnFinishServerEvent(self, args):
         playerId = args['playerId']
@@ -119,9 +127,7 @@ class DietServerSystem(ServerSystem):
             return
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
-        # 上游默认死亡惩罚会把所有饮食值按 AMOUNT 方式扣到最低值，这里在复活完成后处理，避免玩家死亡过程中的实体属性不可读。
-        Diet.applyDeathPenalty(self.playerDietData[playerId])
-        Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)
+        # 死亡事件已经完成扣除和保存；复活完成只负责刷新客户端并清理死亡事务标记。
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         del self.deadPlayers[playerId]
 

@@ -383,6 +383,10 @@ def handleCommand(command, data):
             result['color'] = '§c'
             result['message'] = "数值必须是数字"
             return result
+        if amount != amount or amount == float("inf") or amount == -float("inf"):
+            result['color'] = '§c'
+            result['message'] = "数值必须是有限数字"
+            return result
         if amount > 1.0:
             amount = amount / 100.0
         amountPercent = formatDietPercent(amount)
