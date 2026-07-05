@@ -30,17 +30,39 @@ def createDefaultTracking():
     return tracking
 
 
+# 创建配置化效果的默认开关状态，通用设置和效果刷新共用同一份开关。
+def createDefaultEffectSettings():
+    effectSettings = {}
+    for effectId in config.effectOrder:
+        effectSettings[effectId] = config.dietEffects[effectId]['defaultEnabled']
+    return effectSettings
+
+
 # 从 ModAttr 读取玩家饮食数据，ModAttr 负责跨存档恢复，内存数据只做本次会话的快速缓存。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     values = {}
     tracking = {}
+    effectSettings = {}
     for groupId in config.groupOrder:
         values[groupId] = clampDietValue(compModAttr.GetAttr(config.attrPrefix + groupId, config.groups[groupId]['defaultValue']))
         tracking[groupId] = compModAttr.GetAttr(config.attrPrefix + 'track_' + groupId, True)
+    for effectId in config.effectOrder:
+        effectSettings[effectId] = compModAttr.GetAttr(config.attrPrefix + 'effect_' + effectId, config.dietEffects[effectId]['defaultEnabled'])
+    deathPenaltyMethod = compModAttr.GetAttr(config.attrPrefix + 'death_penalty_method', config.deathPenaltyMethodDefault)
+    if deathPenaltyMethod not in config.deathPenaltyMethodOrder:
+        deathPenaltyMethod = config.deathPenaltyMethodDefault
+    targetDietValue = clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'target_value', config.targetDietValue))
+    if targetDietValue <= 0.0:
+        targetDietValue = 0.01
     return {
         'values': values,
         'tracking': tracking,
+        'effectSettings': effectSettings,
+        'targetDietValue': targetDietValue,
+        'deathPenaltyMethod': deathPenaltyMethod,
+        'deathPenaltyLoss': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_loss', config.deathPenaltyLoss)),
+        'deathPenaltyMin': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_min', config.deathPenaltyMin)),
         'active': compModAttr.GetAttr(config.attrPrefix + 'active', True),
         'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', '')
     }
@@ -52,6 +74,12 @@ def savePlayerData(playerId, data, compFactory):
     for groupId in config.groupOrder:
         compModAttr.SetAttr(config.attrPrefix + groupId, data['values'][groupId], needRestore=True)
         compModAttr.SetAttr(config.attrPrefix + 'track_' + groupId, data['tracking'][groupId], needRestore=True)
+    for effectId in config.effectOrder:
+        compModAttr.SetAttr(config.attrPrefix + 'effect_' + effectId, data['effectSettings'][effectId], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'target_value', data['targetDietValue'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'death_penalty_method', data['deathPenaltyMethod'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'death_penalty_loss', data['deathPenaltyLoss'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'death_penalty_min', data['deathPenaltyMin'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'active', data['active'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'eaten', data['eaten'], needRestore=True)
 
@@ -89,6 +117,12 @@ def buildSettingValues(data):
     }
     for groupId in config.groupOrder:
         values[config.settingGroupKeys[groupId]] = data['tracking'][groupId]
+    values[config.settingTargetValueKey] = formatDietPercent(data['targetDietValue'])
+    for effectId in config.effectOrder:
+        values[config.dietEffects[effectId]['settingKey']] = data['effectSettings'][effectId]
+    values[config.settingDeathPenaltyMethodKey] = config.deathPenaltyMethodNames[data['deathPenaltyMethod']]
+    values[config.settingDeathPenaltyLossKey] = formatDietPercent(data['deathPenaltyLoss'])
+    values[config.settingDeathPenaltyMinKey] = formatDietPercent(data['deathPenaltyMin'])
     return values
 
 
@@ -235,29 +269,97 @@ def applyHungerDecay(data, foodDiff):
     return changed
 
 
-# 上游默认死亡惩罚为 AMOUNT 扣除 100%，这里等价为复活后回到各组默认值。
+# 死亡惩罚按玩家设置选择固定扣除、比例扣除或重置，默认值等价于上游 AMOUNT 扣除 100%。
 def applyDeathPenalty(data):
     for groupId in config.groupOrder:
         if not data['tracking'][groupId]:
             continue
-        value = data['values'][groupId] - config.deathPenaltyLoss
-        if value < config.deathPenaltyMin:
+        originalValue = data['values'][groupId]
+        if data['deathPenaltyMethod'] == config.deathPenaltyMethodReset:
             value = config.groups[groupId]['defaultValue']
+        elif data['deathPenaltyMethod'] == config.deathPenaltyMethodPercent:
+            value = originalValue * (1.0 - data['deathPenaltyLoss'])
+        else:
+            value = originalValue - data['deathPenaltyLoss']
+        if data['deathPenaltyMethod'] != config.deathPenaltyMethodReset:
+            if value < data['deathPenaltyMin']:
+                value = data['deathPenaltyMin']
+            if value > originalValue:
+                value = originalValue
         data['values'][groupId] = clampDietValue(value)
 
 
-# 判断当前数值命中的饮食效果，服务端施加效果和 UI 文案共用同一套条件。
+# 判断单个数值是否落在效果条件区间内，配置化效果的多种匹配模式都复用这个边界判断。
+def isDietValueInCondition(value, above, below):
+    return value >= above and value <= below
+
+
+# 计算单条效果条件的命中数量，支持 Java Diet 的 all、every、any、average、none 五种匹配语义。
+def getConditionMatchCount(data, condition):
+    above = condition['above']
+    if condition['useTarget']:
+        above = data['targetDietValue']
+    below = condition['below']
+    if condition['match'] == 'all':
+        for groupId in condition['groups']:
+            if not data['tracking'][groupId] or not isDietValueInCondition(data['values'][groupId], above, below):
+                return 0
+        return 1
+    if condition['match'] == 'every':
+        count = 0
+        for groupId in condition['groups']:
+            if data['tracking'][groupId] and isDietValueInCondition(data['values'][groupId], above, below):
+                count += 1
+        return count
+    if condition['match'] == 'any':
+        for groupId in condition['groups']:
+            if data['tracking'][groupId] and isDietValueInCondition(data['values'][groupId], above, below):
+                return 1
+        return 0
+    if condition['match'] == 'average':
+        totalValue = 0.0
+        for groupId in condition['groups']:
+            if not data['tracking'][groupId]:
+                return 0
+            totalValue += data['values'][groupId]
+        averageValue = totalValue / float(len(condition['groups']))
+        if isDietValueInCondition(averageValue, above, below):
+            return 1
+        return 0
+    if condition['match'] == 'none':
+        for groupId in condition['groups']:
+            if data['tracking'][groupId] and isDietValueInCondition(data['values'][groupId], above, below):
+                return 0
+        return 1
+    return 0
+
+
+# 多条件效果需要全部命中；every 条件的命中数量会作为后续效果强度增量。
+def getEffectMatchMultiplier(data, effectConfig):
+    multiplier = 0
+    for condition in effectConfig['conditions']:
+        matches = getConditionMatchCount(data, condition)
+        if matches <= 0:
+            return 0
+        if condition['match'] == 'every':
+            multiplier += matches
+    if multiplier <= 0:
+        multiplier = 1
+    return multiplier
+
+
+# 判断当前数值命中的配置化饮食效果，服务端施加效果和 UI 文案共用同一套条件。
 def getMatchedEffects(data):
-    values = data['values']
     matched = []
-    balanced = True
-    for groupId in ["proteins", "fruits", "vegetables", "grains"]:
-        if not data['tracking'][groupId] or values[groupId] < config.targetDietValue:
-            balanced = False
-    if balanced:
-        matched.append("balanced")
-    if data['tracking']['sugars'] and values['sugars'] >= config.targetDietValue:
-        matched.append("sugarRush")
+    for effectId in config.effectOrder:
+        if not data['effectSettings'][effectId]:
+            continue
+        multiplier = getEffectMatchMultiplier(data, config.dietEffects[effectId])
+        if multiplier > 0:
+            matched.append({
+                'id': effectId,
+                'multiplier': multiplier
+            })
     return matched
 
 
@@ -275,8 +377,8 @@ def buildEffectsText(data):
     if not matched:
         return "当前没有饮食效果"
     texts = []
-    for effectId in matched:
-        texts.append(config.effectDescriptions[effectId])
+    for effectResult in matched:
+        texts.append(config.dietEffects[effectResult['id']]['description'])
     return "\n".join(texts)
 
 
@@ -286,13 +388,11 @@ def applyEffects(playerId, data, compFactory):
     if not matched:
         return
     compEffect = compFactory.CreateEffect(playerId)
-    if "balanced" in matched:
-        compEffect.AddEffectToEntity("health_boost", 6, 0, True)
-        compEffect.AddEffectToEntity("strength", 6, 0, True)
-        compEffect.AddEffectToEntity("resistance", 6, 0, True)
-    if "sugarRush" in matched:
-        compEffect.AddEffectToEntity("speed", 6, 0, True)
-        compEffect.AddEffectToEntity("hunger", 6, 2, True)
+    for effectResult in matched:
+        effectConfig = config.dietEffects[effectResult['id']]
+        for statusEffect in effectConfig['statusEffects']:
+            amplifier = statusEffect['amplifier'] + (effectResult['multiplier'] - 1) * statusEffect['increment']
+            compEffect.AddEffectToEntity(statusEffect['name'], statusEffect['duration'], amplifier, True)
 
 
 # 百分比反馈统一经过 0-100 限制，命令消息和导出结果保持同一种显示。
@@ -318,9 +418,9 @@ def buildFoodGainMessages(data, gainValues):
         currentValue = data['values'][groupId]
         currentPercent = formatDietPercent(currentValue)
         text = "{}营养值 +{}%，当前 {}%".format(groupName, formatDietGainPercent(gainValues[groupId]), currentPercent)
-        missingValue = config.targetDietValue - currentValue
+        missingValue = data['targetDietValue'] - currentValue
         if missingValue > 0.0:
-            missingPercent = formatDietPercent(config.targetDietValue) - currentPercent
+            missingPercent = formatDietPercent(data['targetDietValue']) - currentPercent
             text += "，距目标还差 {}%".format(missingPercent)
         gainTexts.append(text)
 
@@ -346,16 +446,44 @@ def buildFoodGainMessages(data, gainValues):
     return result
 
 
+# 通用设置开关可能来自不同引擎版本的回调，服务端统一转换后再写入玩家数据。
+def parseSettingToggle(value):
+    if value == False or value == 0 or value == "False" or value == "false" or value == "0":
+        return False
+    return True
+
+
+# 通用设置滑块是客户端输入边界，解析失败时返回负值交给调用点输出明确错误。
+def parseSettingSliderPercent(value):
+    try:
+        percent = int(value)
+    except (TypeError, ValueError):
+        return -1.0
+    if percent < 0:
+        percent = 0
+    if percent > 100:
+        percent = 100
+    return float(percent) / 100.0
+
+
+# 死亡惩罚下拉框使用中文选项展示，服务端保存稳定的内部方法名。
+def parseDeathPenaltyMethodSetting(value):
+    for deathPenaltyMethod in config.deathPenaltyMethodOrder:
+        if value == deathPenaltyMethod or value == config.deathPenaltyMethodNames[deathPenaltyMethod]:
+            return deathPenaltyMethod
+    return ""
+
+
 # 通用设置只改动服务端可信数据，再由服务端同步回填 UI，避免客户端开关状态和实际计算状态分叉。
 def applySetting(data, settingKey, value):
-    value = bool(value)
     result = {'changed': False, 'message': '', 'color': '§a'}
     if settingKey == config.settingActiveKey:
-        if data['active'] == value:
+        toggleValue = parseSettingToggle(value)
+        if data['active'] == toggleValue:
             return result
-        data['active'] = value
+        data['active'] = toggleValue
         result['changed'] = True
-        if value:
+        if toggleValue:
             result['message'] = "均衡饮食已开启。目标：{}".format(config.settingTargetText)
         else:
             result['message'] = "均衡饮食已关闭。目标：{}".format(config.settingTargetText)
@@ -363,14 +491,78 @@ def applySetting(data, settingKey, value):
     for groupId in config.groupOrder:
         if settingKey != config.settingGroupKeys[groupId]:
             continue
-        if data['tracking'][groupId] == value:
+        toggleValue = parseSettingToggle(value)
+        if data['tracking'][groupId] == toggleValue:
             return result
-        data['tracking'][groupId] = value
+        data['tracking'][groupId] = toggleValue
         result['changed'] = True
-        if value:
+        if toggleValue:
             result['message'] = "{}饮食追踪已开启。目标：{}".format(config.groups[groupId]['name'], config.settingTargetText)
         else:
             result['message'] = "{}饮食追踪已关闭。目标：{}".format(config.groups[groupId]['name'], config.settingTargetText)
+        return result
+    if settingKey == config.settingTargetValueKey:
+        amount = parseSettingSliderPercent(value)
+        if amount < 0.0:
+            result['color'] = '§c'
+            result['message'] = "目标营养值必须是 0-100 的数字"
+            return result
+        if amount <= 0.0:
+            amount = 0.01
+        if data['targetDietValue'] == amount:
+            return result
+        data['targetDietValue'] = amount
+        result['changed'] = True
+        result['message'] = "目标营养值已设置为 {}%。".format(formatDietPercent(data['targetDietValue']))
+        return result
+    for effectId in config.effectOrder:
+        if settingKey != config.dietEffects[effectId]['settingKey']:
+            continue
+        toggleValue = parseSettingToggle(value)
+        if data['effectSettings'][effectId] == toggleValue:
+            return result
+        data['effectSettings'][effectId] = toggleValue
+        result['changed'] = True
+        if toggleValue:
+            result['message'] = "{}已启用。".format(config.dietEffects[effectId]['name'])
+        else:
+            result['message'] = "{}已关闭。".format(config.dietEffects[effectId]['name'])
+        return result
+    if settingKey == config.settingDeathPenaltyMethodKey:
+        deathPenaltyMethod = parseDeathPenaltyMethodSetting(value)
+        if not deathPenaltyMethod:
+            result['color'] = '§c'
+            result['message'] = "未知死亡惩罚方式: {}".format(value)
+            return result
+        if data['deathPenaltyMethod'] == deathPenaltyMethod:
+            return result
+        data['deathPenaltyMethod'] = deathPenaltyMethod
+        result['changed'] = True
+        result['message'] = "死亡惩罚方式已设置为{}。".format(config.deathPenaltyMethodNames[deathPenaltyMethod])
+        return result
+    if settingKey == config.settingDeathPenaltyLossKey:
+        amount = parseSettingSliderPercent(value)
+        if amount < 0.0:
+            result['color'] = '§c'
+            result['message'] = "死亡扣除比例必须是 0-100 的数字"
+            return result
+        if data['deathPenaltyLoss'] == amount:
+            return result
+        data['deathPenaltyLoss'] = amount
+        result['changed'] = True
+        result['message'] = "死亡扣除比例已设置为 {}%。".format(formatDietPercent(data['deathPenaltyLoss']))
+        return result
+    if settingKey == config.settingDeathPenaltyMinKey:
+        amount = parseSettingSliderPercent(value)
+        if amount < 0.0:
+            result['color'] = '§c'
+            result['message'] = "死亡最低保留必须是 0-100 的数字"
+            return result
+        if data['deathPenaltyMin'] == amount:
+            return result
+        data['deathPenaltyMin'] = amount
+        result['changed'] = True
+        result['message'] = "死亡最低保留已设置为 {}%。".format(formatDietPercent(data['deathPenaltyMin']))
         return result
     result['color'] = '§c'
     result['message'] = "未知设置项: {}".format(settingKey)

@@ -21,8 +21,15 @@ settingEventUpdate = "DietSettingUpdate"
 settingEventSync = "DietSettingSync"
 settingActiveKey = "diet_active"
 settingGroupPrefix = "diet_track_"
+settingEffectPrefix = "diet_effect_"
+settingTargetValueKey = "diet_target_value"
+settingDeathPenaltyMethodKey = "diet_death_penalty_method"
+settingDeathPenaltyLossKey = "diet_death_penalty_loss"
+settingDeathPenaltyMinKey = "diet_death_penalty_min"
 settingTargetText = "自己"
 controlToggle = "toggle"
+controlSlider = "slider"
+controlDropDown = "dropdown"
 
 serverSysKey = {
 }
@@ -38,6 +45,19 @@ targetDietValue = 0.8
 nutritionWarningValue = 0.2
 deathPenaltyMin = 0.0
 deathPenaltyLoss = 1.0
+deathPenaltyMethodAmount = "AMOUNT"
+deathPenaltyMethodPercent = "PERCENT"
+deathPenaltyMethodReset = "RESET"
+deathPenaltyMethodDefault = deathPenaltyMethodAmount
+deathPenaltyMethodOrder = [deathPenaltyMethodAmount, deathPenaltyMethodPercent, deathPenaltyMethodReset]
+deathPenaltyMethodNames = {
+    deathPenaltyMethodAmount: "固定扣除",
+    deathPenaltyMethodPercent: "按比例扣除",
+    deathPenaltyMethodReset: "死亡重置"
+}
+deathPenaltyMethodOptions = []
+for deathPenaltyMethod in deathPenaltyMethodOrder:
+    deathPenaltyMethodOptions.append(deathPenaltyMethodNames[deathPenaltyMethod])
 expBase = 2.718281828
 
 groupOrder = ["fruits", "grains", "proteins", "vegetables", "sugars"]
@@ -95,6 +115,54 @@ groups = {
     }
 }
 
+effectOrder = ["balanced", "sugarRush"]
+
+dietEffects = {
+    "balanced": {
+        "name": "均衡奖励",
+        "settingKey": settingEffectPrefix + "balanced",
+        "defaultEnabled": True,
+        "description": "主食、水果、蔬菜、蛋白质达到目标值：获得生命提升、力量、抗性。",
+        "conditions": [
+            {
+                "groups": ["proteins", "fruits", "vegetables", "grains"],
+                "match": "all",
+                "useTarget": True,
+                "above": targetDietValue,
+                "below": 1.0
+            }
+        ],
+        "statusEffects": [
+            {"name": "health_boost", "duration": 6, "amplifier": 0, "increment": 0},
+            {"name": "strength", "duration": 6, "amplifier": 0, "increment": 0},
+            {"name": "resistance", "duration": 6, "amplifier": 0, "increment": 0}
+        ]
+    },
+    "sugarRush": {
+        "name": "糖分冲刺",
+        "settingKey": settingEffectPrefix + "sugarRush",
+        "defaultEnabled": True,
+        "description": "糖分达到目标值：获得速度，但同时获得饥饿。",
+        "conditions": [
+            {
+                "groups": ["sugars"],
+                "match": "all",
+                "useTarget": True,
+                "above": targetDietValue,
+                "below": 1.0
+            }
+        ],
+        "statusEffects": [
+            {"name": "speed", "duration": 6, "amplifier": 0, "increment": 0},
+            {"name": "hunger", "duration": 6, "amplifier": 2, "increment": 0}
+        ]
+    }
+}
+
+effectSettingKeys = {}
+for effectId in effectOrder:
+    effectSettingKeys[effectId] = dietEffects[effectId]["settingKey"]
+
 settingGroupKeys = {}
 for groupId in groupOrder:
     settingGroupKeys[groupId] = settingGroupPrefix + groupId
@@ -120,6 +188,61 @@ for groupId in groupOrder:
         "groupId": groupId
     })
     settingPriority += 10
+
+settingDefs.append({
+    "key": settingTargetValueKey,
+    "name": "目标营养值",
+    "control": controlSlider,
+    "default": int(targetDietValue * 100.0),
+    "priority": settingPriority,
+    "step": 100,
+    "groupId": ""
+})
+settingPriority += 10
+for effectId in effectOrder:
+    settingDefs.append({
+        "key": dietEffects[effectId]["settingKey"],
+        "name": "启用{}".format(dietEffects[effectId]["name"]),
+        "control": controlToggle,
+        "default": dietEffects[effectId]["defaultEnabled"],
+        "priority": settingPriority,
+        "groupId": ""
+    })
+    settingPriority += 10
+
+settingDefs.append({
+    "key": settingDeathPenaltyMethodKey,
+    "name": "死亡惩罚方式",
+    "control": controlDropDown,
+    "default": deathPenaltyMethodNames[deathPenaltyMethodDefault],
+    "priority": settingPriority,
+    "options": deathPenaltyMethodOptions,
+    "groupId": ""
+})
+settingPriority += 10
+settingDefs.append({
+    "key": settingDeathPenaltyLossKey,
+    "name": "死亡扣除比例",
+    "control": controlSlider,
+    "default": int(deathPenaltyLoss * 100.0),
+    "priority": settingPriority,
+    "step": 100,
+    "groupId": ""
+})
+settingPriority += 10
+settingDefs.append({
+    "key": settingDeathPenaltyMinKey,
+    "name": "死亡最低保留",
+    "control": controlSlider,
+    "default": int(deathPenaltyMin * 100.0),
+    "priority": settingPriority,
+    "step": 100,
+    "groupId": ""
+})
+
+settingDefByKey = {}
+for settingDef in settingDefs:
+    settingDefByKey[settingDef["key"]] = settingDef
 
 dietTagGroups = {
     "diet/fruit": ["fruits"],
@@ -214,7 +337,6 @@ foodGroups = {
     "minecraft:sugar": ["sugars"]
 }
 
-effectDescriptions = {
-    "balanced": "主食、水果、蔬菜、蛋白质均超过80%：获得生命提升、力量、抗性。",
-    "sugarRush": "糖分超过80%：获得速度，但同时获得饥饿。"
-}
+effectDescriptions = {}
+for effectId in effectOrder:
+    effectDescriptions[effectId] = dietEffects[effectId]["description"]

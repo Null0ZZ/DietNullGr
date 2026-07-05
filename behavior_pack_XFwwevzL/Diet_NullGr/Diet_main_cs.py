@@ -23,14 +23,9 @@ class DietClientSystem(ClientSystem):
         self.settingRegisteredKeys = []
         self.settingSyncing = False
         self.settingSyncValues = {}
-        self.settingCallbacks = {
-            config.settingActiveKey: self.DietActiveSettingChanged,
-            config.settingGroupKeys['fruits']: self.DietFruitsSettingChanged,
-            config.settingGroupKeys['grains']: self.DietGrainsSettingChanged,
-            config.settingGroupKeys['proteins']: self.DietProteinsSettingChanged,
-            config.settingGroupKeys['vegetables']: self.DietVegetablesSettingChanged,
-            config.settingGroupKeys['sugars']: self.DietSugarsSettingChanged
-        }
+        self.settingCallbacks = {}
+        for settingDef in config.settingDefs:
+            self.settingCallbacks[settingDef['key']] = self.CreateDietSettingCallback(settingDef['key'])
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
         self.ListenForEvent(engineNamespace, engineSystemName, "HudButtonChangedClientEvent", self, self.HudButtonChangedClientEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ScreenSizeChangedClientEvent", self, self.ScreenSizeChangedClientEvent)
@@ -66,7 +61,7 @@ class DietClientSystem(ClientSystem):
         for settingKey in values:
             if settingKey not in self.settingRegisteredKeys:
                 continue
-            self.SyncDietSettingToggle(settingKey, values[settingKey])
+            self.SyncDietSettingControl(settingKey, values[settingKey])
 
     def OpenDietScreen(self, args):
         if self.dietData is None:
@@ -102,51 +97,51 @@ class DietClientSystem(ClientSystem):
             config.settingIconPath
         )
 
-    # 通用设置控件只注册一次，后续服务端状态变化统一用 SetToggleDefault 回填。
+    # 通用设置控件回调可能只回传 value，这里给每个控件绑定固定 key，保证写回服务端时不依赖回调参数形态。
+    def CreateDietSettingCallback(self, settingKey):
+        def DietSettingControlChanged(*args):
+            value = args[0] if len(args) == 1 else args[1]
+            self.NotifyDietSettingChanged(settingKey, value)
+        return DietSettingControlChanged
+
+    # 通用设置控件只注册一次，后续服务端状态变化统一用对应控件的 SetDefault 回填。
     def RegisterDietSettingControls(self, values):
         if self.settingRegistered:
             return
         for settingDef in config.settingDefs:
-            value = bool(values[settingDef['key']])
-            self.settingInst.AddToggle(
-                settingDef['key'],
-                settingDef['name'],
-                self.settingCallbacks[settingDef['key']],
-                settingDef['priority'],
-                value
-            )
-            self.settingRegisteredKeys.append(settingDef['key'])
+            settingKey = settingDef['key']
+            if settingDef['control'] == config.controlToggle:
+                self.settingInst.AddToggle(
+                    settingKey,
+                    settingDef['name'],
+                    self.settingCallbacks[settingKey],
+                    settingDef['priority'],
+                    bool(values[settingKey])
+                )
+            elif settingDef['control'] == config.controlSlider:
+                self.settingInst.AddSlider(
+                    settingKey,
+                    settingDef['name'],
+                    settingDef['step'],
+                    self.settingCallbacks[settingKey],
+                    settingDef['priority'],
+                    int(values[settingKey])
+                )
+            elif settingDef['control'] == config.controlDropDown:
+                self.settingInst.AddDropDown(
+                    settingKey,
+                    settingDef['name'],
+                    settingDef['options'],
+                    self.settingCallbacks[settingKey],
+                    settingDef['priority'],
+                    values[settingKey]
+                )
+            self.settingRegisteredKeys.append(settingKey)
         self.settingRegistered = True
 
-    # AddToggle 在不同引擎版本会回传 value 或 (key, value)，每个回调固定自己的设置键再统一写回服务端。
-    def DietActiveSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingActiveKey, value)
-
-    def DietFruitsSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingGroupKeys['fruits'], value)
-
-    def DietGrainsSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingGroupKeys['grains'], value)
-
-    def DietProteinsSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingGroupKeys['proteins'], value)
-
-    def DietVegetablesSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingGroupKeys['vegetables'], value)
-
-    def DietSugarsSettingChanged(self, *args):
-        value = args[0] if len(args) == 1 else args[1]
-        self.NotifyDietSettingChanged(config.settingGroupKeys['sugars'], value)
-
-    # 同步回填期间 SetToggleDefault 可能触发同一个回调，必须拦截这次回声，避免客户端把服务端状态再写回一次。
+    # 同步回填期间 SetDefault 可能触发同一个回调，必须拦截这次回声，避免客户端把服务端状态再写回一次。
     def NotifyDietSettingChanged(self, settingKey, value):
-        value = bool(value)
-        if self.settingSyncing and settingKey in self.settingSyncValues and bool(self.settingSyncValues[settingKey]) == value:
+        if self.settingSyncing and settingKey in self.settingSyncValues and self.settingSyncValues[settingKey] == value:
             return
         self.NotifyToServer(config.settingEventUpdate, {
             'key': settingKey,
@@ -154,15 +149,20 @@ class DietClientSystem(ClientSystem):
         })
 
     # 服务端才是设置真值来源，客户端控件默认值只做展示回填，finally 用来恢复同步标记而不吞掉 API 异常。
-    def SyncDietSettingToggle(self, settingKey, value):
-        value = bool(value)
+    def SyncDietSettingControl(self, settingKey, value):
+        settingDef = config.settingDefByKey[settingKey]
         oldSettingSyncing = self.settingSyncing
         oldSettingSyncValues = self.settingSyncValues
         if not oldSettingSyncing:
             self.settingSyncing = True
             self.settingSyncValues = {settingKey: value}
         try:
-            self.settingInst.SetToggleDefault(settingKey, value)
+            if settingDef['control'] == config.controlToggle:
+                self.settingInst.SetToggleDefault(settingKey, bool(value))
+            elif settingDef['control'] == config.controlSlider:
+                self.settingInst.SetSliderDefault(settingKey, int(value))
+            elif settingDef['control'] == config.controlDropDown:
+                self.settingInst.SetDropDownDefault(settingKey, value)
         finally:
             if not oldSettingSyncing:
                 self.settingSyncing = False
