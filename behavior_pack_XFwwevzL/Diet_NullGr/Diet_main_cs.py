@@ -32,6 +32,7 @@ class DietClientSystem(ClientSystem):
         self.ListenForEvent(com.modName, com.ssname, "DietSyncData", self, self.DietSyncData)
         self.ListenForEvent(com.modName, com.ssname, "OpenDietScreen", self, self.OpenDietScreen)
         self.ListenForEvent(com.modName, com.ssname, config.settingEventSync, self, self.DietSettingSync)
+        self.ListenForEvent(com.modName, com.ssname, config.lowNutritionAlertEvent, self, self.DietLowNutritionAlert)
         print("[DietNullGr] client ready")
 
     def UiInitFinished(self, args):
@@ -62,6 +63,14 @@ class DietClientSystem(ClientSystem):
             if settingKey not in self.settingRegisteredKeys:
                 continue
             self.SyncDietSettingControl(settingKey, values[settingKey])
+
+    def DietLowNutritionAlert(self, args):
+        sound = args['sound']
+        volume = args['volume']
+        pitch = args['pitch']
+        playerId = clientApi.GetLocalPlayerId()
+        compAudio = compFactory.CreateAudio(playerId)
+        compAudio.PlayPlayerSound(sound, volume, pitch, playerId)
 
     def OpenDietScreen(self, args):
         if self.dietData is None:

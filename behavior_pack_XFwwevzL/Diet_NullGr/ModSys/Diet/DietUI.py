@@ -58,12 +58,14 @@ class DietUI(ScreenNode):
                 percentLabel.SetText('{}%%'.format(int(progress * 100.0)))
                 nameLabel.SetTextColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
                 tooltipLabel.SetTextColor((0.62, 0.6, 0.56))
-                percentWarningRatio = 1.0 - progress
-                percentLabel.SetTextColor((
-                    0.95 + 0.05 * percentWarningRatio,
-                    0.18 + 0.77 * progress,
-                    0.12 + 0.80 * progress
-                ))
+                if progress >= 0.75:
+                    percentLabel.SetTextColor(config.percentColorHealthy)
+                elif progress >= 0.5:
+                    percentLabel.SetTextColor(config.percentColorCaution)
+                elif progress >= 0.25:
+                    percentLabel.SetTextColor(config.percentColorWarning)
+                else:
+                    percentLabel.SetTextColor(config.percentColorDanger)
                 barFill.SetSpriteColor((color[0] / 255.0, color[1] / 255.0, color[2] / 255.0))
                 barFill.SetSpriteClipRatio(1.0 - progress)
             else:

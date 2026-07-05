@@ -19,6 +19,7 @@ settingName = "均衡饮食"
 settingIconPath = "textures/ui/diet_nullgr/button"
 settingEventUpdate = "DietSettingUpdate"
 settingEventSync = "DietSettingSync"
+lowNutritionAlertEvent = "DietLowNutritionAlert"
 settingActiveKey = "diet_active"
 settingGroupPrefix = "diet_track_"
 settingEffectPrefix = "diet_effect_"
@@ -43,6 +44,9 @@ gainPenaltyPerGroup = 15.0
 decayPenaltyPerGroup = 15.0
 targetDietValue = 0.8
 nutritionWarningValue = 0.2
+lowNutritionAlertSound = "random.toast"
+lowNutritionAlertVolume = 1.0
+lowNutritionAlertPitch = 1.0
 deathPenaltyMin = 0.0
 deathPenaltyLoss = 1.0
 deathPenaltyMethodAmount = "AMOUNT"
@@ -61,6 +65,11 @@ for deathPenaltyMethod in deathPenaltyMethodOrder:
 expBase = 2.718281828
 
 groupOrder = ["fruits", "grains", "proteins", "vegetables", "sugars"]
+
+percentColorHealthy = (0.96, 0.96, 0.96)
+percentColorCaution = (1.0, 0.92, 0.18)
+percentColorWarning = (1.0, 0.55, 0.08)
+percentColorDanger = (1.0, 0.16, 0.12)
 
 groups = {
     "fruits": {

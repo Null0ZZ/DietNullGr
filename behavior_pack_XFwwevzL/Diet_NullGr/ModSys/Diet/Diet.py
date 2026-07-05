@@ -38,6 +38,14 @@ def createDefaultEffectSettings():
     return effectSettings
 
 
+# 低值提醒需要比较衰减前后是否跨过阈值，复制当前值可以避免衰减函数额外承担事件语义。
+def copyDietValues(data):
+    values = {}
+    for groupId in config.groupOrder:
+        values[groupId] = data['values'][groupId]
+    return values
+
+
 # 从 ModAttr 读取玩家饮食数据，ModAttr 负责跨存档恢复，内存数据只做本次会话的快速缓存。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
@@ -444,6 +452,20 @@ def buildFoodGainMessages(data, gainValues):
         groupConfig = config.groups[warningGroupId]
         result['warningMessage'] = "提醒：{}营养值偏低，当前 {}%。建议补充：{}".format(groupConfig['name'], formatDietPercent(warningValue), groupConfig['suggestion'])
     return result
+
+
+# 只在营养值从提醒线以上跌到提醒线内时提示一次；补回提醒线以上后，下次跌破才会再次触发。
+def buildLowNutritionAlertMessages(beforeValues, data):
+    messages = []
+    for groupId in config.groupOrder:
+        if not data['tracking'][groupId]:
+            continue
+        beforeValue = beforeValues[groupId]
+        value = data['values'][groupId]
+        if beforeValue > config.nutritionWarningValue and value <= config.nutritionWarningValue:
+            groupConfig = config.groups[groupId]
+            messages.append("{}营养值偏低，当前 {}%。建议补充：{}".format(groupConfig['name'], formatDietPercent(value), groupConfig['suggestion']))
+    return messages
 
 
 # 通用设置开关可能来自不同引擎版本的回调，服务端统一转换后再写入玩家数据。

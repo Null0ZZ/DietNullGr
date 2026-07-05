@@ -106,11 +106,21 @@ class DietServerSystem(ServerSystem):
         if not data['active'] or hunger >= hungerBefore:
             return
         # 网易引擎已提供饥饿值变化事件，这里只在真实下降事件里执行 Diet 原版衰减，避免每 tick 轮询属性。
+        beforeValues = Diet.copyDietValues(data)
         changed = Diet.applyHungerDecay(data, hungerBefore - hunger)
         if not changed:
             return
+        lowNutritionAlertMessages = Diet.buildLowNutritionAlertMessages(beforeValues, data)
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
+        for message in lowNutritionAlertMessages:
+            Diet.sendMessage(playerId, compFactory, message, "§e")
+        if lowNutritionAlertMessages:
+            self.NotifyToClient(playerId, config.lowNutritionAlertEvent, {
+                'sound': config.lowNutritionAlertSound,
+                'volume': config.lowNutritionAlertVolume,
+                'pitch': config.lowNutritionAlertPitch
+            })
 
     def PlayerDieEvent(self, args):
         playerId = args['id']
