@@ -85,12 +85,16 @@ class DietServerSystem(ServerSystem):
         itemName = itemDict['newItemName']
         itemAuxValue = itemDict['newAuxValue']
         compItem = compFactory.CreateItem(serverApi.GetLevelId())
-        applied = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
-        if not applied:
+        gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
+        if not gainValues:
             return
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
-        Diet.sendMessage(playerId, compFactory, "均衡饮食: {} 已记录".format(itemName), "§a")
+        # 进食提示在保存后基于最新数值生成：先告知本次补充，再对其他低值营养给出补充建议。
+        foodGainMessages = Diet.buildFoodGainMessages(data, gainValues)
+        Diet.sendMessage(playerId, compFactory, foodGainMessages['gainMessage'], "§a")
+        if foodGainMessages['warningMessage']:
+            Diet.sendMessage(playerId, compFactory, foodGainMessages['warningMessage'], "§e")
 
     def PlayerHungerChangeServerEvent(self, args):
         playerId = args['playerId']

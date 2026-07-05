@@ -199,18 +199,18 @@ def calculateGain(hunger, nutrition, foodGroupIds):
 def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
     foodGroupIds = getFoodGroupIds(itemName, itemAuxValue, compItem)
     if not foodGroupIds:
-        return False
+        return {}
     trackedFoodGroupIds = []
     for groupId in foodGroupIds:
         if data['tracking'][groupId]:
             trackedFoodGroupIds.append(groupId)
     if not trackedFoodGroupIds:
-        return False
+        return {}
     gainValues = calculateGain(hunger, nutrition, trackedFoodGroupIds)
     for groupId in trackedFoodGroupIds:
         data['values'][groupId] = clampDietValue(data['values'][groupId] + gainValues[groupId])
     addEatenFood(data, itemName)
-    return True
+    return gainValues
 
 
 # 复刻 PlayerDietTracker.decay：饥饿条下降时，所有已有值按 exp(value) 曲线共同衰减。
@@ -252,11 +252,11 @@ def getMatchedEffects(data):
     matched = []
     balanced = True
     for groupId in ["proteins", "fruits", "vegetables", "grains"]:
-        if not data['tracking'][groupId] or values[groupId] < 0.8:
+        if not data['tracking'][groupId] or values[groupId] < config.targetDietValue:
             balanced = False
     if balanced:
         matched.append("balanced")
-    if data['tracking']['sugars'] and values['sugars'] >= 0.8:
+    if data['tracking']['sugars'] and values['sugars'] >= config.targetDietValue:
         matched.append("sugarRush")
     return matched
 
@@ -298,6 +298,52 @@ def applyEffects(playerId, data, compFactory):
 # 百分比反馈统一经过 0-100 限制，命令消息和导出结果保持同一种显示。
 def formatDietPercent(value):
     return int(clampDietValue(value) * 100.0)
+
+
+# 进食增量和当前值使用同一套百分比口径，很小但有效的补充至少显示 +1%。
+def formatDietGainPercent(value):
+    percent = int(clampDietValue(value) * 100.0)
+    if percent <= 0 and value > 0.0:
+        return 1
+    return percent
+
+
+# 进食反馈只基于本次真实增量和保存前的最新数据生成，避免继续显示物品 id 这种调试文案。
+def buildFoodGainMessages(data, gainValues):
+    gainTexts = []
+    for groupId in config.groupOrder:
+        if groupId not in gainValues:
+            continue
+        groupName = config.groups[groupId]['name']
+        currentValue = data['values'][groupId]
+        currentPercent = formatDietPercent(currentValue)
+        text = "{}营养值 +{}%，当前 {}%".format(groupName, formatDietGainPercent(gainValues[groupId]), currentPercent)
+        missingValue = config.targetDietValue - currentValue
+        if missingValue > 0.0:
+            missingPercent = formatDietPercent(config.targetDietValue) - currentPercent
+            text += "，距目标还差 {}%".format(missingPercent)
+        gainTexts.append(text)
+
+    warningGroupId = ""
+    warningValue = 1.1
+    for groupId in config.groupOrder:
+        if groupId in gainValues:
+            continue
+        if not data['tracking'][groupId]:
+            continue
+        value = data['values'][groupId]
+        if value <= config.nutritionWarningValue and value < warningValue:
+            warningGroupId = groupId
+            warningValue = value
+
+    result = {
+        'gainMessage': "；".join(gainTexts),
+        'warningMessage': ''
+    }
+    if warningGroupId:
+        groupConfig = config.groups[warningGroupId]
+        result['warningMessage'] = "提醒：{}营养值偏低，当前 {}%。建议补充：{}".format(groupConfig['name'], formatDietPercent(warningValue), groupConfig['suggestion'])
+    return result
 
 
 # 通用设置只改动服务端可信数据，再由服务端同步回填 UI，避免客户端开关状态和实际计算状态分叉。
