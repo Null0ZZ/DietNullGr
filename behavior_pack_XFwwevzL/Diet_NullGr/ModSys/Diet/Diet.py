@@ -308,6 +308,8 @@ def getConditionMatchCount(data, condition):
     if condition['useTarget']:
         above = data['targetDietValue']
     below = condition['below']
+    if condition['usePenaltyThreshold']:
+        below = config.nutritionPenaltyValue
     if condition['match'] == 'all':
         for groupId in condition['groups']:
             if not data['tracking'][groupId] or not isDietValueInCondition(data['values'][groupId], above, below):
@@ -347,7 +349,7 @@ def getEffectMatchMultiplier(data, effectConfig):
     multiplier = 0
     for condition in effectConfig['conditions']:
         matches = getConditionMatchCount(data, condition)
-        if matches <= 0:
+        if matches < condition['minMatches']:
             return 0
         if condition['match'] == 'every':
             multiplier += matches
@@ -366,8 +368,36 @@ def getMatchedEffects(data):
         if multiplier > 0:
             matched.append({
                 'id': effectId,
+                'kind': 'effect',
                 'multiplier': multiplier
             })
+    return matched
+
+
+# 低值惩罚不写入玩家设置，本轮先由 config 的总开关和每条惩罚 enabled 控制。
+def getMatchedPenalties(data):
+    matched = []
+    if not config.lowPenaltyEnabled:
+        return matched
+    for penaltyId in config.penaltyOrder:
+        penaltyConfig = config.dietPenalties[penaltyId]
+        if not penaltyConfig['enabled']:
+            continue
+        multiplier = getEffectMatchMultiplier(data, penaltyConfig)
+        if multiplier > 0:
+            matched.append({
+                'id': penaltyId,
+                'kind': 'penalty',
+                'multiplier': multiplier
+            })
+    return matched
+
+
+# 奖励和低值惩罚共用同一套刷新周期，避免同一 tick 内状态效果分两套逻辑互相覆盖。
+def getMatchedDietResults(data):
+    matched = getMatchedEffects(data)
+    for penaltyResult in getMatchedPenalties(data):
+        matched.append(penaltyResult)
     return matched
 
 
@@ -381,23 +411,29 @@ def buildEffectsText(data):
             trackedCount += 1
     if trackedCount <= 0:
         return "所有营养追踪已关闭"
-    matched = getMatchedEffects(data)
+    matched = getMatchedDietResults(data)
     if not matched:
         return "当前没有饮食效果"
     texts = []
     for effectResult in matched:
-        texts.append(config.dietEffects[effectResult['id']]['description'])
+        if effectResult['kind'] == 'penalty':
+            texts.append(config.dietPenalties[effectResult['id']]['description'])
+        else:
+            texts.append(config.dietEffects[effectResult['id']]['description'])
     return "\n".join(texts)
 
 
 # 每 4 秒刷新一次短时状态效果，持续时间略长于刷新周期，避免效果闪断。
 def applyEffects(playerId, data, compFactory):
-    matched = getMatchedEffects(data)
+    matched = getMatchedDietResults(data)
     if not matched:
         return
     compEffect = compFactory.CreateEffect(playerId)
     for effectResult in matched:
-        effectConfig = config.dietEffects[effectResult['id']]
+        if effectResult['kind'] == 'penalty':
+            effectConfig = config.dietPenalties[effectResult['id']]
+        else:
+            effectConfig = config.dietEffects[effectResult['id']]
         for statusEffect in effectConfig['statusEffects']:
             amplifier = statusEffect['amplifier'] + (effectResult['multiplier'] - 1) * statusEffect['increment']
             compEffect.AddEffectToEntity(statusEffect['name'], statusEffect['duration'], amplifier, True)

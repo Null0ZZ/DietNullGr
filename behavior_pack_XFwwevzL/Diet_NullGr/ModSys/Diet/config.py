@@ -44,6 +44,8 @@ gainPenaltyPerGroup = 15.0
 decayPenaltyPerGroup = 15.0
 targetDietValue = 0.8
 nutritionWarningValue = 0.2
+lowPenaltyEnabled = True
+nutritionPenaltyValue = 0.15
 lowNutritionAlertSound = "random.toast"
 lowNutritionAlertVolume = 1.0
 lowNutritionAlertPitch = 1.0
@@ -125,6 +127,7 @@ groups = {
 }
 
 effectOrder = ["balanced", "sugarRush"]
+penaltyOrder = ["singleLowNutrition", "multipleLowNutrition"]
 
 dietEffects = {
     "balanced": {
@@ -136,7 +139,9 @@ dietEffects = {
             {
                 "groups": ["proteins", "fruits", "vegetables", "grains"],
                 "match": "all",
+                "minMatches": 1,
                 "useTarget": True,
+                "usePenaltyThreshold": False,
                 "above": targetDietValue,
                 "below": 1.0
             }
@@ -156,7 +161,9 @@ dietEffects = {
             {
                 "groups": ["sugars"],
                 "match": "all",
+                "minMatches": 1,
                 "useTarget": True,
+                "usePenaltyThreshold": False,
                 "above": targetDietValue,
                 "below": 1.0
             }
@@ -164,6 +171,47 @@ dietEffects = {
         "statusEffects": [
             {"name": "speed", "duration": 6, "amplifier": 0, "increment": 0},
             {"name": "hunger", "duration": 6, "amplifier": 2, "increment": 0}
+        ]
+    }
+}
+
+dietPenalties = {
+    "singleLowNutrition": {
+        "name": "营养不足",
+        "enabled": True,
+        "description": "任意一项营养低于惩罚阈值：获得虚弱。",
+        "conditions": [
+            {
+                "groups": groupOrder,
+                "match": "any",
+                "minMatches": 1,
+                "useTarget": False,
+                "usePenaltyThreshold": True,
+                "above": 0.0,
+                "below": nutritionPenaltyValue
+            }
+        ],
+        "statusEffects": [
+            {"name": "weakness", "duration": 6, "amplifier": 0, "increment": 0}
+        ]
+    },
+    "multipleLowNutrition": {
+        "name": "严重营养不足",
+        "enabled": True,
+        "description": "任意两项营养低于惩罚阈值：额外获得缓慢。",
+        "conditions": [
+            {
+                "groups": groupOrder,
+                "match": "every",
+                "minMatches": 2,
+                "useTarget": False,
+                "usePenaltyThreshold": True,
+                "above": 0.0,
+                "below": nutritionPenaltyValue
+            }
+        ],
+        "statusEffects": [
+            {"name": "slowness", "duration": 6, "amplifier": 0, "increment": 0}
         ]
     }
 }
@@ -349,3 +397,5 @@ foodGroups = {
 effectDescriptions = {}
 for effectId in effectOrder:
     effectDescriptions[effectId] = dietEffects[effectId]["description"]
+for penaltyId in penaltyOrder:
+    effectDescriptions[penaltyId] = dietPenalties[penaltyId]["description"]
