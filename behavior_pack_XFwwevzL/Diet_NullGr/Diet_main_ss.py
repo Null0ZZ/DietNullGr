@@ -110,12 +110,12 @@ class DietServerSystem(ServerSystem):
         changed = Diet.applyHungerDecay(data, hungerBefore - hunger)
         if not changed:
             return
-        lowNutritionAlertMessages = Diet.buildLowNutritionAlertMessages(beforeValues, data)
+        nutritionAlertMessages = Diet.buildNutritionAlertMessages(beforeValues, data)
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
-        for message in lowNutritionAlertMessages:
+        for message in nutritionAlertMessages:
             Diet.sendMessage(playerId, compFactory, message, "§e")
-        if lowNutritionAlertMessages:
+        if nutritionAlertMessages:
             self.NotifyToClient(playerId, config.lowNutritionAlertEvent, {
                 'sound': config.lowNutritionAlertSound,
                 'volume': config.lowNutritionAlertVolume,

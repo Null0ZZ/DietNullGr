@@ -452,6 +452,31 @@ def formatDietGainPercent(value):
     return percent
 
 
+# 低值提前提醒线随惩罚阈值移动，固定提前 5%，避免配置变动后提示还停在旧阈值。
+def getNutritionPenaltyWarningValue():
+    return clampDietValue(config.nutritionPenaltyValue + config.nutritionPenaltyWarningOffset)
+
+
+# 低值提醒跟随低值惩罚开关，避免关闭惩罚后仍提示玩家担心处罚。
+def isLowPenaltyAlertEnabled():
+    if not config.lowPenaltyEnabled:
+        return False
+    for penaltyId in config.penaltyOrder:
+        if config.dietPenalties[penaltyId]['enabled']:
+            return True
+    return False
+
+
+# 低值提醒文案统一区分“接近惩罚”和“已经低于惩罚”，进食反馈和衰减跨线提示共用。
+def buildNutritionPenaltyWarningText(groupId, value):
+    groupConfig = config.groups[groupId]
+    thresholdPercent = formatDietPercent(config.nutritionPenaltyValue)
+    currentPercent = formatDietPercent(value)
+    if value <= config.nutritionPenaltyValue:
+        return "{}营养值已低于低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
+    return "{}营养值接近低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
+
+
 # 进食反馈只基于本次真实增量和保存前的最新数据生成，避免继续显示物品 id 这种调试文案。
 def buildFoodGainMessages(data, gainValues):
     gainTexts = []
@@ -470,37 +495,68 @@ def buildFoodGainMessages(data, gainValues):
 
     warningGroupId = ""
     warningValue = 1.1
-    for groupId in config.groupOrder:
-        if groupId in gainValues:
-            continue
-        if not data['tracking'][groupId]:
-            continue
-        value = data['values'][groupId]
-        if value <= config.nutritionWarningValue and value < warningValue:
-            warningGroupId = groupId
-            warningValue = value
+    penaltyWarningValue = getNutritionPenaltyWarningValue()
+    if isLowPenaltyAlertEnabled():
+        for groupId in config.groupOrder:
+            if groupId in gainValues:
+                continue
+            if not data['tracking'][groupId]:
+                continue
+            value = data['values'][groupId]
+            if value <= penaltyWarningValue and value < warningValue:
+                warningGroupId = groupId
+                warningValue = value
 
     result = {
         'gainMessage': "；".join(gainTexts),
         'warningMessage': ''
     }
     if warningGroupId:
-        groupConfig = config.groups[warningGroupId]
-        result['warningMessage'] = "提醒：{}营养值偏低，当前 {}%。建议补充：{}".format(groupConfig['name'], formatDietPercent(warningValue), groupConfig['suggestion'])
+        result['warningMessage'] = "提醒：" + buildNutritionPenaltyWarningText(warningGroupId, warningValue)
     return result
 
 
-# 只在营养值从提醒线以上跌到提醒线内时提示一次；补回提醒线以上后，下次跌破才会再次触发。
-def buildLowNutritionAlertMessages(beforeValues, data):
+# 只在营养值跨过高值奖励线或低值提前提醒线时提示一次；补回线以上后，下次跌破才会再次触发。
+def buildNutritionAlertMessages(beforeValues, data):
     messages = []
-    for groupId in config.groupOrder:
-        if not data['tracking'][groupId]:
+    beforeData = {
+        'values': beforeValues,
+        'tracking': data['tracking'],
+        'effectSettings': data['effectSettings'],
+        'targetDietValue': data['targetDietValue']
+    }
+    afterEffectIds = []
+    for effectResult in getMatchedEffects(data):
+        afterEffectIds.append(effectResult['id'])
+    for effectResult in getMatchedEffects(beforeData):
+        effectId = effectResult['id']
+        if effectId in afterEffectIds:
             continue
-        beforeValue = beforeValues[groupId]
-        value = data['values'][groupId]
-        if beforeValue > config.nutritionWarningValue and value <= config.nutritionWarningValue:
-            groupConfig = config.groups[groupId]
-            messages.append("{}营养值偏低，当前 {}%。建议补充：{}".format(groupConfig['name'], formatDietPercent(value), groupConfig['suggestion']))
+        effectConfig = config.dietEffects[effectId]
+        loweredGroups = []
+        for condition in effectConfig['conditions']:
+            if not condition['useTarget']:
+                continue
+            for groupId in condition['groups']:
+                if not data['tracking'][groupId]:
+                    continue
+                beforeValue = beforeValues[groupId]
+                value = data['values'][groupId]
+                if beforeValue >= data['targetDietValue'] and value < data['targetDietValue']:
+                    groupConfig = config.groups[groupId]
+                    loweredGroups.append("{}营养值当前 {}%".format(groupConfig['name'], formatDietPercent(value)))
+        if loweredGroups:
+            messages.append("已失去{}：{}，低于目标营养值 {}%。".format(effectConfig['name'], "、".join(loweredGroups), formatDietPercent(data['targetDietValue'])))
+
+    if isLowPenaltyAlertEnabled():
+        penaltyWarningValue = getNutritionPenaltyWarningValue()
+        for groupId in config.groupOrder:
+            if not data['tracking'][groupId]:
+                continue
+            beforeValue = beforeValues[groupId]
+            value = data['values'][groupId]
+            if beforeValue > penaltyWarningValue and value <= penaltyWarningValue:
+                messages.append(buildNutritionPenaltyWarningText(groupId, value))
     return messages
 
 
