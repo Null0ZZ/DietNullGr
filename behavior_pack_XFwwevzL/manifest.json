@@ -12,7 +12,7 @@
     "version": [
       6,
       7,
-      4
+      7
     ]
   },
   "modules": [
@@ -22,20 +22,8 @@
       "version": [
         6,
         7,
-        4
+        7
       ],
-      "description": "behaviorpackXFwwevzLNullGrBP"
-    },
-    {
-      "type": "script",
-      "uuid": "7f40914c-dbb9-4c12-918d-24396342b571",
-      "version": [
-        6,
-        7,
-        4
-      ],
-      "language": "python",
-      "entry": "Diet_NullGr/modMain.py",
       "description": "behaviorpackXFwwevzLNullGrBP"
     }
   ]
