@@ -1,11 +1,19 @@
 {
     "diet_row": {
-        "type": "panel",
+        "type": "collection_panel",
+        "collection_name": "diet_rows",
         "anchor_from": "center",
         "anchor_to": "center",
         "size": [
             224,
             22
+        ],
+        "bindings": [
+            {
+                "binding_type": "collection_details",
+                "binding_collection_name": "diet_rows",
+                "binding_condition": "always_when_visible"
+            }
         ],
         "controls": [
             {
@@ -39,7 +47,16 @@
                     ],
                     "property_bag": {
                         "#item_id_aux": 131072
-                    }
+                    },
+                    "bindings": [
+                        {
+                            "binding_name_override": "#item_id_aux",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_icon_aux"
+                        }
+                    ]
                 }
             },
             {
@@ -55,14 +72,25 @@
                         82,
                         16
                     ],
-                    "color": [
-                        1,
-                        1,
-                        1
-                    ],
+                    "color": "#diet_screen.row_name_color",
                     "font_size": "normal",
-                    "text": "",
-                    "text_alignment": "left"
+                    "text": "#diet_screen.row_name",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_name",
+                            "binding_type": "collection"
+                        },
+                        {
+                            "binding_name_override": "#color",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_name_color",
+                            "binding_type": "collection"
+                        }
+                    ]
                 }
             },
             {
@@ -78,14 +106,25 @@
                         88,
                         8
                     ],
-                    "color": [
-                        0.62,
-                        0.6,
-                        0.56
-                    ],
+                    "color": "#diet_screen.row_tooltip_color",
                     "font_size": "small",
-                    "text": "",
-                    "text_alignment": "left"
+                    "text": "#diet_screen.row_tooltip",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_tooltip",
+                            "binding_type": "collection"
+                        },
+                        {
+                            "binding_name_override": "#color",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_tooltip_color",
+                            "binding_type": "collection"
+                        }
+                    ]
                 }
             },
             {
@@ -126,7 +165,8 @@
                         5
                     ],
                     "clip_direction": "left",
-                    "clip_ratio": 1.0,
+                    "clip_ratio": "#diet_screen.row_bar_clip",
+                    "color": "#diet_screen.row_bar_color",
                     "texture": "textures/gui/diet_nullgr/icons",
                     "uv": [
                         20,
@@ -135,6 +175,22 @@
                     "uv_size": [
                         102,
                         5
+                    ],
+                    "bindings": [
+                        {
+                            "binding_name_override": "#clip_ratio",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_bar_clip",
+                            "binding_type": "collection"
+                        },
+                        {
+                            "binding_name_override": "#color",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_bar_color",
+                            "binding_type": "collection"
+                        }
                     ]
                 }
             },
@@ -151,25 +207,47 @@
                         38,
                         16
                     ],
-                    "color": [
-                        0.95,
-                        0.95,
-                        0.92
-                    ],
+                    "color": "#diet_screen.row_percent_color",
                     "font_size": "normal",
                     "shadow": true,
-                    "text": "0%",
-                    "text_alignment": "right"
+                    "text": "#diet_screen.row_percent",
+                    "text_alignment": "right",
+                    "bindings": [
+                        {
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_percent",
+                            "binding_type": "collection"
+                        },
+                        {
+                            "binding_name_override": "#color",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.row_percent_color",
+                            "binding_type": "collection"
+                        }
+                    ]
                 }
             }
         ]
     },
-    "main": {
-        "type": "screen",
+    "main@common.base_screen": {
+        "$screen_content": "diet_screen.netease_editor_root_panel_base_screen0",
+        "$use_loading_bars": false,
         "absorbs_input": true,
         "is_showing_menu": true,
         "render_game_behind": true,
-        "should_steal_mouse": false,
+        "should_steal_mouse": false
+    },
+    "netease_editor_root_panel_base_screen0": {
+        "type": "panel",
+        "anchor_from": "top_left",
+        "anchor_to": "top_left",
+        "layer": 1,
+        "size": [
+            "100%",
+            "100%"
+        ],
         "controls": [
             {
                 "root": {
@@ -210,15 +288,22 @@
                                     160,
                                     12
                                 ],
-                                "color": [
-                                    0.96,
-                                    0.94,
-                                    0.86
-                                ],
+                                "color": "#diet_screen.title_color",
                                 "font_size": "normal",
                                 "shadow": false,
-                                "text": "均衡饮食",
-                                "text_alignment": "center"
+                                "text": "#diet_screen.title",
+                                "text_alignment": "center",
+                                "bindings": [
+                                    {
+                                        "binding_condition": "always",
+                                        "binding_name": "#diet_screen.title"
+                                    },
+                                    {
+                                        "binding_name_override": "#color",
+                                        "binding_condition": "always",
+                                        "binding_name": "#diet_screen.title_color"
+                                    }
+                                ]
                             }
                         },
                         {
@@ -233,6 +318,13 @@
                                 "size": [
                                     18,
                                     18
+                                ],
+                                "button_mappings": [
+                                    {
+                                        "from_button_id": "button.menu_select",
+                                        "to_button_id": "#diet_screen.close",
+                                        "mapping_type": "pressed"
+                                    }
                                 ],
                                 "controls": [
                                     {
@@ -250,6 +342,7 @@
                         },
                         {
                             "row0@diet_screen.diet_row": {
+                                "collection_index": 0,
                                 "offset": [
                                     0,
                                     -48
@@ -258,6 +351,7 @@
                         },
                         {
                             "row1@diet_screen.diet_row": {
+                                "collection_index": 1,
                                 "offset": [
                                     0,
                                     -24
@@ -266,6 +360,7 @@
                         },
                         {
                             "row2@diet_screen.diet_row": {
+                                "collection_index": 2,
                                 "offset": [
                                     0,
                                     0
@@ -274,6 +369,7 @@
                         },
                         {
                             "row3@diet_screen.diet_row": {
+                                "collection_index": 3,
                                 "offset": [
                                     0,
                                     24
@@ -282,6 +378,7 @@
                         },
                         {
                             "row4@diet_screen.diet_row": {
+                                "collection_index": 4,
                                 "offset": [
                                     0,
                                     48
@@ -307,8 +404,14 @@
                                     0.66
                                 ],
                                 "font_size": "small",
-                                "text": "当前没有饮食效果",
-                                "text_alignment": "center"
+                                "text": "#diet_screen.effects",
+                                "text_alignment": "center",
+                                "bindings": [
+                                    {
+                                        "binding_condition": "always",
+                                        "binding_name": "#diet_screen.effects"
+                                    }
+                                ]
                             }
                         }
                     ]
