@@ -52,11 +52,14 @@ def loadPlayerData(playerId, compFactory):
     values = {}
     tracking = {}
     effectSettings = {}
+    penaltySettings = {}
     for groupId in config.groupOrder:
         values[groupId] = clampDietValue(compModAttr.GetAttr(config.attrPrefix + groupId, config.groups[groupId]['defaultValue']))
         tracking[groupId] = compModAttr.GetAttr(config.attrPrefix + 'track_' + groupId, True)
     for effectId in config.effectOrder:
         effectSettings[effectId] = compModAttr.GetAttr(config.attrPrefix + 'effect_' + effectId, config.dietEffects[effectId]['defaultEnabled'])
+    for penaltyId in config.penaltyOrder:
+        penaltySettings[penaltyId] = compModAttr.GetAttr(config.attrPrefix + 'penalty_' + penaltyId, config.dietPenalties[penaltyId]['enabled'])
     deathPenaltyMethod = compModAttr.GetAttr(config.attrPrefix + 'death_penalty_method', config.deathPenaltyMethodDefault)
     if deathPenaltyMethod not in config.deathPenaltyMethodOrder:
         deathPenaltyMethod = config.deathPenaltyMethodDefault
@@ -67,7 +70,11 @@ def loadPlayerData(playerId, compFactory):
         'values': values,
         'tracking': tracking,
         'effectSettings': effectSettings,
+        'penaltySettings': penaltySettings,
         'targetDietValue': targetDietValue,
+        'lowPenaltyEnabled': compModAttr.GetAttr(config.attrPrefix + 'low_penalty_enabled', config.lowPenaltyEnabled),
+        'nutritionPenaltyValue': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'nutrition_penalty_value', config.nutritionPenaltyValue)),
+        'nutritionPenaltyWarningOffset': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'nutrition_penalty_warning_offset', config.nutritionPenaltyWarningOffset)),
         'deathPenaltyMethod': deathPenaltyMethod,
         'deathPenaltyLoss': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_loss', config.deathPenaltyLoss)),
         'deathPenaltyMin': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_min', config.deathPenaltyMin)),
@@ -84,7 +91,12 @@ def savePlayerData(playerId, data, compFactory):
         compModAttr.SetAttr(config.attrPrefix + 'track_' + groupId, data['tracking'][groupId], needRestore=True)
     for effectId in config.effectOrder:
         compModAttr.SetAttr(config.attrPrefix + 'effect_' + effectId, data['effectSettings'][effectId], needRestore=True)
+    for penaltyId in config.penaltyOrder:
+        compModAttr.SetAttr(config.attrPrefix + 'penalty_' + penaltyId, data['penaltySettings'][penaltyId], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'target_value', data['targetDietValue'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'low_penalty_enabled', data['lowPenaltyEnabled'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'nutrition_penalty_value', data['nutritionPenaltyValue'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'nutrition_penalty_warning_offset', data['nutritionPenaltyWarningOffset'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'death_penalty_method', data['deathPenaltyMethod'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'death_penalty_loss', data['deathPenaltyLoss'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'death_penalty_min', data['deathPenaltyMin'], needRestore=True)
@@ -128,6 +140,11 @@ def buildSettingValues(data):
     values[config.settingTargetValueKey] = formatDietPercent(data['targetDietValue'])
     for effectId in config.effectOrder:
         values[config.dietEffects[effectId]['settingKey']] = data['effectSettings'][effectId]
+    values[config.settingLowPenaltyEnabledKey] = data['lowPenaltyEnabled']
+    values[config.settingNutritionPenaltyValueKey] = formatDietPercent(data['nutritionPenaltyValue'])
+    values[config.settingNutritionPenaltyWarningOffsetKey] = formatDietPercent(data['nutritionPenaltyWarningOffset'])
+    for penaltyId in config.penaltyOrder:
+        values[config.dietPenalties[penaltyId]['settingKey']] = data['penaltySettings'][penaltyId]
     values[config.settingDeathPenaltyMethodKey] = config.deathPenaltyMethodNames[data['deathPenaltyMethod']]
     values[config.settingDeathPenaltyLossKey] = formatDietPercent(data['deathPenaltyLoss'])
     values[config.settingDeathPenaltyMinKey] = formatDietPercent(data['deathPenaltyMin'])
@@ -309,7 +326,7 @@ def getConditionMatchCount(data, condition):
         above = data['targetDietValue']
     below = condition['below']
     if condition['usePenaltyThreshold']:
-        below = config.nutritionPenaltyValue
+        below = data['nutritionPenaltyValue']
     if condition['match'] == 'all':
         for groupId in condition['groups']:
             if not data['tracking'][groupId] or not isDietValueInCondition(data['values'][groupId], above, below):
@@ -374,14 +391,14 @@ def getMatchedEffects(data):
     return matched
 
 
-# 低值惩罚不写入玩家设置，本轮先由 config 的总开关和每条惩罚 enabled 控制。
+# 低值惩罚从玩家通用设置读取，服务端判定、UI 文案和提醒保持同一份真值。
 def getMatchedPenalties(data):
     matched = []
-    if not config.lowPenaltyEnabled:
+    if not data['lowPenaltyEnabled']:
         return matched
     for penaltyId in config.penaltyOrder:
         penaltyConfig = config.dietPenalties[penaltyId]
-        if not penaltyConfig['enabled']:
+        if not data['penaltySettings'][penaltyId]:
             continue
         multiplier = getEffectMatchMultiplier(data, penaltyConfig)
         if multiplier > 0:
@@ -452,27 +469,27 @@ def formatDietGainPercent(value):
     return percent
 
 
-# 低值提前提醒线随惩罚阈值移动，固定提前 5%，避免配置变动后提示还停在旧阈值。
-def getNutritionPenaltyWarningValue():
-    return clampDietValue(config.nutritionPenaltyValue + config.nutritionPenaltyWarningOffset)
+# 低值提前提醒线随玩家设置移动，避免通用设置改动后提示还停在旧阈值。
+def getNutritionPenaltyWarningValue(data):
+    return clampDietValue(data['nutritionPenaltyValue'] + data['nutritionPenaltyWarningOffset'])
 
 
 # 低值提醒跟随低值惩罚开关，避免关闭惩罚后仍提示玩家担心处罚。
-def isLowPenaltyAlertEnabled():
-    if not config.lowPenaltyEnabled:
+def isLowPenaltyAlertEnabled(data):
+    if not data['lowPenaltyEnabled']:
         return False
     for penaltyId in config.penaltyOrder:
-        if config.dietPenalties[penaltyId]['enabled']:
+        if data['penaltySettings'][penaltyId]:
             return True
     return False
 
 
 # 低值提醒文案统一区分“接近惩罚”和“已经低于惩罚”，进食反馈和衰减跨线提示共用。
-def buildNutritionPenaltyWarningText(groupId, value):
+def buildNutritionPenaltyWarningText(data, groupId, value):
     groupConfig = config.groups[groupId]
-    thresholdPercent = formatDietPercent(config.nutritionPenaltyValue)
+    thresholdPercent = formatDietPercent(data['nutritionPenaltyValue'])
     currentPercent = formatDietPercent(value)
-    if value <= config.nutritionPenaltyValue:
+    if value <= data['nutritionPenaltyValue']:
         return "{}营养值已低于低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
     return "{}营养值接近低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
 
@@ -495,8 +512,8 @@ def buildFoodGainMessages(data, gainValues):
 
     warningGroupId = ""
     warningValue = 1.1
-    penaltyWarningValue = getNutritionPenaltyWarningValue()
-    if isLowPenaltyAlertEnabled():
+    penaltyWarningValue = getNutritionPenaltyWarningValue(data)
+    if isLowPenaltyAlertEnabled(data):
         for groupId in config.groupOrder:
             if groupId in gainValues:
                 continue
@@ -512,7 +529,7 @@ def buildFoodGainMessages(data, gainValues):
         'warningMessage': ''
     }
     if warningGroupId:
-        result['warningMessage'] = "提醒：" + buildNutritionPenaltyWarningText(warningGroupId, warningValue)
+        result['warningMessage'] = "提醒：" + buildNutritionPenaltyWarningText(data, warningGroupId, warningValue)
     return result
 
 
@@ -548,15 +565,15 @@ def buildNutritionAlertMessages(beforeValues, data):
         if loweredGroups:
             messages.append("已失去{}：{}，低于目标营养值 {}%。".format(effectConfig['name'], "、".join(loweredGroups), formatDietPercent(data['targetDietValue'])))
 
-    if isLowPenaltyAlertEnabled():
-        penaltyWarningValue = getNutritionPenaltyWarningValue()
+    if isLowPenaltyAlertEnabled(data):
+        penaltyWarningValue = getNutritionPenaltyWarningValue(data)
         for groupId in config.groupOrder:
             if not data['tracking'][groupId]:
                 continue
             beforeValue = beforeValues[groupId]
             value = data['values'][groupId]
             if beforeValue > penaltyWarningValue and value <= penaltyWarningValue:
-                messages.append(buildNutritionPenaltyWarningText(groupId, value))
+                messages.append(buildNutritionPenaltyWarningText(data, groupId, value))
     return messages
 
 
@@ -641,6 +658,54 @@ def applySetting(data, settingKey, value):
             result['message'] = "{}已启用。".format(config.dietEffects[effectId]['name'])
         else:
             result['message'] = "{}已关闭。".format(config.dietEffects[effectId]['name'])
+        return result
+    if settingKey == config.settingLowPenaltyEnabledKey:
+        toggleValue = parseSettingToggle(value)
+        if data['lowPenaltyEnabled'] == toggleValue:
+            return result
+        data['lowPenaltyEnabled'] = toggleValue
+        result['changed'] = True
+        if toggleValue:
+            result['message'] = "低值惩罚已启用。"
+        else:
+            result['message'] = "低值惩罚已关闭。"
+        return result
+    if settingKey == config.settingNutritionPenaltyValueKey:
+        amount = parseSettingSliderPercent(value)
+        if amount < 0.0:
+            result['color'] = '§c'
+            result['message'] = "低值惩罚阈值必须是 0-100 的数字"
+            return result
+        if data['nutritionPenaltyValue'] == amount:
+            return result
+        data['nutritionPenaltyValue'] = amount
+        result['changed'] = True
+        result['message'] = "低值惩罚阈值已设置为 {}%。".format(formatDietPercent(data['nutritionPenaltyValue']))
+        return result
+    if settingKey == config.settingNutritionPenaltyWarningOffsetKey:
+        amount = parseSettingSliderPercent(value)
+        if amount < 0.0:
+            result['color'] = '§c'
+            result['message'] = "低值提醒提前量必须是 0-100 的数字"
+            return result
+        if data['nutritionPenaltyWarningOffset'] == amount:
+            return result
+        data['nutritionPenaltyWarningOffset'] = amount
+        result['changed'] = True
+        result['message'] = "低值提醒提前量已设置为 {}%。".format(formatDietPercent(data['nutritionPenaltyWarningOffset']))
+        return result
+    for penaltyId in config.penaltyOrder:
+        if settingKey != config.dietPenalties[penaltyId]['settingKey']:
+            continue
+        toggleValue = parseSettingToggle(value)
+        if data['penaltySettings'][penaltyId] == toggleValue:
+            return result
+        data['penaltySettings'][penaltyId] = toggleValue
+        result['changed'] = True
+        if toggleValue:
+            result['message'] = "{}已启用。".format(config.dietPenalties[penaltyId]['name'])
+        else:
+            result['message'] = "{}已关闭。".format(config.dietPenalties[penaltyId]['name'])
         return result
     if settingKey == config.settingDeathPenaltyMethodKey:
         deathPenaltyMethod = parseDeathPenaltyMethodSetting(value)

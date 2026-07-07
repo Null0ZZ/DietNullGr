@@ -23,7 +23,11 @@ lowNutritionAlertEvent = "DietLowNutritionAlert"
 settingActiveKey = "diet_active"
 settingGroupPrefix = "diet_track_"
 settingEffectPrefix = "diet_effect_"
+settingPenaltyPrefix = "diet_penalty_"
 settingTargetValueKey = "diet_target_value"
+settingLowPenaltyEnabledKey = "diet_low_penalty_enabled"
+settingNutritionPenaltyValueKey = "diet_nutrition_penalty_value"
+settingNutritionPenaltyWarningOffsetKey = "diet_nutrition_penalty_warning_offset"
 settingDeathPenaltyMethodKey = "diet_death_penalty_method"
 settingDeathPenaltyLossKey = "diet_death_penalty_loss"
 settingDeathPenaltyMinKey = "diet_death_penalty_min"
@@ -178,6 +182,7 @@ dietEffects = {
 dietPenalties = {
     "singleLowNutrition": {
         "name": "营养不足",
+        "settingKey": settingPenaltyPrefix + "singleLowNutrition",
         "enabled": True,
         "description": "任意一项营养低于惩罚阈值：获得虚弱。",
         "conditions": [
@@ -197,6 +202,7 @@ dietPenalties = {
     },
     "multipleLowNutrition": {
         "name": "严重营养不足",
+        "settingKey": settingPenaltyPrefix + "multipleLowNutrition",
         "enabled": True,
         "description": "任意两项营养低于惩罚阈值：额外获得缓慢。",
         "conditions": [
@@ -262,6 +268,46 @@ for effectId in effectOrder:
         "name": "启用{}".format(dietEffects[effectId]["name"]),
         "control": controlToggle,
         "default": dietEffects[effectId]["defaultEnabled"],
+        "priority": settingPriority,
+        "groupId": ""
+    })
+    settingPriority += 10
+
+settingDefs.append({
+    "key": settingLowPenaltyEnabledKey,
+    "name": "启用低值惩罚",
+    "control": controlToggle,
+    "default": lowPenaltyEnabled,
+    "priority": settingPriority,
+    "groupId": ""
+})
+settingPriority += 10
+settingDefs.append({
+    "key": settingNutritionPenaltyValueKey,
+    "name": "低值惩罚阈值",
+    "control": controlSlider,
+    "default": int(nutritionPenaltyValue * 100.0),
+    "priority": settingPriority,
+    "step": 100,
+    "groupId": ""
+})
+settingPriority += 10
+settingDefs.append({
+    "key": settingNutritionPenaltyWarningOffsetKey,
+    "name": "低值提醒提前量",
+    "control": controlSlider,
+    "default": int(nutritionPenaltyWarningOffset * 100.0),
+    "priority": settingPriority,
+    "step": 100,
+    "groupId": ""
+})
+settingPriority += 10
+for penaltyId in penaltyOrder:
+    settingDefs.append({
+        "key": dietPenalties[penaltyId]["settingKey"],
+        "name": "启用{}".format(dietPenalties[penaltyId]["name"]),
+        "control": controlToggle,
+        "default": dietPenalties[penaltyId]["enabled"],
         "priority": settingPriority,
         "groupId": ""
     })
