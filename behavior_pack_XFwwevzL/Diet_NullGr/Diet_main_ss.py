@@ -25,6 +25,8 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerDieEvent", self, self.PlayerDieEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "CommandEvent", self, self.CommandEvent)
+        # 奖励和低值惩罚依赖 Tick 周期刷新，必须显式监听引擎事件，否则只会停留在普通方法定义。
+        self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
         self.ListenForEvent(com.modName, com.csname, "DietClientReady", self, self.DietClientReady)
         self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
         print("[DietNullGr] server ready")

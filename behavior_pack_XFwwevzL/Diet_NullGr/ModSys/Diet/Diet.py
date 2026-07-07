@@ -440,7 +440,7 @@ def buildEffectsText(data):
     return "\n".join(texts)
 
 
-# 每 4 秒刷新一次短时状态效果，持续时间略长于刷新周期，避免效果闪断。
+# 按服务端 Tick 间隔刷新短时状态效果，持续时间需要略长于刷新周期，避免效果闪断。
 def applyEffects(playerId, data, compFactory):
     matched = getMatchedDietResults(data)
     if not matched:
