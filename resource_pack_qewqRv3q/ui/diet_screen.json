@@ -1,7 +1,6 @@
 {
     "diet_row": {
-        "type": "collection_panel",
-        "collection_name": "diet_rows",
+        "type": "panel",
         "anchor_from": "center",
         "anchor_to": "center",
         "size": [
@@ -341,48 +340,26 @@
                             }
                         },
                         {
-                            "row0@diet_screen.diet_row": {
-                                "collection_index": 0,
-                                "offset": [
-                                    0,
-                                    -48
-                                ]
-                            }
-                        },
-                        {
-                            "row1@diet_screen.diet_row": {
-                                "collection_index": 1,
-                                "offset": [
-                                    0,
-                                    -24
-                                ]
-                            }
-                        },
-                        {
-                            "row2@diet_screen.diet_row": {
-                                "collection_index": 2,
+                            "rows_grid": {
+                                "type": "grid",
+                                "anchor_from": "center",
+                                "anchor_to": "center",
                                 "offset": [
                                     0,
                                     0
-                                ]
-                            }
-                        },
-                        {
-                            "row3@diet_screen.diet_row": {
-                                "collection_index": 3,
-                                "offset": [
-                                    0,
-                                    24
-                                ]
-                            }
-                        },
-                        {
-                            "row4@diet_screen.diet_row": {
-                                "collection_index": 4,
-                                "offset": [
-                                    0,
-                                    48
-                                ]
+                                ],
+                                "size": [
+                                    224,
+                                    118
+                                ],
+                                "collection_name": "diet_rows",
+                                "grid_dimensions": [
+                                    1,
+                                    5
+                                ],
+                                "grid_item_template": "diet_screen.diet_row",
+                                "grid_rescaling_type": "none",
+                                "maximum_grid_items": 5
                             }
                         },
                         {

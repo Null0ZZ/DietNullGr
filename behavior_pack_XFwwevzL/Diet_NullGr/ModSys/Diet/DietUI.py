@@ -121,7 +121,7 @@ class DietUI(ScreenNode):
     def bindRowPercent(self, index):
         groupData = self.getGroupData(index)
         if groupData['tracked']:
-            return '{}%%'.format(int(groupData['value'] * 100.0))
+            return str(int(groupData['value'] * 100.0)) + '%'
         return '关闭'
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_percent_color")
