@@ -1,6 +1,7 @@
 {
     "ui_defs": [
         "ui/diet_button.json",
-        "ui/diet_screen.json"
+        "ui/diet_screen.json",
+        "ui/thirst_hud.json"
     ]
 }

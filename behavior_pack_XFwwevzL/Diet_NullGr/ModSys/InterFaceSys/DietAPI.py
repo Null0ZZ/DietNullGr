@@ -30,9 +30,33 @@ class DietProxy(object):
         return loadInterFaceModule().Diet.getFoodGroups(itemName, itemAuxValue)
 
 
+class ThirstProxy(object):
+    # 查询服务端口渴真值。
+    def getValue(self, playerId):
+        return loadInterFaceModule().Thirst.getValue(playerId)
+
+    # 直接设置口渴真值；系统关闭时返回未修改的原值。
+    def setValue(self, playerId, value):
+        return loadInterFaceModule().Thirst.setValue(playerId, value)
+
+    # 增加口渴值并返回最新真值。
+    def addValue(self, playerId, amount):
+        return loadInterFaceModule().Thirst.addValue(playerId, amount)
+
+    # 扣除口渴值并返回最新真值。
+    def consumeValue(self, playerId, amount):
+        return loadInterFaceModule().Thirst.consumeValue(playerId, amount)
+
+    # 查询通用设置中的口渴系统开关。
+    def isEnabled(self, playerId):
+        return loadInterFaceModule().Thirst.isEnabled(playerId)
+
+
 class DietNullGrAPI(object):
     Diet = DietProxy()
+    Thirst = ThirstProxy()
 
 
 Diet = DietNullGrAPI.Diet
+Thirst = DietNullGrAPI.Thirst
 

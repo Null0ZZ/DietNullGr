@@ -1,0 +1,297 @@
+{
+    "namespace": "thirst_hud",
+    "blink_fade_out": {
+        "anim_type": "alpha",
+        "easing": "linear",
+        "duration": 0.45,
+        "from": 0.8,
+        "to": 0.15,
+        "next": "@thirst_hud.blink_fade_in"
+    },
+    "blink_fade_in": {
+        "anim_type": "alpha",
+        "easing": "linear",
+        "duration": 0.45,
+        "from": 0.15,
+        "to": 0.8,
+        "next": "@thirst_hud.blink_fade_out"
+    },
+    "thirst_slot": {
+        "type": "panel",
+        "size": [
+            9,
+            9
+        ],
+        "bindings": [
+            {
+                "binding_type": "collection_details",
+                "binding_collection_name": "thirst_slots",
+                "binding_condition": "always_when_visible"
+            }
+        ],
+        "controls": [
+            {
+                "background": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 0,
+                    "texture": "textures/ui/thirst_nullgr/thirst_background"
+                }
+            },
+            {
+                "full": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 1,
+                    "texture": "textures/ui/thirst_nullgr/thirst_full",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.full_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "half": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 1,
+                    "texture": "textures/ui/thirst_nullgr/thirst_half",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.half_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "critical_blink": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 2,
+                    "alpha": "@thirst_hud.blink_fade_out",
+                    "texture": "textures/ui/thirst_nullgr/thirst_blink",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.critical_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "flash_full": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 3,
+                    "texture": "textures/ui/thirst_nullgr/thirst_flash_full",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.flash_full_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "flash_half": {
+                    "type": "image",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 3,
+                    "texture": "textures/ui/thirst_nullgr/thirst_flash_half",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.flash_half_visible"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "thirst_bar": {
+        "type": "panel",
+        "size": [
+            90,
+            9
+        ],
+        "bindings": [
+            {
+                "binding_name": "#thirst_hud.visible",
+                "binding_name_override": "#visible",
+                "binding_condition": "always"
+            }
+        ],
+        "controls": [
+            {
+                "slots": {
+                    "type": "grid",
+                    "size": [
+                        90,
+                        9
+                    ],
+                    "collection_name": "thirst_slots",
+                    "grid_dimensions": [
+                        10,
+                        1
+                    ],
+                    "grid_item_template": "thirst_hud.thirst_slot",
+                    "grid_rescaling_type": "none",
+                    "maximum_grid_items": 10
+                }
+            }
+        ]
+    },
+    "root": {
+        "type": "panel",
+        "size": [
+            "100%",
+            "100%"
+        ],
+        "bindings": [
+            {
+                "binding_name": "#hud_visible",
+                "binding_name_override": "#visible",
+                "binding_type": "global"
+            },
+            {
+                "binding_name": "#hud_alpha",
+                "binding_name_override": "#alpha",
+                "binding_type": "global"
+            },
+            {
+                "binding_name": "#hud_propagate_alpha",
+                "binding_name_override": "#propagateAlpha",
+                "binding_type": "global"
+            }
+        ],
+        "controls": [
+            {
+                "desktop_classic": {
+                    "type": "panel",
+                    "size": [
+                        "100%",
+                        "100%"
+                    ],
+                    "ignored": "(not $desktop_screen or $touch)",
+                    "bindings": [
+                        {
+                            "binding_name": "#show_survival_ui",
+                            "binding_name_override": "#visible"
+                        }
+                    ],
+                    "controls": [
+                        {
+                            "bar@thirst_hud.thirst_bar": {
+                                "anchor_from": "bottom_middle",
+                                "anchor_to": "bottom_middle",
+                                "offset": [
+                                    45,
+                                    -66
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "desktop_touch": {
+                    "type": "panel",
+                    "size": [
+                        "100%",
+                        "100%"
+                    ],
+                    "ignored": "(not $desktop_screen or not $touch)",
+                    "bindings": [
+                        {
+                            "binding_name": "#show_survival_ui",
+                            "binding_name_override": "#visible"
+                        }
+                    ],
+                    "controls": [
+                        {
+                            "bar@thirst_hud.thirst_bar": {
+                                "anchor_from": "bottom_middle",
+                                "anchor_to": "bottom_middle",
+                                "offset": [
+                                    55,
+                                    -66
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "pocket": {
+                    "type": "panel",
+                    "size": [
+                        "100%",
+                        "100%"
+                    ],
+                    "ignored": "(not $pocket_screen)",
+                    "bindings": [
+                        {
+                            "binding_name": "#show_survival_ui",
+                            "binding_name_override": "#visible"
+                        }
+                    ],
+                    "controls": [
+                        {
+                            "bar@thirst_hud.thirst_bar": {
+                                "anchor_from": "top_right",
+                                "anchor_to": "top_right",
+                                "offset": [
+                                    -2,
+                                    22
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "main@hud.hud_screen": {
+        "$screen_content": "thirst_hud.root",
+        "button_mappings": [],
+        "absorbs_input": false,
+        "should_steal_mouse": false,
+        "render_game_behind": true
+    }
+}

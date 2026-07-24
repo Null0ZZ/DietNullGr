@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import Diet_NullGr.ModSys.Thirst.config as thirstConfig
+
 ssname = "Diet_Core_ServerSys"
 csname = "Diet_Core_ClientSys"
 ssPath = "Diet_NullGr.ModSys.Diet.Diet_ss.ServerSys"
@@ -238,7 +240,8 @@ settingDefs = [
         "default": True,
         "priority": 10,
         "groupId": ""
-    }
+    },
+    thirstConfig.settingDef
 ]
 settingPriority = 20
 for groupId in groupOrder:

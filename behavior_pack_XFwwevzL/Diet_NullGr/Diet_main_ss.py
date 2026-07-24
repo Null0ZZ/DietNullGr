@@ -4,6 +4,7 @@ import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Diet.Diet as Diet
+import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
@@ -54,6 +55,9 @@ class DietServerSystem(ServerSystem):
         playerId = args['__id__']
         settingKey = args['key']
         value = args['value']
+        # 口渴设置与均衡饮食共用客户端设置事件，但由独立服务端系统持久化，旧服务不重复解释该 key。
+        if settingKey == thirstConfig.settingEnabledKey:
+            return
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         # 通用设置开关先落服务端存档，再同步面板和设置控件，避免客户端本地状态先行造成计算分叉。

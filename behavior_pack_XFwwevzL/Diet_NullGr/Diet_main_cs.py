@@ -3,6 +3,7 @@
 import mod.client.extraClientApi as clientApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Diet.config as config
+import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
 ClientSystem = clientApi.GetClientSystemCls()
 compFactory = clientApi.GetEngineCompFactory()
@@ -32,6 +33,7 @@ class DietClientSystem(ClientSystem):
         self.ListenForEvent(com.modName, com.ssname, "DietSyncData", self, self.DietSyncData)
         self.ListenForEvent(com.modName, com.ssname, "OpenDietScreen", self, self.OpenDietScreen)
         self.ListenForEvent(com.modName, com.ssname, config.settingEventSync, self, self.DietSettingSync)
+        self.ListenForEvent(com.modName, thirstConfig.ssname, config.settingEventSync, self, self.DietSettingSync)
         self.ListenForEvent(com.modName, com.ssname, config.lowNutritionAlertEvent, self, self.DietLowNutritionAlert)
         print("[DietNullGr] client ready")
 
@@ -56,11 +58,12 @@ class DietClientSystem(ClientSystem):
         values = args['values']
         if not self.settingInst:
             return
+        registeredKeysBefore = self.settingRegisteredKeys[:]
         if not self.settingRegistered:
             self.RegisterDietSettingControls(values)
-            return
         for settingKey in values:
-            if settingKey not in self.settingRegisteredKeys:
+            # 新控件已由 AddToggle/AddSlider 的默认值完成初始化，只回填此前存在的控件以避免触发设置回声。
+            if settingKey not in registeredKeysBefore:
                 continue
             self.SyncDietSettingControl(settingKey, values[settingKey])
 
@@ -113,12 +116,16 @@ class DietClientSystem(ClientSystem):
             self.NotifyDietSettingChanged(settingKey, value)
         return DietSettingControlChanged
 
-    # 通用设置控件只注册一次，后续服务端状态变化统一用对应控件的 SetDefault 回填。
+    # 不同服务端模块会分批同步设置项；已注册项保持不动，只为本次数据中出现的新 key 创建控件。
     def RegisterDietSettingControls(self, values):
         if self.settingRegistered:
             return
         for settingDef in config.settingDefs:
             settingKey = settingDef['key']
+            if settingKey in self.settingRegisteredKeys:
+                continue
+            if settingKey not in values:
+                continue
             if settingDef['control'] == config.controlToggle:
                 self.settingInst.AddToggle(
                     settingKey,
@@ -146,7 +153,7 @@ class DietClientSystem(ClientSystem):
                     values[settingKey]
                 )
             self.settingRegisteredKeys.append(settingKey)
-        self.settingRegistered = True
+        self.settingRegistered = len(self.settingRegisteredKeys) == len(config.settingDefs)
 
     # 同步回填期间 SetDefault 可能触发同一个回调，必须拦截这次回声，避免客户端把服务端状态再写回一次。
     def NotifyDietSettingChanged(self, settingKey, value):
