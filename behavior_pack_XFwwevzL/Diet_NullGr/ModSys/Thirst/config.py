@@ -48,7 +48,7 @@ flashToggleCount = 6
 
 settingDef = {
     "key": settingEnabledKey,
-    "name": "启用口渴值",
+    "name": "启用口渴值（开启后口渴会持续消耗，低值限制冲刺，耗尽时受伤；关闭后隐藏口渴条并停止这些影响）",
     "control": "toggle",
     "default": True,
     "priority": 15,

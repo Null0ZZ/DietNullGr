@@ -141,6 +141,7 @@ dietEffects = {
         "settingKey": settingEffectPrefix + "balanced",
         "defaultEnabled": True,
         "description": "主食、水果、蔬菜、蛋白质达到目标值：获得生命提升、力量、抗性。",
+        "settingDescription": "开启后四项非糖营养达标会获得生命提升、力量与抗性；关闭后不触发",
         "conditions": [
             {
                 "groups": ["proteins", "fruits", "vegetables", "grains"],
@@ -163,6 +164,7 @@ dietEffects = {
         "settingKey": settingEffectPrefix + "sugarRush",
         "defaultEnabled": True,
         "description": "糖分达到目标值：获得速度，但同时获得饥饿。",
+        "settingDescription": "开启后糖分达标会获得速度和饥饿效果；关闭后不触发",
         "conditions": [
             {
                 "groups": ["sugars"],
@@ -235,7 +237,7 @@ for groupId in groupOrder:
 settingDefs = [
     {
         "key": settingActiveKey,
-        "name": "启用均衡饮食",
+        "name": "启用均衡饮食（开启后进食与饥饿变化会改变营养值并触发饮食效果；关闭后暂停这些功能）",
         "control": controlToggle,
         "default": True,
         "priority": 10,
@@ -247,7 +249,7 @@ settingPriority = 20
 for groupId in groupOrder:
     settingDefs.append({
         "key": settingGroupKeys[groupId],
-        "name": "追踪{}".format(groups[groupId]["name"]),
+        "name": "追踪{}（开启后该类食物会改变此营养值并参与效果判断；关闭后数值不再变化且不参与效果）".format(groups[groupId]["name"]),
         "control": controlToggle,
         "default": True,
         "priority": settingPriority,
@@ -257,7 +259,7 @@ for groupId in groupOrder:
 
 settingDefs.append({
     "key": settingTargetValueKey,
-    "name": "目标营养值",
+    "name": "目标营养值（奖励效果的达标线；数值越高越难触发奖励）",
     "control": controlSlider,
     "default": int(targetDietValue * 100.0),
     "priority": settingPriority,
@@ -268,7 +270,7 @@ settingPriority += 10
 for effectId in effectOrder:
     settingDefs.append({
         "key": dietEffects[effectId]["settingKey"],
-        "name": "启用{}".format(dietEffects[effectId]["name"]),
+        "name": "启用{}（{}）".format(dietEffects[effectId]["name"], dietEffects[effectId]["settingDescription"]),
         "control": controlToggle,
         "default": dietEffects[effectId]["defaultEnabled"],
         "priority": settingPriority,
@@ -278,7 +280,7 @@ for effectId in effectOrder:
 
 settingDefs.append({
     "key": settingLowPenaltyEnabledKey,
-    "name": "启用低值惩罚",
+    "name": "启用低值惩罚（开启后会提醒低营养并施加已启用的惩罚；关闭后不再提醒或施加低值惩罚）",
     "control": controlToggle,
     "default": lowPenaltyEnabled,
     "priority": settingPriority,
@@ -287,7 +289,7 @@ settingDefs.append({
 settingPriority += 10
 settingDefs.append({
     "key": settingNutritionPenaltyValueKey,
-    "name": "低值惩罚阈值",
+    "name": "低值惩罚阈值（营养值达到或低于此百分比时触发已启用的惩罚；数值越高越容易触发）",
     "control": controlSlider,
     "default": int(nutritionPenaltyValue * 100.0),
     "priority": settingPriority,
@@ -297,7 +299,7 @@ settingDefs.append({
 settingPriority += 10
 settingDefs.append({
     "key": settingNutritionPenaltyWarningOffsetKey,
-    "name": "低值提醒提前量",
+    "name": "低值提醒提前量（在惩罚阈值基础上提前多少个百分点提醒；数值越高提醒越早）",
     "control": controlSlider,
     "default": int(nutritionPenaltyWarningOffset * 100.0),
     "priority": settingPriority,
@@ -308,7 +310,7 @@ settingPriority += 10
 for penaltyId in penaltyOrder:
     settingDefs.append({
         "key": dietPenalties[penaltyId]["settingKey"],
-        "name": "启用{}".format(dietPenalties[penaltyId]["name"]),
+        "name": "启用{}（开启后{}关闭后不再施加该效果）".format(dietPenalties[penaltyId]["name"], dietPenalties[penaltyId]["description"]),
         "control": controlToggle,
         "default": dietPenalties[penaltyId]["enabled"],
         "priority": settingPriority,
@@ -318,7 +320,7 @@ for penaltyId in penaltyOrder:
 
 settingDefs.append({
     "key": settingDeathPenaltyMethodKey,
-    "name": "死亡惩罚方式",
+    "name": "死亡惩罚方式（选择死亡时按固定值扣除、按当前值比例扣除或重置为初始值）",
     "control": controlDropDown,
     "default": deathPenaltyMethodNames[deathPenaltyMethodDefault],
     "priority": settingPriority,
@@ -328,7 +330,7 @@ settingDefs.append({
 settingPriority += 10
 settingDefs.append({
     "key": settingDeathPenaltyLossKey,
-    "name": "死亡扣除比例",
+    "name": "死亡扣除比例（固定扣除时减营养百分点，按比例扣除时减当前值比例；死亡重置时无效）",
     "control": controlSlider,
     "default": int(deathPenaltyLoss * 100.0),
     "priority": settingPriority,
@@ -338,7 +340,7 @@ settingDefs.append({
 settingPriority += 10
 settingDefs.append({
     "key": settingDeathPenaltyMinKey,
-    "name": "死亡最低保留",
+    "name": "死亡最低保留（固定或按比例扣除后至少保留的营养值；死亡重置时不生效）",
     "control": controlSlider,
     "default": int(deathPenaltyMin * 100.0),
     "priority": settingPriority,
