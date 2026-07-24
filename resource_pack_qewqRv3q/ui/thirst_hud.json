@@ -19,7 +19,7 @@
     "thirst_slot": {
         "type": "panel",
         "size": [
-            9,
+            8,
             9
         ],
         "bindings": [
@@ -37,6 +37,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 0,
                     "texture": "textures/ui/thirst_nullgr/thirst_background"
                 }
@@ -48,6 +50,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 1,
                     "texture": "textures/ui/thirst_nullgr/thirst_full",
                     "bindings": [
@@ -68,6 +72,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 1,
                     "texture": "textures/ui/thirst_nullgr/thirst_half",
                     "bindings": [
@@ -88,6 +94,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 2,
                     "alpha": "@thirst_hud.blink_fade_out",
                     "texture": "textures/ui/thirst_nullgr/thirst_blink",
@@ -109,6 +117,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 3,
                     "texture": "textures/ui/thirst_nullgr/thirst_flash_full",
                     "bindings": [
@@ -129,6 +139,8 @@
                         9,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "layer": 3,
                     "texture": "textures/ui/thirst_nullgr/thirst_flash_half",
                     "bindings": [
@@ -147,7 +159,7 @@
     "thirst_bar": {
         "type": "panel",
         "size": [
-            90,
+            81,
             9
         ],
         "bindings": [
@@ -162,9 +174,11 @@
                 "slots": {
                     "type": "grid",
                     "size": [
-                        90,
+                        80,
                         9
                     ],
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
                     "collection_name": "thirst_slots",
                     "grid_dimensions": [
                         10,
@@ -208,21 +222,38 @@
                         "100%",
                         "100%"
                     ],
-                    "ignored": "(not $desktop_screen or $touch)",
                     "bindings": [
                         {
-                            "binding_name": "#show_survival_ui",
-                            "binding_name_override": "#visible"
+                            "binding_name": "#hud_visible_centered",
+                            "binding_name_override": "#visible",
+                            "binding_type": "global"
                         }
                     ],
                     "controls": [
                         {
-                            "bar@thirst_hud.thirst_bar": {
-                                "anchor_from": "bottom_middle",
-                                "anchor_to": "bottom_middle",
-                                "offset": [
-                                    45,
-                                    -66
+                            "survival": {
+                                "type": "panel",
+                                "size": [
+                                    "100%",
+                                    "100%"
+                                ],
+                                "bindings": [
+                                    {
+                                        "binding_name": "#show_survival_ui",
+                                        "binding_name_override": "#visible"
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "bar@thirst_hud.thirst_bar": {
+                                            "anchor_from": "bottom_middle",
+                                            "anchor_to": "bottom_middle",
+                                            "offset": [
+                                                49.5,
+                                                -50
+                                            ]
+                                        }
+                                    }
                                 ]
                             }
                         }
@@ -236,21 +267,38 @@
                         "100%",
                         "100%"
                     ],
-                    "ignored": "(not $desktop_screen or not $touch)",
                     "bindings": [
                         {
-                            "binding_name": "#show_survival_ui",
-                            "binding_name_override": "#visible"
+                            "binding_name": "#hud_visible_centered_touch",
+                            "binding_name_override": "#visible",
+                            "binding_type": "global"
                         }
                     ],
                     "controls": [
                         {
-                            "bar@thirst_hud.thirst_bar": {
-                                "anchor_from": "bottom_middle",
-                                "anchor_to": "bottom_middle",
-                                "offset": [
-                                    55,
-                                    -66
+                            "survival": {
+                                "type": "panel",
+                                "size": [
+                                    "100%",
+                                    "100%"
+                                ],
+                                "bindings": [
+                                    {
+                                        "binding_name": "#show_survival_ui",
+                                        "binding_name_override": "#visible"
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "bar@thirst_hud.thirst_bar": {
+                                            "anchor_from": "bottom_middle",
+                                            "anchor_to": "bottom_middle",
+                                            "offset": [
+                                                59.5,
+                                                -50
+                                            ]
+                                        }
+                                    }
                                 ]
                             }
                         }
@@ -264,21 +312,38 @@
                         "100%",
                         "100%"
                     ],
-                    "ignored": "(not $pocket_screen)",
                     "bindings": [
                         {
-                            "binding_name": "#show_survival_ui",
-                            "binding_name_override": "#visible"
+                            "binding_name": "#hud_visible_not_centered",
+                            "binding_name_override": "#visible",
+                            "binding_type": "global"
                         }
                     ],
                     "controls": [
                         {
-                            "bar@thirst_hud.thirst_bar": {
-                                "anchor_from": "top_right",
-                                "anchor_to": "top_right",
-                                "offset": [
-                                    -2,
-                                    22
+                            "survival": {
+                                "type": "panel",
+                                "size": [
+                                    "100%",
+                                    "100%"
+                                ],
+                                "bindings": [
+                                    {
+                                        "binding_name": "#show_survival_ui",
+                                        "binding_name_override": "#visible"
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "bar@thirst_hud.thirst_bar": {
+                                            "anchor_from": "top_right",
+                                            "anchor_to": "top_right",
+                                            "offset": [
+                                                -2,
+                                                22
+                                            ]
+                                        }
+                                    }
                                 ]
                             }
                         }
