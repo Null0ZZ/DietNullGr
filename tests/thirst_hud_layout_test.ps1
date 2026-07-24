@@ -18,7 +18,7 @@ Assert-Equal $ui.thirst_bar.controls[0].slots.size[0] 80 'grid width'
 $expectedLayouts = @(
     @('desktop_classic', '#hud_visible_centered', 49.5, -45, 'bottom_middle', 'bottom_middle'),
     @('desktop_touch', '#hud_visible_centered_touch', 59.5, -45, 'bottom_middle', 'bottom_middle'),
-    @('pocket', '#hud_visible_not_centered', -2, 22, 'top_right', 'top_right')
+    @('pocket', '#hud_visible_not_centered', -2, 12, 'top_right', 'top_right')
 )
 
 for ($index = 0; $index -lt $expectedLayouts.Count; $index++) {
