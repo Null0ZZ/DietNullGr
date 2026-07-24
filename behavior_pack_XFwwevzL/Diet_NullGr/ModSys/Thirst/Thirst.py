@@ -3,6 +3,14 @@
 import Diet_NullGr.ModSys.Thirst.config as config
 
 
+# 饮品优先使用附加值专属配置，未细分的可饮用药水统一回落到该物品的默认补水量。
+def getDrinkItemValue(itemName, itemAuxValue):
+    drinkData = config.drinkItemValues[itemName]
+    if itemAuxValue in drinkData['auxValues']:
+        return drinkData['auxValues'][itemAuxValue]
+    return drinkData['defaultValue']
+
+
 # 口渴真值始终限制在服务端定义的合法区间，外部玩法可以直接传入增减后的数值。
 def clampThirstValue(value):
     if value < 0.0:

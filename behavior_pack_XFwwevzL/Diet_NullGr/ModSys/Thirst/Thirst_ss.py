@@ -24,6 +24,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "AddServerPlayerEvent", self, self.AddServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ClientLoadAddonsFinishServerEvent", self, self.ClientLoadAddonsFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "ActorUseItemServerEvent", self, self.ActorUseItemServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerEatFoodServerEvent", self, self.PlayerEatFoodServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
@@ -65,16 +66,35 @@ class ServerSys(ServerSystem):
         Thirst.savePlayerData(playerId, self.playerThirstData[playerId], compFactory)
         del self.playerThirstData[playerId]
 
+    def ActorUseItemServerEvent(self, args):
+        playerId = args['playerId']
+        itemDict = args['itemDict']
+        stackSize = args['stackSize']
+        itemName = args['itemName']
+        itemAuxValue = args['auxValue']
+        useMethod = args['useMethod']
+        if itemName not in config.drinkItemValues:
+            return
+        drinkData = config.drinkItemValues[itemName]
+        if drinkData['event'] != config.actorUseDrinkEvent:
+            return
+        # 该事件只在物品完整使用后触发，饮用中断不会结算补水，也不需要依赖背包变化反推结果。
+        self.addThirstValue(playerId, Thirst.getDrinkItemValue(itemName, itemAuxValue))
+
     def PlayerEatFoodServerEvent(self, args):
         playerId = args['playerId']
         itemDict = args['itemDict']
         hunger = args['hunger']
         nutrition = args['nutrition']
         itemName = itemDict['newItemName']
+        itemAuxValue = itemDict['newAuxValue']
         if itemName not in config.drinkItemValues:
             return
+        drinkData = config.drinkItemValues[itemName]
+        if drinkData['event'] != config.playerEatDrinkEvent:
+            return
         # 当前网易运行时会在牛奶完整饮用后抛出进食事件，与 Diet 营养结算共用同一个完成时机。
-        self.addThirstValue(playerId, config.drinkItemValues[itemName])
+        self.addThirstValue(playerId, Thirst.getDrinkItemValue(itemName, itemAuxValue))
 
     def PlayerHungerChangeServerEvent(self, args):
         playerId = args['playerId']

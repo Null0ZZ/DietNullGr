@@ -31,8 +31,23 @@ dehydrationDamage = 1.0
 easyDehydrationMinHealth = 10.0
 normalDehydrationMinHealth = 1.0
 
+playerEatDrinkEvent = "PlayerEatFoodServerEvent"
+actorUseDrinkEvent = "ActorUseItemServerEvent"
+
 drinkItemValues = {
-    "minecraft:milk_bucket": 8.0
+    "minecraft:milk_bucket": {
+        "event": playerEatDrinkEvent,
+        "defaultValue": 8.0,
+        "auxValues": {}
+    },
+    # 水瓶与可饮用药水共用同一物品 ID；水瓶使用附加值 0，其余药水暂用默认补水量。
+    "minecraft:potion": {
+        "event": actorUseDrinkEvent,
+        "defaultValue": 4.0,
+        "auxValues": {
+            0: 6.0
+        }
+    }
 }
 
 attrValue = "diet_nullgr_thirst_value"
