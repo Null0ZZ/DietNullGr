@@ -26,6 +26,14 @@ baseDecayPerSecond = 1.0 / 180.0
 hungerDecayFactor = 0.2
 dataSaveIntervalTick = 600
 respawnValue = 20.0
+dehydrationDamageIntervalTick = 80
+dehydrationDamage = 1.0
+easyDehydrationMinHealth = 10.0
+normalDehydrationMinHealth = 1.0
+
+drinkItemValues = {
+    "minecraft:milk_bucket": 8.0
+}
 
 attrValue = "diet_nullgr_thirst_value"
 attrEnabled = "diet_nullgr_thirst_enabled"

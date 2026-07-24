@@ -5,6 +5,7 @@ import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Thirst.config as config
 
 ClientSystem = clientApi.GetClientSystemCls()
+compFactory = clientApi.GetEngineCompFactory()
 engineNamespace = clientApi.GetEngineNamespace()
 engineSystemName = clientApi.GetEngineSystemName()
 
@@ -15,6 +16,7 @@ class ClientSys(ClientSystem):
         self.thirstData = None
         self.uiNode = None
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
+        self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickClient", self, self.OnScriptTickClient)
         self.ListenForEvent(com.modName, config.ssname, config.syncEvent, self, self.ThirstSyncData)
         print("[DietNullGr] thirst client ready")
 
@@ -30,13 +32,22 @@ class ClientSys(ClientSystem):
         displayValue = args['displayValue']
         visible = args['visible']
         critical = args['critical']
+        sprintLimited = args['sprintLimited']
         self.thirstData = {
             'displayValue': displayValue,
             'visible': visible,
-            'critical': critical
+            'critical': critical,
+            'sprintLimited': sprintLimited
         }
         if self.uiNode:
             self.uiNode.UpdateThirstData(self.thirstData)
+
+    def OnScriptTickClient(self):
+        if not self.thirstData or not self.thirstData['sprintLimited']:
+            return
+        # 服务端只同步是否限制冲刺，客户端每 tick 结束本地冲刺，避免玩家在低口渴期间重新触发疾跑。
+        compMotion = compFactory.CreateActorMotion(clientApi.GetLocalPlayerId())
+        compMotion.EndSprinting()
 
     def Destroy(self):
         pass

@@ -21,13 +21,15 @@ def getDisplayValue(value):
     return roundedValue
 
 
-# 从 ModAttr 恢复玩家口渴数据；dirty 只表示本轮内存真值尚未批量落盘，不发送给客户端。
+# 从 ModAttr 恢复玩家口渴数据；脱水计时和冲刺限制只属于本轮在线状态，不写入存档。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     return {
         'value': clampThirstValue(compModAttr.GetAttr(config.attrValue, config.defaultValue)),
         'enabled': bool(compModAttr.GetAttr(config.attrEnabled, True)),
-        'dirty': False
+        'dirty': False,
+        'dehydrationTicks': 0,
+        'sprintLimited': False
     }
 
 
@@ -43,7 +45,8 @@ def buildClientData(data):
     return {
         'displayValue': getDisplayValue(data['value']),
         'visible': data['enabled'],
-        'critical': data['enabled'] and data['value'] <= config.criticalValue
+        'critical': data['enabled'] and data['value'] <= config.criticalValue,
+        'sprintLimited': data['sprintLimited']
     }
 
 
