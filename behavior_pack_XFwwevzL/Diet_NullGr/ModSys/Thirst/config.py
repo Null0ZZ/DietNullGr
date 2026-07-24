@@ -21,6 +21,11 @@ maxValue = 20.0
 defaultValue = 20.0
 displayMaxValue = 20
 criticalValue = 6.0
+baseDecayIntervalTick = 20
+baseDecayPerSecond = 1.0 / 180.0
+hungerDecayFactor = 0.2
+dataSaveIntervalTick = 600
+respawnValue = 20.0
 
 attrValue = "diet_nullgr_thirst_value"
 attrEnabled = "diet_nullgr_thirst_enabled"

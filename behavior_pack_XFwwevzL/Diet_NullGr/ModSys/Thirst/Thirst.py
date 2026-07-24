@@ -21,16 +21,17 @@ def getDisplayValue(value):
     return roundedValue
 
 
-# 从 ModAttr 恢复玩家口渴数据，关闭系统时仍保留原值，重新开启后可继续使用。
+# 从 ModAttr 恢复玩家口渴数据；dirty 只表示本轮内存真值尚未批量落盘，不发送给客户端。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     return {
         'value': clampThirstValue(compModAttr.GetAttr(config.attrValue, config.defaultValue)),
-        'enabled': bool(compModAttr.GetAttr(config.attrEnabled, True))
+        'enabled': bool(compModAttr.GetAttr(config.attrEnabled, True)),
+        'dirty': False
     }
 
 
-# 数值与开关都在变动后立即持久化，避免退出游戏前丢失服务端真值。
+# 自动代谢会合并多次变动后批量保存，公开接口、退出和系统销毁仍会立即调用此处落盘。
 def savePlayerData(playerId, data, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     compModAttr.SetAttr(config.attrValue, data['value'], needRestore=True)
