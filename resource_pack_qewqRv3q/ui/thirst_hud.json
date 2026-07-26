@@ -219,74 +219,20 @@
             }
         ]
     },
-    "thirst_slot": {
-        "type": "panel",
-        "size": [
-            8,
-            9
-        ],
-        "bindings": [
-            {
-                "binding_type": "collection_details",
-                "binding_collection_name": "thirst_slots",
-                "binding_condition": "always_when_visible"
-            }
-        ],
-        "controls": [
-            {
-                "water_drop@thirst_hud.thirst_icon_style": {
-                    "$background_texture": "textures/ui/thirst_nullgr/thirst_background",
-                    "$blink_texture": "textures/ui/thirst_nullgr/thirst_blink",
-                    "$flash_full_texture": "textures/ui/thirst_nullgr/thirst_flash_full",
-                    "$flash_half_texture": "textures/ui/thirst_nullgr/thirst_flash_half",
-                    "$full_texture": "textures/ui/thirst_nullgr/thirst_full",
-                    "$half_texture": "textures/ui/thirst_nullgr/thirst_half",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.water_drop_style_visible"
-                        }
-                    ]
-                }
-            },
-            {
-                "square@thirst_hud.thirst_icon_style": {
-                    "$background_texture": "textures/ui/thirst_nullgr/thirst_square_background",
-                    "$blink_texture": "textures/ui/thirst_nullgr/thirst_square_blink",
-                    "$flash_full_texture": "textures/ui/thirst_nullgr/thirst_square_flash_full",
-                    "$flash_half_texture": "textures/ui/thirst_nullgr/thirst_square_flash_half",
-                    "$full_texture": "textures/ui/thirst_nullgr/thirst_square_full",
-                    "$half_texture": "textures/ui/thirst_nullgr/thirst_square_half",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.square_style_visible"
-                        }
-                    ]
-                }
-            }
-        ]
-    },
     "thirst_icon_style": {
         "type": "panel",
-        "anchor_from": "left_middle",
-        "anchor_to": "left_middle",
-        "size": [
-            9,
-            9
-        ],
         "$background_texture": "textures/ui/thirst_nullgr/thirst_background",
         "$blink_texture": "textures/ui/thirst_nullgr/thirst_blink",
         "$flash_full_texture": "textures/ui/thirst_nullgr/thirst_flash_full",
         "$flash_half_texture": "textures/ui/thirst_nullgr/thirst_flash_half",
         "$full_texture": "textures/ui/thirst_nullgr/thirst_full",
         "$half_texture": "textures/ui/thirst_nullgr/thirst_half",
+        "anchor_from": "left_middle",
+        "anchor_to": "left_middle",
+        "size": [
+            9,
+            9
+        ],
         "controls": [
             {
                 "background": {
@@ -396,6 +342,60 @@
                             "binding_condition": "always",
                             "binding_type": "collection",
                             "binding_name": "#thirst_hud.flash_half_visible"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "thirst_slot": {
+        "type": "panel",
+        "size": [
+            8,
+            9
+        ],
+        "bindings": [
+            {
+                "binding_type": "collection_details",
+                "binding_collection_name": "thirst_slots",
+                "binding_condition": "always_when_visible"
+            }
+        ],
+        "controls": [
+            {
+                "water_drop@thirst_hud.thirst_icon_style": {
+                    "$background_texture": "textures/ui/thirst_nullgr/thirst_background",
+                    "$blink_texture": "textures/ui/thirst_nullgr/thirst_blink",
+                    "$flash_full_texture": "textures/ui/thirst_nullgr/thirst_flash_full",
+                    "$flash_half_texture": "textures/ui/thirst_nullgr/thirst_flash_half",
+                    "$full_texture": "textures/ui/thirst_nullgr/thirst_full",
+                    "$half_texture": "textures/ui/thirst_nullgr/thirst_half",
+                    "bindings": [
+                        {
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_name": "#thirst_hud.water_drop_style_visible",
+                            "binding_name_override": "#visible",
+                            "binding_type": "collection"
+                        }
+                    ]
+                }
+            },
+            {
+                "square@thirst_hud.thirst_icon_style": {
+                    "$background_texture": "textures/ui/thirst_nullgr/thirst_square_background",
+                    "$blink_texture": "textures/ui/thirst_nullgr/thirst_square_blink",
+                    "$flash_full_texture": "textures/ui/thirst_nullgr/thirst_square_flash_full",
+                    "$flash_half_texture": "textures/ui/thirst_nullgr/thirst_square_flash_half",
+                    "$full_texture": "textures/ui/thirst_nullgr/thirst_square_full",
+                    "$half_texture": "textures/ui/thirst_nullgr/thirst_square_half",
+                    "bindings": [
+                        {
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_name": "#thirst_hud.square_style_visible",
+                            "binding_name_override": "#visible",
+                            "binding_type": "collection"
                         }
                     ]
                 }

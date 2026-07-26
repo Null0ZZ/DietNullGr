@@ -132,21 +132,18 @@
                     "anchor_from": "right_middle",
                     "anchor_to": "right_middle",
                     "offset": [
-                        -39,
+                        -29.0,
                         -1
                     ],
                     "size": [
-                        102,
+                        141.0,
                         5
                     ],
-                    "texture": "textures/gui/diet_nullgr/icons",
+                    "fill": true,
+                    "texture": "textures/gui/diet_nullgr/temp",
                     "uv": [
-                        20,
-                        0
-                    ],
-                    "uv_size": [
-                        102,
-                        5
+                        0.0,
+                        0.0
                     ]
                 }
             },
@@ -156,24 +153,21 @@
                     "anchor_from": "right_middle",
                     "anchor_to": "right_middle",
                     "offset": [
-                        -39,
+                        -29.0,
                         -1
                     ],
                     "size": [
-                        102,
+                        141.0,
                         5
                     ],
                     "clip_direction": "left",
                     "clip_ratio": "#diet_screen.row_bar_clip",
                     "color": "#diet_screen.row_bar_color",
-                    "texture": "textures/gui/diet_nullgr/icons",
+                    "fill": true,
+                    "texture": "textures/gui/diet_nullgr/fill",
                     "uv": [
-                        20,
-                        5
-                    ],
-                    "uv_size": [
-                        102,
-                        5
+                        0.0,
+                        0.0
                     ],
                     "bindings": [
                         {
@@ -203,7 +197,7 @@
                         0
                     ],
                     "size": [
-                        38,
+                        22.0,
                         16
                     ],
                     "color": "#diet_screen.row_percent_color",
@@ -255,7 +249,7 @@
                                 "anchor_to": "center",
                                 "size": [
                                     248,
-                                    164.0
+                                    152.0
                                 ],
                                 "controls": [
                                     {
@@ -281,7 +275,7 @@
                                             "anchor_to": "top_middle",
                                             "offset": [
                                                 0,
-                                                12
+                                                6.0
                                             ],
                                             "size": [
                                                 160,
@@ -306,47 +300,13 @@
                                         }
                                     },
                                     {
-                                        "close_button": {
-                                            "type": "button",
-                                            "anchor_from": "top_right",
-                                            "anchor_to": "top_right",
-                                            "offset": [
-                                                -7.0,
-                                                6.0
-                                            ],
-                                            "size": [
-                                                18,
-                                                18
-                                            ],
-                                            "button_mappings": [
-                                                {
-                                                    "to_button_id": "#diet_screen.close",
-                                                    "from_button_id": "button.menu_select",
-                                                    "mapping_type": "pressed"
-                                                }
-                                            ],
-                                            "controls": [
-                                                {
-                                                    "close_bg": {
-                                                        "type": "image",
-                                                        "size": [
-                                                            18,
-                                                            18
-                                                        ],
-                                                        "texture": "textures/ui/close_button_default_light"
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    {
                                         "rows_grid": {
                                             "type": "grid",
                                             "anchor_from": "center",
                                             "anchor_to": "center",
                                             "offset": [
                                                 0,
-                                                0
+                                                9.0
                                             ],
                                             "size": [
                                                 224,
@@ -363,30 +323,73 @@
                                         }
                                     },
                                     {
-                                        "effects": {
-                                            "type": "label",
-                                            "anchor_from": "bottom_middle",
-                                            "anchor_to": "bottom_middle",
-                                            "offset": [
+                                        "button@common.button": {
+                                            "type": "button",
+                                            "$control_alpha": 1.0,
+                                            "$default_texture": "textures/ui/close_button_default",
+                                            "$hover_texture": "textures/ui/close_button_hover",
+                                            "$is_new_nine_slice": false,
+                                            "$label_color": [
+                                                1,
+                                                1,
+                                                1
+                                            ],
+                                            "$label_font_scale_factor": 1.0,
+                                            "$label_font_size": "large",
+                                            "$label_layer": 3,
+                                            "$label_offset": [
                                                 0,
-                                                -11
+                                                0
+                                            ],
+                                            "$label_text": "",
+                                            "$nine_slice_buttom": 0,
+                                            "$nine_slice_left": 0,
+                                            "$nine_slice_right": 0,
+                                            "$nine_slice_top": 0,
+                                            "$nineslice_size": [
+                                                0,
+                                                0,
+                                                0,
+                                                0
+                                            ],
+                                            "$pressed_button_name": "%netease_editor_template_namespace.click",
+                                            "$pressed_texture": "textures/ui/close_button_hover",
+                                            "$texture_layer": 2,
+                                            "anchor_from": "top_right",
+                                            "anchor_to": "top_right",
+                                            "offset": [
+                                                -6.0,
+                                                5.0
                                             ],
                                             "size": [
-                                                224,
-                                                24
+                                                18.0,
+                                                18.0
                                             ],
-                                            "color": [
-                                                0.76,
-                                                0.73,
-                                                0.66
-                                            ],
-                                            "font_size": "small",
-                                            "text": "#diet_screen.effects",
-                                            "text_alignment": "center",
+                                            "layer": 2,
+                                            "button_mappings": [],
+                                            "default_control": "default",
+                                            "hover_control": "hover",
+                                            "is_handle_button_move_event": true,
+                                            "pressed_control": "pressed",
                                             "bindings": [
                                                 {
-                                                    "binding_condition": "always",
-                                                    "binding_name": "#diet_screen.effects"
+                                                    "binding_type": "collection_details",
+                                                    "binding_collection_name": "",
+                                                    "binding_condition": "always_when_visible"
+                                                }
+                                            ],
+                                            "controls": [
+                                                {
+                                                    "default@netease_editor_template_namespace.default": {}
+                                                },
+                                                {
+                                                    "hover@netease_editor_template_namespace.hover": {}
+                                                },
+                                                {
+                                                    "pressed@netease_editor_template_namespace.pressed": {}
+                                                },
+                                                {
+                                                    "button_label@netease_editor_template_namespace.button_label": {}
                                                 }
                                             ]
                                         }
