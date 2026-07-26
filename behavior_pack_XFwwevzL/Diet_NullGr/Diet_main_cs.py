@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import mod.client.extraClientApi as clientApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Diet.config as config
