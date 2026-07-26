@@ -21,6 +21,9 @@ maxValue = 20.0
 defaultValue = 20.0
 displayMaxValue = 20
 criticalValue = 6.0
+# 原版疾跑通过当前移速的 1.3 倍总值乘数实现，逆乘数只抵消疾跑加速，不改变其他速度效果。
+sprintLimitModifierId = "diet_nullgr:low_thirst_sprint_inverse"
+sprintLimitModifierAmount = -3.0 / 13.0
 baseDecayIntervalTick = 20
 baseDecayPerSecond = 1.0 / 180.0
 hungerDecayFactor = 0.2

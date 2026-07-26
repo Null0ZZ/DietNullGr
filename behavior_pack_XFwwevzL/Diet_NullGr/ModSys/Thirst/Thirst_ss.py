@@ -12,6 +12,9 @@ gameTypeEnum = serverApi.GetMinecraftEnum().GameType
 gameDifficultyEnum = serverApi.GetMinecraftEnum().GameDiffculty
 actorDamageCause = serverApi.GetMinecraftEnum().ActorDamageCause
 attrType = serverApi.GetMinecraftEnum().AttrType
+playerActionType = serverApi.GetMinecraftEnum().PlayerActionType
+attributeModifierOperation = serverApi.GetMinecraftEnum().AttributeModifierOperation
+attributeOperands = serverApi.GetMinecraftEnum().AttributeOperands
 engineNamespace = serverApi.GetEngineNamespace()
 engineSystemName = serverApi.GetEngineSystemName()
 
@@ -28,6 +31,8 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerEatFoodServerEvent", self, self.PlayerEatFoodServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "OnPlayerActionServerEvent", self, self.OnPlayerActionServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "DimensionChangeServerEvent", self, self.DimensionChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
         self.ListenForEvent(com.modName, config.csname, config.clientReadyEvent, self, self.ThirstClientReady)
         self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
@@ -35,11 +40,15 @@ class ServerSys(ServerSystem):
 
     def AddServerPlayerEvent(self, args):
         playerId = args['id']
+        # 单机 MCDK 不下发 Apollo 扩展字段，本模块只绑定所有运行环境都提供的玩家 ID。
         self.playerThirstData[playerId] = Thirst.loadPlayerData(playerId, compFactory)
 
     def ClientLoadAddonsFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
+        data['sprinting'] = False
+        # AddServerPlayerEvent 触发时实体尚未加载完成，必须等客户端加载完成后再清理固定 ID 的残留修饰符。
+        self._updateSprintSpeedModifier(playerId, data)
         Thirst.syncToClient(self, playerId, data)
         Thirst.syncSettingToClient(self, playerId, data)
 
@@ -69,9 +78,14 @@ class ServerSys(ServerSystem):
 
     def DelServerPlayerEvent(self, args):
         playerId = args['id']
+        # 离开事件同样只依赖稳定的玩家 ID，避免读取单机不存在的转服字段。
         if playerId not in self.playerThirstData:
             return
-        Thirst.savePlayerData(playerId, self.playerThirstData[playerId], compFactory)
+        data = self.playerThirstData[playerId]
+        data['sprinting'] = False
+        data['sprintLimited'] = False
+        # DelServerPlayerEvent 触发前实体已被引擎移除，运行时修饰符随实体销毁；这里只回收在线状态并保存口渴数据。
+        Thirst.savePlayerData(playerId, data, compFactory)
         del self.playerThirstData[playerId]
 
     def ActorUseItemServerEvent(self, args):
@@ -113,15 +127,47 @@ class ServerSys(ServerSystem):
         # 原版饥饿下降是当前接口能稳定提供的活动量代理；扣减先进入内存，统一等待周期保存。
         self._consumeAutomatically(playerId, (hungerBefore - hunger) * config.hungerDecayFactor)
 
+    def OnPlayerActionServerEvent(self, args):
+        playerId = args['playerId']
+        actionType = args['actionType']
+        if actionType == playerActionType.StartSprinting:
+            sprinting = True
+        elif actionType == playerActionType.StopSprinting:
+            sprinting = False
+        else:
+            return
+        data = self._getPlayerData(playerId)
+        data['sprinting'] = sprinting
+        # 疾跑动作状态与每秒刷新的口渴限制资格共同决定逆修饰符，任一状态变化都必须立即汇合。
+        self._updateSprintSpeedModifier(playerId, data)
+
+    def DimensionChangeServerEvent(self, args):
+        playerId = args['playerId']
+        fromDimensionId = args['fromDimensionId']
+        toDimensionId = args['toDimensionId']
+        fromX = args['fromX']
+        fromY = args['fromY']
+        fromZ = args['fromZ']
+        toX = args['toX']
+        toY = args['toY']
+        toZ = args['toZ']
+        data = self._getPlayerData(playerId)
+        data['sprinting'] = False
+        # 换维度会重建移动状态，主动撤销旧维度的逆修饰符，等待新的疾跑动作重新添加。
+        self._updateSprintSpeedModifier(playerId, data)
+
     def PlayerRespawnFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
+        data['sprinting'] = False
+        data['sprintLimited'] = False
+        # 复活可能更换玩家实体，必须在口渴值早退判断前清理死亡前的疾跑事务。
+        self._updateSprintSpeedModifier(playerId, data)
         if not data['enabled'] or data['value'] == config.respawnValue:
             return
         oldDisplayValue = Thirst.getDisplayValue(data['value'])
         data['value'] = Thirst.clampThirstValue(config.respawnValue)
         data['dehydrationTicks'] = 0
-        data['sprintLimited'] = False
         # 复活重置必须立即落盘，避免玩家在下一次批量保存前退出后又恢复为死亡前的低口渴值。
         self._saveAndSync(playerId, Thirst.getDisplayValue(data['value']) != oldDisplayValue, False)
 
@@ -141,7 +187,8 @@ class ServerSys(ServerSystem):
                     sprintLimited = gameType != gameTypeEnum.Creative and gameType != gameTypeEnum.Spectator
                 if sprintLimited != data['sprintLimited']:
                     data['sprintLimited'] = sprintLimited
-                    Thirst.syncToClient(self, playerId, data)
+                # 每秒将资格与动作状态汇合到真实属性，维度切换或接口偶发失败后也能自动收敛。
+                self._updateSprintSpeedModifier(playerId, data)
         # 伤害资格每 tick 按当前模式判定，不复用低频刷新的冲刺标记，避免切换和平或创造时误伤。
         gameDifficulty = compGame.GetGameDiffculty()
         for playerId in serverApi.GetPlayerList():
@@ -183,6 +230,28 @@ class ServerSys(ServerSystem):
         if playerId not in self.playerThirstData:
             self.playerThirstData[playerId] = Thirst.loadPlayerData(playerId, compFactory)
         return self.playerThirstData[playerId]
+
+    # 疾跑动作与低口渴资格由不同事件维护，此处统一幂等增删只抵消原版疾跑倍率的速度修饰符。
+    def _updateSprintSpeedModifier(self, playerId, data):
+        compAttr = compFactory.CreateAttr(playerId)
+        hasModifier = compAttr.HasModifier(attrType.SPEED, config.sprintLimitModifierId)
+        shouldLimitSpeed = data['sprinting'] and data['sprintLimited']
+        if shouldLimitSpeed == hasModifier:
+            return
+        if shouldLimitSpeed:
+            result = compAttr.AddModifier(
+                attrType.SPEED,
+                config.sprintLimitModifierId,
+                config.sprintLimitModifierAmount,
+                attributeModifierOperation.OperationMultiplyTotal,
+                attributeOperands.OperandCurrent
+            )
+            if not result:
+                print("[DietNullGr] 添加低口渴疾跑修饰符失败: {}".format(playerId))
+            return
+        result = compAttr.RemoveModifier(attrType.SPEED, config.sprintLimitModifierId)
+        if not result:
+            print("[DietNullGr] 移除低口渴疾跑修饰符失败: {}".format(playerId))
 
     # 公开接口和关键状态变动按“落盘→可选 HUD 同步→设置同步”的顺序完成同一事务。
     def _saveAndSync(self, playerId, syncHud, syncSetting):
@@ -227,8 +296,10 @@ class ServerSys(ServerSystem):
         data['value'] = newValue
         if newValue > 0.0:
             data['dehydrationTicks'] = 0
-        if newValue > config.criticalValue:
+        if newValue > config.criticalValue and data['sprintLimited']:
             data['sprintLimited'] = False
+            # 补水越过临界值时不等待下一次代谢周期，立即恢复原版疾跑倍率。
+            self._updateSprintSpeedModifier(playerId, data)
         # 外部低频接口保持立即落盘兼容性；只有半格显示变化时才发 HUD 数据。
         self._saveAndSync(playerId, Thirst.getDisplayValue(newValue) != oldDisplayValue, False)
         return newValue
@@ -261,9 +332,18 @@ class ServerSys(ServerSystem):
         if not enabled:
             data['dehydrationTicks'] = 0
             data['sprintLimited'] = False
+            # 设置关闭属于即时事务，必须同步撤销仍在疾跑中的玩家修饰符。
+            self._updateSprintSpeedModifier(playerId, data)
         self._saveAndSync(playerId, True, True)
         return enabled
 
     def Destroy(self):
+        onlinePlayers = serverApi.GetPlayerList()
         for playerId in self.playerThirstData:
-            Thirst.savePlayerData(playerId, self.playerThirstData[playerId], compFactory)
+            data = self.playerThirstData[playerId]
+            data['sprinting'] = False
+            data['sprintLimited'] = False
+            # 热重载时玩家实体仍在线，需要回滚修饰符；世界关闭时实体可能已销毁，不再访问失效组件。
+            if playerId in onlinePlayers:
+                self._updateSprintSpeedModifier(playerId, data)
+            Thirst.savePlayerData(playerId, data, compFactory)

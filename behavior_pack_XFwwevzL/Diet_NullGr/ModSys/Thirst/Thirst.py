@@ -29,7 +29,7 @@ def getDisplayValue(value):
     return roundedValue
 
 
-# 从 ModAttr 恢复玩家口渴数据；脱水计时和冲刺限制只属于本轮在线状态，不写入存档。
+# 从 ModAttr 恢复玩家口渴数据；脱水计时、疾跑状态和冲刺限制只属于本轮在线状态，不写入存档。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     return {
@@ -38,7 +38,8 @@ def loadPlayerData(playerId, compFactory):
         'style': compModAttr.GetAttr(config.attrStyle, config.defaultStyle),
         'dirty': False,
         'dehydrationTicks': 0,
-        'sprintLimited': False
+        'sprintLimited': False,
+        'sprinting': False
     }
 
 
@@ -56,8 +57,7 @@ def buildClientData(data):
         'displayValue': getDisplayValue(data['value']),
         'visible': data['enabled'],
         'style': data['style'],
-        'critical': data['enabled'] and data['value'] <= config.criticalValue,
-        'sprintLimited': data['sprintLimited']
+        'critical': data['enabled'] and data['value'] <= config.criticalValue
     }
 
 
