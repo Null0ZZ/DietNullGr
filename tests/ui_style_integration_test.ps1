@@ -5,6 +5,8 @@ $buttonUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\diet_button.js
 $dietUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\diet_screen.json'
 $thirstUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\thirst_hud.json'
 $buttonLogicPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\DietButtonUI.py'
+$dietLogicPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\DietUI.py'
+$dietDataPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\Diet.py'
 $thirstConfigPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Thirst\config.py'
 $thirstDataPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Thirst\Thirst.py'
 $thirstServerPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Thirst\Thirst_ss.py'
@@ -29,6 +31,8 @@ $dietUi = $dietUiText | ConvertFrom-Json
 $thirstUiText = Get-Content -LiteralPath $thirstUiPath -Raw -Encoding UTF8
 $thirstUi = $thirstUiText | ConvertFrom-Json
 $buttonLogicText = Get-Content -LiteralPath $buttonLogicPath -Raw -Encoding UTF8
+$dietLogicText = Get-Content -LiteralPath $dietLogicPath -Raw -Encoding UTF8
+$dietDataText = Get-Content -LiteralPath $dietDataPath -Raw -Encoding UTF8
 $thirstConfigText = Get-Content -LiteralPath $thirstConfigPath -Raw -Encoding UTF8
 $thirstDataText = Get-Content -LiteralPath $thirstDataPath -Raw -Encoding UTF8
 $thirstServerText = Get-Content -LiteralPath $thirstServerPath -Raw -Encoding UTF8
@@ -44,6 +48,14 @@ Assert-Match $buttonLogicText 'buttonLayoutVersionKey[\s\S]*buttonLayoutVersion'
 Assert-True ($dietUi.main.type -eq 'screen') 'diet main is a plain screen'
 Assert-True ($dietUiText -notmatch '"main@common\.base_screen"') 'diet main does not inherit base screen'
 Assert-True ($null -ne $dietUi.main.controls[0].netease_editor_root_panel_base_screen0) 'editable root panel remains in main tree'
+
+# 关闭按钮沿用编辑器生成的 common.button 外观，只恢复原有绑定事件；底部效果标签删除后不再生成或同步专用文本。
+Assert-Match $dietUiText '"button@common\.button"' 'redesigned close button exists'
+Assert-Match $dietUiText '"to_button_id"\s*:\s*"#diet_screen\.close"' 'redesigned close button mapping'
+Assert-Match $dietLogicText 'BF_ButtonClickUp,\s*"#diet_screen\.close"[\s\S]*clientApi\.PopScreen\(\)' 'close button binding'
+Assert-True ($dietUiText -notmatch '#diet_screen\.effects') 'removed effects label binding'
+Assert-True ($dietLogicText -notmatch 'effectsText|bindEffectsText|#diet_screen\.effects') 'removed effects UI logic'
+Assert-True ($dietDataText -notmatch 'effectsText|buildEffectsText') 'removed effects text sync data'
 
 # 两种外观复用同一套状态绑定，只切换贴图容器，避免切换样式时改变口渴数值与闪烁逻辑。
 Assert-True ($thirstUi.thirst_slot.controls[0].PSObject.Properties.Name -contains 'water_drop@thirst_hud.thirst_icon_style') 'water drop style control'

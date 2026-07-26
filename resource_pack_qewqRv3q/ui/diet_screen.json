@@ -366,7 +366,13 @@
                                                 18.0
                                             ],
                                             "layer": 2,
-                                            "button_mappings": [],
+                                            "button_mappings": [
+                                                {
+                                                    "to_button_id": "#diet_screen.close",
+                                                    "from_button_id": "button.menu_select",
+                                                    "mapping_type": "pressed"
+                                                }
+                                            ],
                                             "default_control": "default",
                                             "hover_control": "hover",
                                             "is_handle_button_move_event": true,

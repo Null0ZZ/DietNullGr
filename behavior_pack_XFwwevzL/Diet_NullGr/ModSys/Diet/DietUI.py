@@ -23,7 +23,7 @@ class DietUI(ScreenNode):
                 'value': groupConfig['defaultValue'],
                 'tracked': True
             })
-        self.dietData = {'active': True, 'groups': defaultGroups, 'effectsText': '当前没有饮食效果'}
+        self.dietData = {'active': True, 'groups': defaultGroups}
         self.itemAuxCache = {}
         compFactory = clientApi.GetEngineCompFactory()
         self.itemComp = compFactory.CreateItem(clientApi.GetLevelId())
@@ -58,10 +58,6 @@ class DietUI(ScreenNode):
         if self.dietData['active']:
             return (0.96, 0.94, 0.86)
         return (0.78, 0.78, 0.78)
-
-    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.effects")
-    def bindEffectsText(self):
-        return self.dietData['effectsText']
 
     # 多个行绑定都按集合索引读取同一份同步数据，集中入口能保证字段来源一致。
     def getGroupData(self, index):

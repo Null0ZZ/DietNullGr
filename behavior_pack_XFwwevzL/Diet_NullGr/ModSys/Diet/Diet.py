@@ -120,8 +120,7 @@ def buildClientData(data):
         })
     return {
         'active': data['active'],
-        'groups': groupList,
-        'effectsText': buildEffectsText(data)
+        'groups': groupList
     }
 
 
@@ -416,28 +415,6 @@ def getMatchedDietResults(data):
     for penaltyResult in getMatchedPenalties(data):
         matched.append(penaltyResult)
     return matched
-
-
-# 将命中的饮食效果翻译成 UI 文本，空效果时明确显示暂无奖励。
-def buildEffectsText(data):
-    if not data['active']:
-        return "均衡饮食已关闭"
-    trackedCount = 0
-    for groupId in config.groupOrder:
-        if data['tracking'][groupId]:
-            trackedCount += 1
-    if trackedCount <= 0:
-        return "所有营养追踪已关闭"
-    matched = getMatchedDietResults(data)
-    if not matched:
-        return "当前没有饮食效果"
-    texts = []
-    for effectResult in matched:
-        if effectResult['kind'] == 'penalty':
-            texts.append(config.dietPenalties[effectResult['id']]['description'])
-        else:
-            texts.append(config.dietEffects[effectResult['id']]['description'])
-    return "\n".join(texts)
 
 
 # 按服务端 Tick 间隔刷新短时状态效果，持续时间需要略长于刷新周期，避免效果闪断。
