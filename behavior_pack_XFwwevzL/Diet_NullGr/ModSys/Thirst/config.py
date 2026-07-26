@@ -521,11 +521,19 @@ for itemName, defaultValue in foodDrinkDefaultValues.items():
 
 attrValue = "diet_nullgr_thirst_value"
 attrEnabled = "diet_nullgr_thirst_enabled"
+attrStyle = "diet_nullgr_thirst_style"
 syncEvent = "ThirstSyncData"
 clientReadyEvent = "ThirstClientReady"
 settingEnabledKey = "thirst_enabled"
+settingStyleKey = "thirst_style"
 settingEventUpdate = "DietSettingUpdate"
 settingEventSync = "DietSettingSync"
+
+styleWaterDrop = "水滴形"
+styleSquare = "正方形"
+styleOptions = [styleWaterDrop, styleSquare]
+defaultStyle = styleWaterDrop
+settingKeys = (settingEnabledKey, settingStyleKey)
 
 flashInterval = 0.12
 flashToggleCount = 6
@@ -536,5 +544,15 @@ settingDef = {
     "control": "toggle",
     "default": True,
     "priority": 15,
+    "groupId": ""
+}
+
+styleSettingDef = {
+    "key": settingStyleKey,
+    "name": "口渴值样式（切换 HUD 使用水滴形或正方形图标）",
+    "control": "dropdown",
+    "default": defaultStyle,
+    "priority": 16,
+    "options": styleOptions,
     "groupId": ""
 }

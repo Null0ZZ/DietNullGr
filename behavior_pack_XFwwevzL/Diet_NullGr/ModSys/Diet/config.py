@@ -14,6 +14,8 @@ buttonUiName = "diet_button.main"
 buttonUiPath = "Diet_NullGr.ModSys.Diet.DietButtonUI.DietButtonUI"
 buttonConfigKey = "Diet_NullGr_ButtonPos"
 buttonPosKey = "button_pos"
+buttonLayoutVersionKey = "layout_version"
+buttonLayoutVersion = 2
 buttonLongPressSeconds = 1.0
 buttonClickMoveLimit = 8.0
 settingItemId = "diet_nullgr"
@@ -243,7 +245,8 @@ settingDefs = [
         "priority": 10,
         "groupId": ""
     },
-    thirstConfig.settingDef
+    thirstConfig.settingDef,
+    thirstConfig.styleSettingDef
 ]
 settingPriority = 20
 for groupId in groupOrder:

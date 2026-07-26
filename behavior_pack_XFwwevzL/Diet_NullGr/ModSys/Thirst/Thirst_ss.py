@@ -53,11 +53,19 @@ class ServerSys(ServerSystem):
         playerId = args['__id__']
         settingKey = args['key']
         value = args['value']
-        if settingKey != config.settingEnabledKey:
+        if settingKey == config.settingEnabledKey:
+            # 通用设置回调属于客户端输入边界，兼容引擎可能回传的布尔值、数字或字符串形式。
+            enabled = not (value == False or value == 0 or value == "False" or value == "false" or value == "0")
+            self.setThirstEnabled(playerId, enabled)
             return
-        # 通用设置回调属于客户端输入边界，兼容引擎可能回传的布尔值、数字或字符串形式。
-        enabled = not (value == False or value == 0 or value == "False" or value == "false" or value == "0")
-        self.setThirstEnabled(playerId, enabled)
+        if settingKey != config.settingStyleKey or value not in config.styleOptions:
+            return
+        data = self._getPlayerData(playerId)
+        if value == data['style']:
+            return
+        data['style'] = value
+        # 样式只改变客户端表现，但仍由服务端落盘并回推 HUD 与设置控件，保证重进世界后选择不丢失。
+        self._saveAndSync(playerId, True, True)
 
     def DelServerPlayerEvent(self, args):
         playerId = args['id']

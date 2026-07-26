@@ -31,11 +31,13 @@ class ClientSys(ClientSystem):
     def ThirstSyncData(self, args):
         displayValue = args['displayValue']
         visible = args['visible']
+        style = args['style']
         critical = args['critical']
         sprintLimited = args['sprintLimited']
         self.thirstData = {
             'displayValue': displayValue,
             'visible': visible,
+            'style': style,
             'critical': critical,
             'sprintLimited': sprintLimited
         }

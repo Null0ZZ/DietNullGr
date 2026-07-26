@@ -230,164 +230,166 @@
             }
         ]
     },
-    "main@common.base_screen": {
-        "$screen_content": "diet_screen.netease_editor_root_panel_base_screen0",
-        "$use_loading_bars": false,
+    "main": {
+        "type": "screen",
         "absorbs_input": true,
         "is_showing_menu": true,
         "render_game_behind": true,
-        "should_steal_mouse": false
-    },
-    "namespace": "diet_screen",
-    "netease_editor_root_panel_base_screen0": {
-        "type": "panel",
-        "anchor_from": "top_left",
-        "anchor_to": "top_left",
-        "size": [
-            "100%",
-            "100%"
-        ],
-        "layer": 1,
+        "should_steal_mouse": false,
         "controls": [
             {
-                "root": {
+                "netease_editor_root_panel_base_screen0": {
                     "type": "panel",
-                    "anchor_from": "center",
-                    "anchor_to": "center",
+                    "anchor_from": "top_left",
+                    "anchor_to": "top_left",
                     "size": [
-                        248,
-                        164.0
+                        "100%",
+                        "100%"
                     ],
+                    "layer": 1,
                     "controls": [
                         {
-                            "background": {
-                                "type": "image",
+                            "root": {
+                                "type": "panel",
+                                "anchor_from": "center",
+                                "anchor_to": "center",
                                 "size": [
                                     248,
-                                    "default"
-                                ],
-                                "nineslice_size": [
-                                    8,
-                                    8,
-                                    8,
-                                    8
-                                ],
-                                "texture": "textures/ui/background_panel"
-                            }
-                        },
-                        {
-                            "title": {
-                                "type": "label",
-                                "anchor_from": "top_middle",
-                                "anchor_to": "top_middle",
-                                "offset": [
-                                    0,
-                                    12
-                                ],
-                                "size": [
-                                    160,
-                                    12
-                                ],
-                                "color": "#diet_screen.title_color",
-                                "font_size": "normal",
-                                "shadow": false,
-                                "text": "#diet_screen.title",
-                                "text_alignment": "center",
-                                "bindings": [
-                                    {
-                                        "binding_condition": "always",
-                                        "binding_name": "#diet_screen.title"
-                                    },
-                                    {
-                                        "binding_name_override": "#color",
-                                        "binding_condition": "always",
-                                        "binding_name": "#diet_screen.title_color"
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "close_button": {
-                                "type": "button",
-                                "anchor_from": "top_right",
-                                "anchor_to": "top_right",
-                                "offset": [
-                                    -7.0,
-                                    6.0
-                                ],
-                                "size": [
-                                    18,
-                                    18
-                                ],
-                                "button_mappings": [
-                                    {
-                                        "to_button_id": "#diet_screen.close",
-                                        "from_button_id": "button.menu_select",
-                                        "mapping_type": "pressed"
-                                    }
+                                    164.0
                                 ],
                                 "controls": [
                                     {
-                                        "close_bg": {
+                                        "background": {
                                             "type": "image",
+                                            "size": [
+                                                248,
+                                                "default"
+                                            ],
+                                            "nineslice_size": [
+                                                8,
+                                                8,
+                                                8,
+                                                8
+                                            ],
+                                            "texture": "textures/ui/background_panel"
+                                        }
+                                    },
+                                    {
+                                        "title": {
+                                            "type": "label",
+                                            "anchor_from": "top_middle",
+                                            "anchor_to": "top_middle",
+                                            "offset": [
+                                                0,
+                                                12
+                                            ],
+                                            "size": [
+                                                160,
+                                                12
+                                            ],
+                                            "color": "#diet_screen.title_color",
+                                            "font_size": "normal",
+                                            "shadow": false,
+                                            "text": "#diet_screen.title",
+                                            "text_alignment": "center",
+                                            "bindings": [
+                                                {
+                                                    "binding_condition": "always",
+                                                    "binding_name": "#diet_screen.title"
+                                                },
+                                                {
+                                                    "binding_name_override": "#color",
+                                                    "binding_condition": "always",
+                                                    "binding_name": "#diet_screen.title_color"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "close_button": {
+                                            "type": "button",
+                                            "anchor_from": "top_right",
+                                            "anchor_to": "top_right",
+                                            "offset": [
+                                                -7.0,
+                                                6.0
+                                            ],
                                             "size": [
                                                 18,
                                                 18
                                             ],
-                                            "texture": "textures/ui/close_button_default_light"
+                                            "button_mappings": [
+                                                {
+                                                    "to_button_id": "#diet_screen.close",
+                                                    "from_button_id": "button.menu_select",
+                                                    "mapping_type": "pressed"
+                                                }
+                                            ],
+                                            "controls": [
+                                                {
+                                                    "close_bg": {
+                                                        "type": "image",
+                                                        "size": [
+                                                            18,
+                                                            18
+                                                        ],
+                                                        "texture": "textures/ui/close_button_default_light"
+                                                    }
+                                                }
+                                            ]
                                         }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "rows_grid": {
-                                "type": "grid",
-                                "anchor_from": "center",
-                                "anchor_to": "center",
-                                "offset": [
-                                    0,
-                                    0
-                                ],
-                                "size": [
-                                    224,
-                                    118
-                                ],
-                                "collection_name": "diet_rows",
-                                "grid_dimensions": [
-                                    1,
-                                    5
-                                ],
-                                "grid_item_template": "diet_screen.diet_row",
-                                "grid_rescaling_type": "none",
-                                "maximum_grid_items": 5
-                            }
-                        },
-                        {
-                            "effects": {
-                                "type": "label",
-                                "anchor_from": "bottom_middle",
-                                "anchor_to": "bottom_middle",
-                                "offset": [
-                                    0,
-                                    -11
-                                ],
-                                "size": [
-                                    224,
-                                    24
-                                ],
-                                "color": [
-                                    0.76,
-                                    0.73,
-                                    0.66
-                                ],
-                                "font_size": "small",
-                                "text": "#diet_screen.effects",
-                                "text_alignment": "center",
-                                "bindings": [
+                                    },
                                     {
-                                        "binding_condition": "always",
-                                        "binding_name": "#diet_screen.effects"
+                                        "rows_grid": {
+                                            "type": "grid",
+                                            "anchor_from": "center",
+                                            "anchor_to": "center",
+                                            "offset": [
+                                                0,
+                                                0
+                                            ],
+                                            "size": [
+                                                224,
+                                                118
+                                            ],
+                                            "collection_name": "diet_rows",
+                                            "grid_dimensions": [
+                                                1,
+                                                5
+                                            ],
+                                            "grid_item_template": "diet_screen.diet_row",
+                                            "grid_rescaling_type": "none",
+                                            "maximum_grid_items": 5
+                                        }
+                                    },
+                                    {
+                                        "effects": {
+                                            "type": "label",
+                                            "anchor_from": "bottom_middle",
+                                            "anchor_to": "bottom_middle",
+                                            "offset": [
+                                                0,
+                                                -11
+                                            ],
+                                            "size": [
+                                                224,
+                                                24
+                                            ],
+                                            "color": [
+                                                0.76,
+                                                0.73,
+                                                0.66
+                                            ],
+                                            "font_size": "small",
+                                            "text": "#diet_screen.effects",
+                                            "text_alignment": "center",
+                                            "bindings": [
+                                                {
+                                                    "binding_condition": "always",
+                                                    "binding_name": "#diet_screen.effects"
+                                                }
+                                            ]
+                                        }
                                     }
                                 ]
                             }
@@ -396,5 +398,6 @@
                 }
             }
         ]
-    }
+    },
+    "namespace": "diet_screen"
 }

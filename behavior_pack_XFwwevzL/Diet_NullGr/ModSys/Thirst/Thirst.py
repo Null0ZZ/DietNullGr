@@ -35,6 +35,7 @@ def loadPlayerData(playerId, compFactory):
     return {
         'value': clampThirstValue(compModAttr.GetAttr(config.attrValue, config.defaultValue)),
         'enabled': bool(compModAttr.GetAttr(config.attrEnabled, True)),
+        'style': compModAttr.GetAttr(config.attrStyle, config.defaultStyle),
         'dirty': False,
         'dehydrationTicks': 0,
         'sprintLimited': False
@@ -46,6 +47,7 @@ def savePlayerData(playerId, data, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     compModAttr.SetAttr(config.attrValue, data['value'], needRestore=True)
     compModAttr.SetAttr(config.attrEnabled, data['enabled'], needRestore=True)
+    compModAttr.SetAttr(config.attrStyle, data['style'], needRestore=True)
 
 
 # 客户端只接收视觉表现所需字段，浮点真值继续留在服务端供玩法逻辑使用。
@@ -53,6 +55,7 @@ def buildClientData(data):
     return {
         'displayValue': getDisplayValue(data['value']),
         'visible': data['enabled'],
+        'style': data['style'],
         'critical': data['enabled'] and data['value'] <= config.criticalValue,
         'sprintLimited': data['sprintLimited']
     }
@@ -67,6 +70,7 @@ def syncToClient(serverSys, playerId, data):
 def syncSettingToClient(serverSys, playerId, data):
     serverSys.NotifyToClient(playerId, config.settingEventSync, {
         'values': {
-            config.settingEnabledKey: data['enabled']
+            config.settingEnabledKey: data['enabled'],
+            config.settingStyleKey: data['style']
         }
     })

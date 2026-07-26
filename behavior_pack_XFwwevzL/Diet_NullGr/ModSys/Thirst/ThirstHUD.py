@@ -16,6 +16,7 @@ class ThirstHUD(ScreenNode):
         self.flashOldValue = config.displayMaxValue
         self.flashDisplayValue = config.displayMaxValue
         self.visible = False
+        self.style = config.defaultStyle
         self.critical = False
         self.flashVisible = False
         self.flashTimer = None
@@ -30,7 +31,7 @@ class ThirstHUD(ScreenNode):
     def Creat(self):
         self.Create()
 
-    # 每个水滴承载两点口渴值，索引从左到右，但阈值反向计算以复刻原版饥饿条从左侧开始消失。
+    # 每个图标承载两点口渴值，索引从左到右，但阈值反向计算以复刻原版饥饿条从左侧开始消失。
     def GetSlotState(self, value, index):
         fullValue = (10 - index) * 2
         if value >= fullValue:
@@ -51,6 +52,7 @@ class ThirstHUD(ScreenNode):
             self.flashSteps = config.flashToggleCount
         self.displayValue = newDisplayValue
         self.visible = data['visible']
+        self.style = data['style']
         self.critical = data['critical']
         self.hasData = True
         self.UpdateScreen(True)
@@ -81,6 +83,15 @@ class ThirstHUD(ScreenNode):
     @ViewBinder.binding(ViewBinder.BF_BindBool, "#thirst_hud.visible")
     def bindVisible(self):
         return self.visible
+
+    # 每个格子只挂载一种外观容器，状态绑定继续共用，切换样式时不需要重建 HUD。
+    @ViewBinder.binding_collection(ViewBinder.BF_BindBool, "thirst_slots", "#thirst_hud.water_drop_style_visible")
+    def bindWaterDropStyleVisible(self, index):
+        return self.style == config.styleWaterDrop
+
+    @ViewBinder.binding_collection(ViewBinder.BF_BindBool, "thirst_slots", "#thirst_hud.square_style_visible")
+    def bindSquareStyleVisible(self, index):
+        return self.style == config.styleSquare
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindBool, "thirst_slots", "#thirst_hud.full_visible")
     def bindFullVisible(self, index):

@@ -114,10 +114,14 @@ class DietButtonUI(ScreenNode):
         self.buttonControl.SetPosition(pos)
         self.SaveButtonPos()
 
-    # 客户端配置用于保存 HUD 按钮位置，换存档时也沿用玩家自己的按钮布局。
+    # 客户端配置用于保存 HUD 按钮位置；新版 UI 改变了锚点坐标系，旧版本坐标不能直接复用。
     def RestoreButtonPos(self):
         compConfig = compFactory.CreateConfigClient(levelId)
         data = compConfig.GetConfigData(config.buttonConfigKey, True)
+        if config.buttonLayoutVersionKey not in data:
+            return False
+        if data[config.buttonLayoutVersionKey] != config.buttonLayoutVersion:
+            return False
         if config.buttonPosKey not in data:
             return False
         pos = data[config.buttonPosKey]
@@ -132,6 +136,7 @@ class DietButtonUI(ScreenNode):
         data = compConfig.GetConfigData(config.buttonConfigKey, True)
         pos = self.buttonControl.GetPosition()
         data[config.buttonPosKey] = [pos[0], pos[1]]
+        data[config.buttonLayoutVersionKey] = config.buttonLayoutVersion
         compConfig.SetConfigData(config.buttonConfigKey, data, True)
 
     # 长按计时属于输入事务的一部分，提前取消可以避免旧回调污染下一次触摸。
