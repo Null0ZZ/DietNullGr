@@ -77,17 +77,17 @@
                     "text_alignment": "left",
                     "bindings": [
                         {
+                            "binding_type": "collection",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_name",
-                            "binding_type": "collection"
+                            "binding_name": "#diet_screen.row_name"
                         },
                         {
                             "binding_name_override": "#color",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_name_color",
-                            "binding_type": "collection"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_name_color"
                         }
                     ]
                 }
@@ -111,17 +111,17 @@
                     "text_alignment": "left",
                     "bindings": [
                         {
+                            "binding_type": "collection",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_tooltip",
-                            "binding_type": "collection"
+                            "binding_name": "#diet_screen.row_tooltip"
                         },
                         {
                             "binding_name_override": "#color",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_tooltip_color",
-                            "binding_type": "collection"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_tooltip_color"
                         }
                     ]
                 }
@@ -180,15 +180,15 @@
                             "binding_name_override": "#clip_ratio",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_bar_clip",
-                            "binding_type": "collection"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_bar_clip"
                         },
                         {
                             "binding_name_override": "#color",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_bar_color",
-                            "binding_type": "collection"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_bar_color"
                         }
                     ]
                 }
@@ -213,17 +213,17 @@
                     "text_alignment": "right",
                     "bindings": [
                         {
+                            "binding_type": "collection",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_percent",
-                            "binding_type": "collection"
+                            "binding_name": "#diet_screen.row_percent"
                         },
                         {
                             "binding_name_override": "#color",
                             "binding_collection_name": "diet_rows",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_percent_color",
-                            "binding_type": "collection"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_percent_color"
                         }
                     ]
                 }
@@ -238,15 +238,16 @@
         "render_game_behind": true,
         "should_steal_mouse": false
     },
+    "namespace": "diet_screen",
     "netease_editor_root_panel_base_screen0": {
         "type": "panel",
         "anchor_from": "top_left",
         "anchor_to": "top_left",
-        "layer": 1,
         "size": [
             "100%",
             "100%"
         ],
+        "layer": 1,
         "controls": [
             {
                 "root": {
@@ -320,8 +321,8 @@
                                 ],
                                 "button_mappings": [
                                     {
-                                        "from_button_id": "button.menu_select",
                                         "to_button_id": "#diet_screen.close",
+                                        "from_button_id": "button.menu_select",
                                         "mapping_type": "pressed"
                                     }
                                 ],
@@ -395,6 +396,5 @@
                 }
             }
         ]
-    },
-    "namespace": "diet_screen"
+    }
 }

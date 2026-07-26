@@ -1,196 +1,28 @@
 {
-    "namespace": "thirst_hud",
-    "blink_fade_out": {
-        "anim_type": "alpha",
-        "easing": "linear",
-        "duration": 0.45,
-        "from": 0.8,
-        "to": 0.15,
-        "next": "@thirst_hud.blink_fade_in"
-    },
     "blink_fade_in": {
         "anim_type": "alpha",
-        "easing": "linear",
         "duration": 0.45,
+        "easing": "linear",
         "from": 0.15,
-        "to": 0.8,
-        "next": "@thirst_hud.blink_fade_out"
+        "next": "@thirst_hud.blink_fade_out",
+        "to": 0.8
     },
-    "thirst_slot": {
-        "type": "panel",
-        "size": [
-            8,
-            9
-        ],
-        "bindings": [
-            {
-                "binding_type": "collection_details",
-                "binding_collection_name": "thirst_slots",
-                "binding_condition": "always_when_visible"
-            }
-        ],
-        "controls": [
-            {
-                "background": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 0,
-                    "texture": "textures/ui/thirst_nullgr/thirst_background"
-                }
-            },
-            {
-                "full": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 1,
-                    "texture": "textures/ui/thirst_nullgr/thirst_full",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.full_visible"
-                        }
-                    ]
-                }
-            },
-            {
-                "half": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 1,
-                    "texture": "textures/ui/thirst_nullgr/thirst_half",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.half_visible"
-                        }
-                    ]
-                }
-            },
-            {
-                "critical_blink": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 2,
-                    "alpha": "@thirst_hud.blink_fade_out",
-                    "texture": "textures/ui/thirst_nullgr/thirst_blink",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.critical_visible"
-                        }
-                    ]
-                }
-            },
-            {
-                "flash_full": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 3,
-                    "texture": "textures/ui/thirst_nullgr/thirst_flash_full",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.flash_full_visible"
-                        }
-                    ]
-                }
-            },
-            {
-                "flash_half": {
-                    "type": "image",
-                    "size": [
-                        9,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "layer": 3,
-                    "texture": "textures/ui/thirst_nullgr/thirst_flash_half",
-                    "bindings": [
-                        {
-                            "binding_name_override": "#visible",
-                            "binding_collection_name": "thirst_slots",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#thirst_hud.flash_half_visible"
-                        }
-                    ]
-                }
-            }
-        ]
+    "blink_fade_out": {
+        "anim_type": "alpha",
+        "duration": 0.45,
+        "easing": "linear",
+        "from": 0.8,
+        "next": "@thirst_hud.blink_fade_in",
+        "to": 0.15
     },
-    "thirst_bar": {
-        "type": "panel",
-        "size": [
-            81,
-            9
-        ],
-        "bindings": [
-            {
-                "binding_name": "#thirst_hud.visible",
-                "binding_name_override": "#visible",
-                "binding_condition": "always"
-            }
-        ],
-        "controls": [
-            {
-                "slots": {
-                    "type": "grid",
-                    "size": [
-                        80,
-                        9
-                    ],
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "collection_name": "thirst_slots",
-                    "grid_dimensions": [
-                        10,
-                        1
-                    ],
-                    "grid_item_template": "thirst_hud.thirst_slot",
-                    "grid_rescaling_type": "none",
-                    "maximum_grid_items": 10
-                }
-            }
-        ]
+    "main@hud.hud_screen": {
+        "$screen_content": "thirst_hud.root",
+        "absorbs_input": false,
+        "button_mappings": [],
+        "render_game_behind": true,
+        "should_steal_mouse": false
     },
+    "namespace": "thirst_hud",
     "root": {
         "type": "panel",
         "size": [
@@ -199,19 +31,19 @@
         ],
         "bindings": [
             {
-                "binding_name": "#hud_visible",
+                "binding_type": "global",
                 "binding_name_override": "#visible",
-                "binding_type": "global"
+                "binding_name": "#hud_visible"
             },
             {
-                "binding_name": "#hud_alpha",
+                "binding_type": "global",
                 "binding_name_override": "#alpha",
-                "binding_type": "global"
+                "binding_name": "#hud_alpha"
             },
             {
-                "binding_name": "#hud_propagate_alpha",
+                "binding_type": "global",
                 "binding_name_override": "#propagateAlpha",
-                "binding_type": "global"
+                "binding_name": "#hud_propagate_alpha"
             }
         ],
         "controls": [
@@ -224,9 +56,9 @@
                     ],
                     "bindings": [
                         {
-                            "binding_name": "#hud_visible_centered",
+                            "binding_type": "global",
                             "binding_name_override": "#visible",
-                            "binding_type": "global"
+                            "binding_name": "#hud_visible_centered"
                         }
                     ],
                     "controls": [
@@ -239,8 +71,8 @@
                                 ],
                                 "bindings": [
                                     {
-                                        "binding_name": "#show_survival_ui",
-                                        "binding_name_override": "#visible"
+                                        "binding_name_override": "#visible",
+                                        "binding_name": "#show_survival_ui"
                                     }
                                 ],
                                 "controls": [
@@ -269,9 +101,9 @@
                     ],
                     "bindings": [
                         {
-                            "binding_name": "#hud_visible_centered_touch",
+                            "binding_type": "global",
                             "binding_name_override": "#visible",
-                            "binding_type": "global"
+                            "binding_name": "#hud_visible_centered_touch"
                         }
                     ],
                     "controls": [
@@ -284,8 +116,8 @@
                                 ],
                                 "bindings": [
                                     {
-                                        "binding_name": "#show_survival_ui",
-                                        "binding_name_override": "#visible"
+                                        "binding_name_override": "#visible",
+                                        "binding_name": "#show_survival_ui"
                                     }
                                 ],
                                 "controls": [
@@ -314,9 +146,9 @@
                     ],
                     "bindings": [
                         {
-                            "binding_name": "#hud_visible_not_centered",
+                            "binding_type": "global",
                             "binding_name_override": "#visible",
-                            "binding_type": "global"
+                            "binding_name": "#hud_visible_not_centered"
                         }
                     ],
                     "controls": [
@@ -329,8 +161,8 @@
                                 ],
                                 "bindings": [
                                     {
-                                        "binding_name": "#show_survival_ui",
-                                        "binding_name_override": "#visible"
+                                        "binding_name_override": "#visible",
+                                        "binding_name": "#show_survival_ui"
                                     }
                                 ],
                                 "controls": [
@@ -352,11 +184,179 @@
             }
         ]
     },
-    "main@hud.hud_screen": {
-        "$screen_content": "thirst_hud.root",
-        "button_mappings": [],
-        "absorbs_input": false,
-        "should_steal_mouse": false,
-        "render_game_behind": true
+    "thirst_bar": {
+        "type": "panel",
+        "size": [
+            81,
+            9
+        ],
+        "bindings": [
+            {
+                "binding_name_override": "#visible",
+                "binding_condition": "always",
+                "binding_name": "#thirst_hud.visible"
+            }
+        ],
+        "controls": [
+            {
+                "slots": {
+                    "type": "grid",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        80,
+                        9
+                    ],
+                    "collection_name": "thirst_slots",
+                    "grid_dimensions": [
+                        10,
+                        1
+                    ],
+                    "grid_item_template": "thirst_hud.thirst_slot",
+                    "grid_rescaling_type": "none",
+                    "maximum_grid_items": 10
+                }
+            }
+        ]
+    },
+    "thirst_slot": {
+        "type": "panel",
+        "size": [
+            8,
+            9
+        ],
+        "bindings": [
+            {
+                "binding_type": "collection_details",
+                "binding_collection_name": "thirst_slots",
+                "binding_condition": "always_when_visible"
+            }
+        ],
+        "controls": [
+            {
+                "background": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 0,
+                    "texture": "textures/ui/thirst_nullgr/thirst_background"
+                }
+            },
+            {
+                "full": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 1,
+                    "texture": "textures/ui/thirst_nullgr/thirst_full",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.full_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "half": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 1,
+                    "texture": "textures/ui/thirst_nullgr/thirst_half",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.half_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "critical_blink": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 2,
+                    "alpha": "@thirst_hud.blink_fade_out",
+                    "texture": "textures/ui/thirst_nullgr/thirst_blink",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.critical_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "flash_full": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 3,
+                    "texture": "textures/ui/thirst_nullgr/thirst_flash_full",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.flash_full_visible"
+                        }
+                    ]
+                }
+            },
+            {
+                "flash_half": {
+                    "type": "image",
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "layer": 3,
+                    "texture": "textures/ui/thirst_nullgr/thirst_flash_half",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "thirst_slots",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#thirst_hud.flash_half_visible"
+                        }
+                    ]
+                }
+            }
+        ]
     }
 }

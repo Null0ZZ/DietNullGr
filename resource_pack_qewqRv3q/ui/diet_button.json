@@ -11,39 +11,85 @@
         "should_steal_mouse": false,
         "controls": [
             {
-                "open_button": {
+                "open_button@common.button": {
                     "type": "button",
-                    "anchor_from": "right_middle",
-                    "anchor_to": "right_middle",
+                    "$control_alpha": 1.0,
+                    "$default_texture": "textures/ui/joystick_knob",
+                    "$hover_texture": "textures/ui/joystick_knob",
+                    "$is_new_nine_slice": false,
+                    "$label_color": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "$label_font_scale_factor": 1.0,
+                    "$label_font_size": "large",
+                    "$label_layer": 3,
+                    "$label_offset": [
+                        0,
+                        0
+                    ],
+                    "$label_text": "",
+                    "$nine_slice_buttom": 0,
+                    "$nine_slice_left": 0,
+                    "$nine_slice_right": 0,
+                    "$nine_slice_top": 0,
+                    "$nineslice_size": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "$pressed_button_name": "%netease_editor_template_namespace.click",
+                    "$pressed_texture": "textures/ui/joystick_knob",
+                    "$texture_layer": 2,
                     "offset": [
-                        -64,
-                        -18
+                        167.0,
+                        -40.0
                     ],
                     "size": [
                         16.0,
                         16.0
                     ],
-                    "draggable": "both",
-                    "layer": 10,
+                    "layer": 2,
+                    "alpha": 0.71,
+                    "propagate_alpha": true,
                     "button_mappings": [],
+                    "default_control": "default",
+                    "hover_control": "hover",
                     "is_handle_button_move_event": true,
+                    "pressed_control": "pressed",
+                    "bindings": [
+                        {
+                            "binding_type": "collection_details",
+                            "binding_collection_name": "",
+                            "binding_condition": "always_when_visible"
+                        }
+                    ],
                     "controls": [
                         {
-                            "button_bg": {
-                                "type": "image",
-                                "size": [
-                                    20.0,
-                                    20.0
-                                ],
-                                "alpha": 0.92,
-                                "nineslice_size": [
-                                    4.0,
-                                    4.0,
-                                    4.0,
-                                    4.0
-                                ],
-                                "texture": "textures/ui/background_panel"
+                            "default@netease_editor_template_namespace.default": {}
+                        },
+                        {
+                            "hover@netease_editor_template_namespace.hover": {
+                                "color": [
+                                    0.5176,
+                                    0.3216,
+                                    0.1216
+                                ]
                             }
+                        },
+                        {
+                            "pressed@netease_editor_template_namespace.pressed": {
+                                "color": [
+                                    0.451,
+                                    0.2235,
+                                    0.1294
+                                ]
+                            }
+                        },
+                        {
+                            "button_label@netease_editor_template_namespace.button_label": {}
                         },
                         {
                             "image": {
@@ -52,7 +98,7 @@
                                     16.0,
                                     16.0
                                 ],
-                                "layer": 1,
+                                "layer": 8,
                                 "texture": "textures/ui/hunger_effect"
                             }
                         }
