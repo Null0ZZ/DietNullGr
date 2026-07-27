@@ -47,7 +47,7 @@ clientSysKey = {
 }
 
 attrPrefix = "diet_nullgr_"
-effectRefreshTick = 12
+effectRefreshTick = 1200
 gainPenaltyPerGroup = 15.0
 decayPenaltyPerGroup = 15.0
 targetDietValue = 0.8
