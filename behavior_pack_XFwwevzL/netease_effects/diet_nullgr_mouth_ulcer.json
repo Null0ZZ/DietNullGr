@@ -1,0 +1,16 @@
+{
+    "format_version": "1.10",
+    "minecraft:effect": {
+        "components": {
+            "minecraft:icon": "diet_nullgr/disease/mouth_ulcer",
+            "minecraft:particle_color": [
+                83,
+                10,
+                30
+            ]
+        },
+        "description": {
+            "identifier": "diet_nullgr:mouth_ulcer"
+        }
+    }
+}

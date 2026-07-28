@@ -410,16 +410,23 @@ def getMatchedPenalties(data):
 
 
 # 奖励和低值惩罚共用同一套刷新周期，避免同一 tick 内状态效果分两套逻辑互相覆盖。
-def getMatchedDietResults(data):
-    matched = getMatchedEffects(data)
+def getMatchedDietResults(data, diseaseActive=False, pauseSugarRush=False):
+    matched = []
+    for effectResult in getMatchedEffects(data):
+        if pauseSugarRush and effectResult['id'] == 'sugarRush':
+            continue
+        matched.append(effectResult)
+    # 疾病已经承担饮食失衡反馈，患病期间暂停普通低营养状态，避免两套惩罚叠加。
+    if diseaseActive:
+        return matched
     for penaltyResult in getMatchedPenalties(data):
         matched.append(penaltyResult)
     return matched
 
 
 # 按服务端 Tick 间隔刷新短时状态效果，持续时间需要略长于刷新周期，避免效果闪断。
-def applyEffects(playerId, data, compFactory):
-    matched = getMatchedDietResults(data)
+def applyEffects(playerId, data, compFactory, diseaseActive=False, pauseSugarRush=False):
+    matched = getMatchedDietResults(data, diseaseActive, pauseSugarRush)
     if not matched:
         return
     compEffect = compFactory.CreateEffect(playerId)
@@ -491,7 +498,7 @@ def buildFoodGainMessages(data, gainValues):
     warningValue = 1.1
     penaltyWarningValue = getNutritionPenaltyWarningValue(data)
     if isLowPenaltyAlertEnabled(data):
-        for groupId in config.groupOrder:
+        for groupId in config.essentialGroupOrder:
             if groupId in gainValues:
                 continue
             if not data['tracking'][groupId]:
@@ -544,7 +551,7 @@ def buildNutritionAlertMessages(beforeValues, data):
 
     if isLowPenaltyAlertEnabled(data):
         penaltyWarningValue = getNutritionPenaltyWarningValue(data)
-        for groupId in config.groupOrder:
+        for groupId in config.essentialGroupOrder:
             if not data['tracking'][groupId]:
                 continue
             beforeValue = beforeValues[groupId]

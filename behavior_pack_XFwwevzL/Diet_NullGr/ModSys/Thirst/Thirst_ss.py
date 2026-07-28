@@ -2,6 +2,7 @@
 
 import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Thirst.config as config
 import Diet_NullGr.ModSys.Thirst.Thirst as Thirst
 
@@ -84,6 +85,7 @@ class ServerSys(ServerSystem):
         data = self.playerThirstData[playerId]
         data['sprinting'] = False
         data['sprintLimited'] = False
+        data['sprintLimitSources'] = {}
         # DelServerPlayerEvent 触发前实体已被引擎移除，运行时修饰符随实体销毁；这里只回收在线状态并保存口渴数据。
         Thirst.savePlayerData(playerId, data, compFactory)
         del self.playerThirstData[playerId]
@@ -235,7 +237,7 @@ class ServerSys(ServerSystem):
     def _updateSprintSpeedModifier(self, playerId, data):
         compAttr = compFactory.CreateAttr(playerId)
         hasModifier = compAttr.HasModifier(attrType.SPEED, config.sprintLimitModifierId)
-        shouldLimitSpeed = data['sprinting'] and data['sprintLimited']
+        shouldLimitSpeed = data['sprinting'] and (data['sprintLimited'] or bool(data['sprintLimitSources']))
         if shouldLimitSpeed == hasModifier:
             return
         if shouldLimitSpeed:
@@ -273,6 +275,9 @@ class ServerSys(ServerSystem):
             return data['value']
         if compGame.GetGameDiffculty() == gameDifficultyEnum.Peaceful:
             return data['value']
+        # 高血糖与发烧共享同一疾病倍率入口，只取当前最高值，避免两种疾病同时存在时连乘。
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        amount *= diseaseSys.getThirstConsumptionMultiplier(playerId)
         oldDisplayValue = Thirst.getDisplayValue(data['value'])
         data['value'] = Thirst.clampThirstValue(data['value'] - amount)
         data['dirty'] = True
@@ -322,6 +327,16 @@ class ServerSys(ServerSystem):
     def isThirstEnabled(self, playerId):
         return self._getPlayerData(playerId)['enabled']
 
+    # 低口渴与疾病限制共用一个疾跑逆修饰符；来源集合保证任一限制解除时不会误删另一来源。
+    def setSprintLimitSource(self, playerId, source, limited):
+        data = self._getPlayerData(playerId)
+        if limited:
+            data['sprintLimitSources'][source] = True
+        elif source in data['sprintLimitSources']:
+            del data['sprintLimitSources'][source]
+        self._updateSprintSpeedModifier(playerId, data)
+        return bool(data['sprintLimitSources'])
+
     # 通用设置只改变启用状态，不重置口渴真值；HUD 与设置控件在保存后一起刷新。
     def setThirstEnabled(self, playerId, enabled):
         data = self._getPlayerData(playerId)
@@ -343,6 +358,7 @@ class ServerSys(ServerSystem):
             data = self.playerThirstData[playerId]
             data['sprinting'] = False
             data['sprintLimited'] = False
+            data['sprintLimitSources'] = {}
             # 热重载时玩家实体仍在线，需要回滚修饰符；世界关闭时实体可能已销毁，不再访问失效组件。
             if playerId in onlinePlayers:
                 self._updateSprintSpeedModifier(playerId, data)

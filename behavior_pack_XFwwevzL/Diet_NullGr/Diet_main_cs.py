@@ -71,8 +71,8 @@ class DietClientSystem(ClientSystem):
         volume = args['volume']
         pitch = args['pitch']
         playerId = clientApi.GetLocalPlayerId()
-        compAudio = compFactory.CreateAudio(playerId)
-        compAudio.PlayPlayerSound(sound, volume, pitch, playerId)
+        customAudioComp = compFactory.CreateCustomAudio(levelId)
+        customAudioComp.PlayCustomMusic(sound, (0, 0, 0), volume, pitch, False, playerId)
 
     def OpenDietScreen(self, args):
         if self.dietData is None:

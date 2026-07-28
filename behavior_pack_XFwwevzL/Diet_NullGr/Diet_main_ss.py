@@ -2,6 +2,7 @@
 
 import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Diet.Diet as Diet
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
@@ -86,12 +87,15 @@ class DietServerSystem(ServerSystem):
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
-        if not data['active']:
-            return
-        itemName = itemDict['newItemName']
-        itemAuxValue = itemDict['newAuxValue']
-        compItem = compFactory.CreateItem(serverApi.GetLevelId())
-        gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
+        gainValues = {}
+        if data['active']:
+            itemName = itemDict['newItemName']
+            itemAuxValue = itemDict['newAuxValue']
+            compItem = compFactory.CreateItem(serverApi.GetLevelId())
+            gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
+        # 真实进食总要结算患病症状；只有取得营养增益时才增加有效进食次数并推进恢复。
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        diseaseSys.recordFoodEat(playerId, data, gainValues)
         if not gainValues:
             return
         Diet.savePlayerData(playerId, data, compFactory)
@@ -113,7 +117,11 @@ class DietServerSystem(ServerSystem):
             return
         # 网易引擎已提供饥饿值变化事件，这里只在真实下降事件里执行 Diet 原版衰减，避免每 tick 轮询属性。
         beforeValues = Diet.copyDietValues(data)
-        changed = Diet.applyHungerDecay(data, hungerBefore - hunger)
+        metabolicPoints = hungerBefore - hunger
+        changed = Diet.applyHungerDecay(data, metabolicPoints)
+        # 即使营养值已经为零无法继续衰减，真实饥饿下降仍要推进疾病代谢点。
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        diseaseSys.queueMetabolism(playerId, metabolicPoints)
         if not changed:
             return
         nutritionAlertMessages = Diet.buildNutritionAlertMessages(beforeValues, data)
@@ -154,6 +162,10 @@ class DietServerSystem(ServerSystem):
     def CommandEvent(self, args):
         entityId = args['entityId']
         command = args['command']
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        if diseaseSys.handleCommand(entityId, command):
+            args['cancel'] = True
+            return
         if entityId not in self.playerDietData:
             self.playerDietData[entityId] = Diet.loadPlayerData(entityId, compFactory)
         commandResult = Diet.handleCommand(command, self.playerDietData[entityId])
@@ -180,7 +192,14 @@ class DietServerSystem(ServerSystem):
                 self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
             data = self.playerDietData[playerId]
             if data['active']:
-                Diet.applyEffects(playerId, data, compFactory)
+                diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+                Diet.applyEffects(
+                    playerId,
+                    data,
+                    compFactory,
+                    diseaseSys.hasActiveDisease(playerId),
+                    diseaseSys.isSugarRushPaused(playerId)
+                )
 
     def Destroy(self):
         for playerId in self.playerDietData:

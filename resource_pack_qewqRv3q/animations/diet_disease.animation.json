@@ -1,0 +1,24 @@
+{
+    "format_version": "1.8.0",
+    "animations": {
+        "animation.diet_nullgr.disease_scale": {
+            "loop": true,
+            "bones": {
+                "body": {
+                    "scale": [
+                        "query.mod.diet_body_scale",
+                        "query.mod.diet_body_scale",
+                        "query.mod.diet_body_scale"
+                    ]
+                },
+                "head": {
+                    "scale": [
+                        "query.mod.diet_head_scale / query.mod.diet_body_scale",
+                        "query.mod.diet_head_scale / query.mod.diet_body_scale",
+                        "query.mod.diet_head_scale / query.mod.diet_body_scale"
+                    ]
+                }
+            }
+        }
+    }
+}

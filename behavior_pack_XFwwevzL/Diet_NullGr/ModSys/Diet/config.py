@@ -75,11 +75,15 @@ for deathPenaltyMethod in deathPenaltyMethodOrder:
 expBase = 2.718281828
 
 groupOrder = ["fruits", "grains", "proteins", "vegetables", "sugars"]
+# 糖分不是必需营养，普通低值提醒与惩罚只检查四类基础营养；糖分异常由疾病系统单独反馈。
+essentialGroupOrder = ["fruits", "grains", "proteins", "vegetables"]
 
 percentColorHealthy = (0.96, 0.96, 0.96)
 percentColorCaution = (1.0, 0.92, 0.18)
 percentColorWarning = (1.0, 0.55, 0.08)
 percentColorDanger = (1.0, 0.16, 0.12)
+diseaseGroupHighlightColor = (1.0, 0.56, 0.2)
+diseaseGroupTooltipColor = (1.0, 0.78, 0.42)
 
 groups = {
     "fruits": {
@@ -193,7 +197,7 @@ dietPenalties = {
         "description": "任意一项营养低于惩罚阈值：获得虚弱。",
         "conditions": [
             {
-                "groups": groupOrder,
+                "groups": essentialGroupOrder,
                 "match": "any",
                 "minMatches": 1,
                 "useTarget": False,
@@ -213,7 +217,7 @@ dietPenalties = {
         "description": "任意两项营养低于惩罚阈值：额外获得缓慢。",
         "conditions": [
             {
-                "groups": groupOrder,
+                "groups": essentialGroupOrder,
                 "match": "every",
                 "minMatches": 2,
                 "useTarget": False,

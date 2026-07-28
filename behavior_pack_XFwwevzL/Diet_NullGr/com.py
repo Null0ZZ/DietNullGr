@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import Diet_NullGr.ModSys.Diet.config as config
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
 modName = "diet_nullgr"
@@ -14,9 +15,11 @@ serverSysKey = {
 }
 serverSysKey.update(config.serverSysKey)
 serverSysKey.update(thirstConfig.serverSysKey)
+serverSysKey.update(diseaseConfig.serverSysKey)
 
 clientSysKey = {
     csname: csPath
 }
 clientSysKey.update(config.clientSysKey)
 clientSysKey.update(thirstConfig.clientSysKey)
+clientSysKey.update(diseaseConfig.clientSysKey)

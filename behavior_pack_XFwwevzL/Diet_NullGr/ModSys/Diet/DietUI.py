@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import mod.client.extraClientApi as clientApi
+import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Diet.config as config
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 
 ScreenNode = clientApi.GetScreenNodeCls()
 ViewBinder = clientApi.GetViewBinderCls()
@@ -21,9 +23,22 @@ class DietUI(ScreenNode):
                 'icon': groupConfig['icon'],
                 'color': groupConfig['color'],
                 'value': groupConfig['defaultValue'],
-                'tracked': True
+                'tracked': True,
+                'diseaseRelated': False
             })
         self.dietData = {'active': True, 'groups': defaultGroups}
+        self.diseaseData = {'active': []}
+        self.emptyDiseaseData = {
+            'id': '',
+            'name': '',
+            'icon': '',
+            'durationText': '',
+            'progressText': '',
+            'symptom': '',
+            'cause': '',
+            'relief': '',
+            'groups': []
+        }
         self.itemAuxCache = {}
         compFactory = clientApi.GetEngineCompFactory()
         self.itemComp = compFactory.CreateItem(clientApi.GetLevelId())
@@ -31,6 +46,11 @@ class DietUI(ScreenNode):
             self.dietData = param['dietData']
 
     def Create(self):
+        # 疾病同步可能早于面板创建，打开面板时必须先接回疾病客户端系统保存的最新快照。
+        diseaseClientSys = clientApi.GetSystem(com.modName, diseaseConfig.csname)
+        if diseaseClientSys and diseaseClientSys.diseaseData is not None:
+            self.diseaseData = diseaseClientSys.diseaseData
+        self.refreshDiseaseGroupFlags()
         self.UpdateScreen(True)
 
     def Creat(self):
@@ -39,6 +59,13 @@ class DietUI(ScreenNode):
     # 服务端同步只更新绑定数据源，控件树路径变化不会影响面板刷新。
     def UpdateDietData(self, data):
         self.dietData = data
+        self.refreshDiseaseGroupFlags()
+        self.UpdateScreen(True)
+
+    # 疾病变化与营养变化使用独立同步事件，面板打开期间由疾病客户端系统直接刷新此数据源。
+    def UpdateDiseaseData(self, data):
+        self.diseaseData = data
+        self.refreshDiseaseGroupFlags()
         self.UpdateScreen(True)
 
     # 关闭按钮通过绑定事件弹出 PushScreen 栈，避免控件路径变化导致回调注册失败。
@@ -79,6 +106,15 @@ class DietUI(ScreenNode):
         color = self.getGroupData(index)['color']
         return (color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
 
+    # 疾病同步先把关联组压成营养行标量，绑定刷新时不再跨读第二套集合数据。
+    def refreshDiseaseGroupFlags(self):
+        diseaseGroups = {}
+        for diseaseData in self.diseaseData['active']:
+            for groupId in diseaseData['groups']:
+                diseaseGroups[groupId] = True
+        for groupData in self.dietData['groups']:
+            groupData['diseaseRelated'] = groupData['id'] in diseaseGroups
+
     # 百分比颜色沿用旧面板阈值，绑定刷新和原手动刷新表现保持一致。
     def getPercentColor(self, progress):
         if progress >= 0.75:
@@ -99,9 +135,12 @@ class DietUI(ScreenNode):
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_name_color")
     def bindRowNameColor(self, index):
-        if self.getGroupData(index)['tracked']:
-            return self.getGroupDisplayColor(index)
-        return (0.48, 0.48, 0.48)
+        groupData = self.getGroupData(index)
+        if not groupData['tracked']:
+            return (0.48, 0.48, 0.48)
+        if groupData['diseaseRelated']:
+            return config.diseaseGroupHighlightColor
+        return self.getGroupDisplayColor(index)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_tooltip")
     def bindRowTooltip(self, index):
@@ -109,9 +148,12 @@ class DietUI(ScreenNode):
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_tooltip_color")
     def bindRowTooltipColor(self, index):
-        if self.getGroupData(index)['tracked']:
-            return (0.62, 0.6, 0.56)
-        return (0.42, 0.42, 0.42)
+        groupData = self.getGroupData(index)
+        if not groupData['tracked']:
+            return (0.42, 0.42, 0.42)
+        if groupData['diseaseRelated']:
+            return config.diseaseGroupTooltipColor
+        return (0.62, 0.6, 0.56)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_percent")
     def bindRowPercent(self, index):
@@ -129,9 +171,12 @@ class DietUI(ScreenNode):
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_bar_color")
     def bindRowBarColor(self, index):
-        if self.getGroupData(index)['tracked']:
-            return self.getGroupDisplayColor(index)
-        return (0.22, 0.22, 0.22)
+        groupData = self.getGroupData(index)
+        if not groupData['tracked']:
+            return (0.22, 0.22, 0.22)
+        if groupData['diseaseRelated']:
+            return config.diseaseGroupHighlightColor
+        return self.getGroupDisplayColor(index)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindFloat, "diet_rows", "#diet_screen.row_bar_clip")
     def bindRowBarClip(self, index):
@@ -139,3 +184,77 @@ class DietUI(ScreenNode):
         if groupData['tracked']:
             return 1.0 - groupData['value']
         return 1.0
+
+    @ViewBinder.binding(ViewBinder.BF_BindBool, "#diet_screen.disease_healthy_visible")
+    def bindDiseaseHealthyVisible(self):
+        return len(self.diseaseData['active']) == 0
+
+    # 疾病最多同时两种，两个固定标量卡槽可避开同屏多集合刷新时的引擎类型错误。
+    def getDiseaseData(self, index):
+        if index < len(self.diseaseData['active']):
+            return self.diseaseData['active'][index]
+        return self.emptyDiseaseData
+
+    @ViewBinder.binding(ViewBinder.BF_BindBool, "#diet_screen.disease_slot_0_visible")
+    def bindDiseaseSlot0Visible(self):
+        return len(self.diseaseData['active']) > 0
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_icon")
+    def bindDiseaseSlot0Icon(self):
+        return self.getDiseaseData(0)['icon']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_name")
+    def bindDiseaseSlot0Name(self):
+        return self.getDiseaseData(0)['name']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_duration")
+    def bindDiseaseSlot0Duration(self):
+        return self.getDiseaseData(0)['durationText']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_progress")
+    def bindDiseaseSlot0Progress(self):
+        return self.getDiseaseData(0)['progressText']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_symptom")
+    def bindDiseaseSlot0Symptom(self):
+        return "症状：" + self.getDiseaseData(0)['symptom']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_cause")
+    def bindDiseaseSlot0Cause(self):
+        return "病因：" + self.getDiseaseData(0)['cause']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_0_relief")
+    def bindDiseaseSlot0Relief(self):
+        return "缓解：" + self.getDiseaseData(0)['relief']
+
+    @ViewBinder.binding(ViewBinder.BF_BindBool, "#diet_screen.disease_slot_1_visible")
+    def bindDiseaseSlot1Visible(self):
+        return len(self.diseaseData['active']) > 1
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_icon")
+    def bindDiseaseSlot1Icon(self):
+        return self.getDiseaseData(1)['icon']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_name")
+    def bindDiseaseSlot1Name(self):
+        return self.getDiseaseData(1)['name']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_duration")
+    def bindDiseaseSlot1Duration(self):
+        return self.getDiseaseData(1)['durationText']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_progress")
+    def bindDiseaseSlot1Progress(self):
+        return self.getDiseaseData(1)['progressText']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_symptom")
+    def bindDiseaseSlot1Symptom(self):
+        return "症状：" + self.getDiseaseData(1)['symptom']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_cause")
+    def bindDiseaseSlot1Cause(self):
+        return "病因：" + self.getDiseaseData(1)['cause']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_slot_1_relief")
+    def bindDiseaseSlot1Relief(self):
+        return "缓解：" + self.getDiseaseData(1)['relief']

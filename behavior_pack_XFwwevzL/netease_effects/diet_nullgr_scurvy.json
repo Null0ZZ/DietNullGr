@@ -1,0 +1,16 @@
+{
+    "format_version": "1.10",
+    "minecraft:effect": {
+        "components": {
+            "minecraft:icon": "diet_nullgr/disease/scurvy",
+            "minecraft:particle_color": [
+                141,
+                97,
+                96
+            ]
+        },
+        "description": {
+            "identifier": "diet_nullgr:scurvy"
+        }
+    }
+}

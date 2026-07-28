@@ -1,0 +1,16 @@
+{
+    "format_version": "1.10",
+    "minecraft:effect": {
+        "components": {
+            "minecraft:icon": "diet_nullgr/disease/constipation",
+            "minecraft:particle_color": [
+                96,
+                56,
+                37
+            ]
+        },
+        "description": {
+            "identifier": "diet_nullgr:constipation"
+        }
+    }
+}

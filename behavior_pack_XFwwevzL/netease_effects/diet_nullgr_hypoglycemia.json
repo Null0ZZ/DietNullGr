@@ -1,0 +1,16 @@
+{
+    "format_version": "1.10",
+    "minecraft:effect": {
+        "components": {
+            "minecraft:icon": "diet_nullgr/disease/hypoglycemia",
+            "minecraft:particle_color": [
+                109,
+                23,
+                29
+            ]
+        },
+        "description": {
+            "identifier": "diet_nullgr:hypoglycemia"
+        }
+    }
+}

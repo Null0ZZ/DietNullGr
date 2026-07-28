@@ -224,6 +224,498 @@
             }
         ]
     },
+    "disease_slot_0": {
+        "type": "panel",
+        "anchor_from": "top_middle",
+        "anchor_to": "top_middle",
+        "offset": [
+            0,
+            154.0
+        ],
+        "size": [
+            224,
+            60
+        ],
+        "visible": "#diet_screen.disease_slot_0_visible",
+        "bindings": [
+            {
+                "binding_name_override": "#visible",
+                "binding_condition": "always",
+                "binding_name": "#diet_screen.disease_slot_0_visible"
+            }
+        ],
+        "controls": [
+            {
+                "row_bg": {
+                    "type": "image",
+                    "layer": 0,
+                    "size": [
+                        224,
+                        58
+                    ],
+                    "nineslice_size": [
+                        3,
+                        3,
+                        3,
+                        3
+                    ],
+                    "texture": "textures/ui/diet_nullgr/row",
+                    "alpha": 0.92
+                }
+            },
+            {
+                "icon": {
+                    "type": "image",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        -15
+                    ],
+                    "size": [
+                        18,
+                        18
+                    ],
+                    "texture": "#diet_screen.disease_slot_0_icon",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#texture",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_icon"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        31,
+                        -22
+                    ],
+                    "size": [
+                        88,
+                        12
+                    ],
+                    "color": [
+                        1.0,
+                        0.46,
+                        0.34
+                    ],
+                    "font_size": "normal",
+                    "shadow": true,
+                    "text": "#diet_screen.disease_slot_0_name",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_name"
+                        }
+                    ]
+                }
+            },
+            {
+                "duration": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -7,
+                        -22
+                    ],
+                    "size": [
+                        96,
+                        10
+                    ],
+                    "color": [
+                        0.8,
+                        0.78,
+                        0.72
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_0_duration",
+                    "text_alignment": "right",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_duration"
+                        }
+                    ]
+                }
+            },
+            {
+                "progress": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        31,
+                        -10
+                    ],
+                    "size": [
+                        186,
+                        10
+                    ],
+                    "color": [
+                        1.0,
+                        0.8,
+                        0.3
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_0_progress",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_progress"
+                        }
+                    ]
+                }
+            },
+            {
+                "symptom": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        1
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.92,
+                        0.72,
+                        0.62
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_0_symptom",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_symptom"
+                        }
+                    ]
+                }
+            },
+            {
+                "cause": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        12
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.73,
+                        0.7,
+                        0.64
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_0_cause",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_cause"
+                        }
+                    ]
+                }
+            },
+            {
+                "relief": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        23
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.55,
+                        0.88,
+                        0.55
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_0_relief",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_0_relief"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "disease_slot_1": {
+        "type": "panel",
+        "anchor_from": "top_middle",
+        "anchor_to": "top_middle",
+        "offset": [
+            0,
+            214.0
+        ],
+        "size": [
+            224,
+            60
+        ],
+        "visible": "#diet_screen.disease_slot_1_visible",
+        "bindings": [
+            {
+                "binding_name_override": "#visible",
+                "binding_condition": "always",
+                "binding_name": "#diet_screen.disease_slot_1_visible"
+            }
+        ],
+        "controls": [
+            {
+                "row_bg": {
+                    "type": "image",
+                    "layer": 0,
+                    "size": [
+                        224,
+                        58
+                    ],
+                    "nineslice_size": [
+                        3,
+                        3,
+                        3,
+                        3
+                    ],
+                    "texture": "textures/ui/diet_nullgr/row",
+                    "alpha": 0.92
+                }
+            },
+            {
+                "icon": {
+                    "type": "image",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        -15
+                    ],
+                    "size": [
+                        18,
+                        18
+                    ],
+                    "texture": "#diet_screen.disease_slot_1_icon",
+                    "bindings": [
+                        {
+                            "binding_name_override": "#texture",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_icon"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        31,
+                        -22
+                    ],
+                    "size": [
+                        88,
+                        12
+                    ],
+                    "color": [
+                        1.0,
+                        0.46,
+                        0.34
+                    ],
+                    "font_size": "normal",
+                    "shadow": true,
+                    "text": "#diet_screen.disease_slot_1_name",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_name"
+                        }
+                    ]
+                }
+            },
+            {
+                "duration": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -7,
+                        -22
+                    ],
+                    "size": [
+                        96,
+                        10
+                    ],
+                    "color": [
+                        0.8,
+                        0.78,
+                        0.72
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_1_duration",
+                    "text_alignment": "right",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_duration"
+                        }
+                    ]
+                }
+            },
+            {
+                "progress": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        31,
+                        -10
+                    ],
+                    "size": [
+                        186,
+                        10
+                    ],
+                    "color": [
+                        1.0,
+                        0.8,
+                        0.3
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_1_progress",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_progress"
+                        }
+                    ]
+                }
+            },
+            {
+                "symptom": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        1
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.92,
+                        0.72,
+                        0.62
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_1_symptom",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_symptom"
+                        }
+                    ]
+                }
+            },
+            {
+                "cause": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        12
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.73,
+                        0.7,
+                        0.64
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_1_cause",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_cause"
+                        }
+                    ]
+                }
+            },
+            {
+                "relief": {
+                    "type": "label",
+                    "layer": 1,
+                    "anchor_from": "left_middle",
+                    "anchor_to": "left_middle",
+                    "offset": [
+                        7,
+                        23
+                    ],
+                    "size": [
+                        210,
+                        10
+                    ],
+                    "color": [
+                        0.55,
+                        0.88,
+                        0.55
+                    ],
+                    "font_size": "small",
+                    "text": "#diet_screen.disease_slot_1_relief",
+                    "text_alignment": "left",
+                    "bindings": [
+                        {
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_slot_1_relief"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
     "main": {
         "type": "screen",
         "absorbs_input": true,
@@ -249,7 +741,7 @@
                                 "anchor_to": "center",
                                 "size": [
                                     248,
-                                    152.0
+                                    292.0
                                 ],
                                 "controls": [
                                     {
@@ -302,15 +794,15 @@
                                     {
                                         "rows_grid": {
                                             "type": "grid",
-                                            "anchor_from": "center",
-                                            "anchor_to": "center",
+                                            "anchor_from": "top_middle",
+                                            "anchor_to": "top_middle",
                                             "offset": [
                                                 0,
-                                                4.0
+                                                22.0
                                             ],
                                             "size": [
                                                 224,
-                                                118
+                                                110
                                             ],
                                             "collection_name": "diet_rows",
                                             "grid_dimensions": [
@@ -321,6 +813,68 @@
                                             "grid_rescaling_type": "none",
                                             "maximum_grid_items": 5
                                         }
+                                    },
+                                    {
+                                        "disease_title": {
+                                            "type": "label",
+                                            "anchor_from": "top_middle",
+                                            "anchor_to": "top_middle",
+                                            "offset": [
+                                                0,
+                                                138.0
+                                            ],
+                                            "size": [
+                                                224,
+                                                12
+                                            ],
+                                            "color": [
+                                                0.96,
+                                                0.86,
+                                                0.66
+                                            ],
+                                            "font_size": "normal",
+                                            "shadow": false,
+                                            "text": "疾病状态",
+                                            "text_alignment": "left"
+                                        }
+                                    },
+                                    {
+                                        "disease_healthy": {
+                                            "type": "label",
+                                            "anchor_from": "top_middle",
+                                            "anchor_to": "top_middle",
+                                            "offset": [
+                                                0,
+                                                166.0
+                                            ],
+                                            "size": [
+                                                224,
+                                                14
+                                            ],
+                                            "visible": "#diet_screen.disease_healthy_visible",
+                                            "color": [
+                                                0.5,
+                                                0.9,
+                                                0.58
+                                            ],
+                                            "font_size": "normal",
+                                            "shadow": false,
+                                            "text": "当前身体状况良好",
+                                            "text_alignment": "center",
+                                            "bindings": [
+                                                {
+                                                    "binding_name_override": "#visible",
+                                                    "binding_condition": "always",
+                                                    "binding_name": "#diet_screen.disease_healthy_visible"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "disease_slot_0@diet_screen.disease_slot_0": {}
+                                    },
+                                    {
+                                        "disease_slot_1@diet_screen.disease_slot_1": {}
                                     },
                                     {
                                         "button@common.button": {

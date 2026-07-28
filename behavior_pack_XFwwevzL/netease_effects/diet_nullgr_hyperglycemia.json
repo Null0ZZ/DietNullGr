@@ -1,0 +1,16 @@
+{
+    "format_version": "1.10",
+    "minecraft:effect": {
+        "components": {
+            "minecraft:icon": "diet_nullgr/disease/hyperglycemia",
+            "minecraft:particle_color": [
+                144,
+                20,
+                33
+            ]
+        },
+        "description": {
+            "identifier": "diet_nullgr:hyperglycemia"
+        }
+    }
+}

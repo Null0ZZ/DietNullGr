@@ -1,0 +1,227 @@
+# -*- coding: utf-8 -*-
+
+ssname = "Disease_Core_ServerSys"
+csname = "Disease_Core_ClientSys"
+ssPath = "Diet_NullGr.ModSys.Disease.Disease_ss.ServerSys"
+csPath = "Diet_NullGr.ModSys.Disease.Disease_cs.ClientSys"
+
+serverSysKey = {
+    ssname: ssPath
+}
+
+clientSysKey = {
+    csname: csPath
+}
+
+syncEvent = "DiseaseSyncData"
+visualEvent = "DiseaseVisualSync"
+visualReadyEvent = "DiseaseVisualReady"
+symptomEvent = "DiseaseSymptom"
+clientReadyEvent = "DiseaseClientReady"
+jumpEvent = "DiseasePlayerJump"
+debugCommandEnabled = False
+
+effectRefreshTick = 100
+dataSaveTick = 600
+customEffectDurationPadding = 10
+statusEffectDuration = 6
+nauseaDuration = 4
+nauseaSharedCooldownSeconds = 30
+hypoglycemiaLateSeconds = 45
+hypoglycemiaNauseaIntervalSeconds = 30
+hyperglycemiaNauseaIntervalSeconds = 45
+feverNauseaIntervalSeconds = 60
+hypoglycemiaJumpIntervalTick = 30
+ricketsJumpDamageCooldownTick = 100
+ricketsJumpDamageChance = 15
+ricketsFallDamageMultiplier = 1.5
+symptomDamage = 1.0
+minimumHealthAfterSymptom = 1.0
+constipationSneakHoldTick = 5
+constipationMaxVerticalMove = 0.4
+constipationBodyGrowSeconds = 120.0
+feverHeadGrowSeconds = 300.0
+maximumBoneScale = 1.25
+visualScaleFadeTick = 20
+hyperglycemiaThirstMultiplier = 1.25
+feverThirstMultiplier = 1.5
+gaussianBlurMaxRadius = 6.0
+gaussianBlurGrowSeconds = 90.0
+gaussianBlurFadeTick = 20
+hypoglycemiaSprintLimitSource = "hypoglycemia"
+hypoglycemiaQuickProtectionSeconds = 60
+bloodSugarConversionProtectionSeconds = 120
+bodyScaleQuery = "query.mod.diet_body_scale"
+headScaleQuery = "query.mod.diet_head_scale"
+playerScaleAnimationKey = "diet_disease_scale"
+playerScaleAnimation = "animation.diet_nullgr.disease_scale"
+invalidGroundBlocks = [
+    "minecraft:air",
+    "minecraft:water",
+    "minecraft:flowing_water",
+    "minecraft:bubble_column"
+]
+invalidBodyBlocks = [
+    "minecraft:water",
+    "minecraft:flowing_water",
+    "minecraft:bubble_column"
+]
+
+attrPrefix = "diet_nullgr_disease_"
+attrValidEatCount = attrPrefix + "valid_eat_count"
+attrActive = attrPrefix + "active"
+attrConstipationSquatCount = attrPrefix + "constipation_squat_count"
+attrProgressPrefix = attrPrefix + "progress_"
+attrActiveSecondsPrefix = attrPrefix + "active_seconds_"
+attrProtectionSecondsPrefix = attrPrefix + "protection_seconds_"
+attrRecoveryProgressPrefix = attrPrefix + "recovery_progress_"
+
+minimumValidEatCount = 5
+maxActiveCount = 2
+fullSlotProgressRatio = 0.5
+progressFallbackMultiplier = 2.0
+constipationSquatRequired = 12
+thirstMaxValue = 20.0
+
+# 存档、客户端显示和遍历统一使用固定顺序，避免字典顺序造成状态变化。
+diseaseOrder = [
+    "hypoglycemia",
+    "hyperglycemia",
+    "constipation",
+    "rickets",
+    "fever",
+    "mouth_ulcer",
+    "scurvy"
+]
+
+# 多种疾病同轮达到触发线时按玩法严重度填充空闲槽位，不替换已经确诊的疾病。
+diagnosisOrder = [
+    "fever",
+    "hyperglycemia",
+    "hypoglycemia",
+    "scurvy",
+    "rickets",
+    "constipation",
+    "mouth_ulcer"
+]
+
+bloodSugarConflict = {
+    "hypoglycemia": "hyperglycemia",
+    "hyperglycemia": "hypoglycemia"
+}
+
+# 每种疾病只依赖玩家可见的营养组；recoveryMetabolicPoints 为零表示饮食达标后立即痊愈。
+diseases = {
+    "hypoglycemia": {
+        "name": "低血糖",
+        "cause": "谷物、水果和糖分均长期处于低位。",
+        "relief": "补充谷物可稳定缓解，水果或甜食可快速缓解。",
+        "symptom": "初期限制疾跑和连续跳跃，持续后会视野模糊并间歇反胃。",
+        "customEffect": "diet_nullgr:hypoglycemia",
+        "icon": "textures/ui/diet_nullgr/disease/hypoglycemia_effect",
+        "priority": 3,
+        "triggerPoints": 3.0,
+        "maxActiveSeconds": 240,
+        "protectionSeconds": 180,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["grains", "fruits", "sugars"],
+        "requiredGroups": ["grains", "fruits", "sugars"],
+        "requiresThirst": False
+    },
+    "hyperglycemia": {
+        "name": "高血糖",
+        "cause": "糖分长期过高，并明显高于其他四类营养。",
+        "relief": "暂停甜食，将糖分降到 55% 以下并补充至少两类非糖食物。",
+        "symptom": "缓慢、间歇反胃、口渴消耗提高，并暂停糖分冲刺。",
+        "customEffect": "diet_nullgr:hyperglycemia",
+        "icon": "textures/ui/diet_nullgr/disease/hyperglycemia_effect",
+        "priority": 2,
+        "triggerPoints": 4.0,
+        "maxActiveSeconds": 480,
+        "protectionSeconds": 240,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["sugars", "fruits", "grains", "proteins", "vegetables"],
+        "requiredGroups": ["fruits", "grains", "proteins", "vegetables", "sugars"],
+        "requiresThirst": False
+    },
+    "constipation": {
+        "name": "便秘",
+        "cause": "水分不足，且水果、谷物和蔬菜摄入偏少。",
+        "relief": "将口渴值恢复到 50% 以上并补充其中至少两类食物，或完成 12 次有效下蹲。",
+        "symptom": "进食后反胃，身体逐渐变大，可通过连续下蹲缓解。",
+        "customEffect": "diet_nullgr:constipation",
+        "icon": "textures/ui/diet_nullgr/disease/constipation_effect",
+        "priority": 6,
+        "triggerPoints": 8.0,
+        "maxActiveSeconds": 600,
+        "protectionSeconds": 180,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["fruits", "grains", "vegetables"],
+        "requiredGroups": ["fruits", "grains", "vegetables"],
+        "requiresThirst": True
+    },
+    "rickets": {
+        "name": "佝偻病",
+        "cause": "蛋白质长期不足，但其他饮食类别仍较充足。",
+        "relief": "将蛋白质恢复到 45% 以上并保持 3 个代谢点，推荐牛奶、鱼或蛋。",
+        "symptom": "摔落伤害提高，跳跃时可能受伤并播放骨折音效。",
+        "customEffect": "diet_nullgr:rickets",
+        "icon": "textures/ui/diet_nullgr/disease/rickets_effect",
+        "priority": 5,
+        "triggerPoints": 18.0,
+        "maxActiveSeconds": 600,
+        "protectionSeconds": 300,
+        "recoveryMetabolicPoints": 3.0,
+        "uiGroups": ["proteins"],
+        "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "requiresThirst": False
+    },
+    "fever": {
+        "name": "发烧",
+        "cause": "严重缺水，并且多类非糖营养同时处于危急水平。",
+        "relief": "将口渴值恢复到 50% 以上，并使至少三类非糖营养达到 30%。",
+        "symptom": "虚弱、间歇反胃、口渴消耗提高，头部随持续时间逐渐变大。",
+        "customEffect": "diet_nullgr:fever",
+        "icon": "textures/ui/diet_nullgr/disease/fever_effect",
+        "priority": 1,
+        "triggerPoints": 5.0,
+        "maxActiveSeconds": 360,
+        "protectionSeconds": 240,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "requiresThirst": True
+    },
+    "mouth_ulcer": {
+        "name": "口腔溃疡",
+        "cause": "谷物和蛋白质长期不足，高糖饮食会加快发病。",
+        "relief": "让谷物和蛋白质一项达到 40%、另一项达到 30%，并减少甜食。",
+        "symptom": "进食时播放疼痛提示，并有概率受到不会致死的伤害。",
+        "customEffect": "diet_nullgr:mouth_ulcer",
+        "icon": "textures/ui/diet_nullgr/disease/mouth_ulcer_effect",
+        "priority": 7,
+        "triggerPoints": 9.0,
+        "maxActiveSeconds": 480,
+        "protectionSeconds": 180,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["grains", "proteins"],
+        "requiredGroups": ["grains", "proteins"],
+        "requiresThirst": False
+    },
+    "scurvy": {
+        "name": "坏血病",
+        "cause": "水果和蔬菜长期严重不足，但谷物或蛋白质仍较充足。",
+        "relief": "将水果恢复到 40% 以上，或将蔬菜恢复到 45% 以上。",
+        "symptom": "持续虚弱，受伤后会短暂获得挖掘疲劳。",
+        "customEffect": "diet_nullgr:scurvy",
+        "icon": "textures/ui/diet_nullgr/disease/scurvy_effect",
+        "priority": 4,
+        "triggerPoints": 18.0,
+        "maxActiveSeconds": 600,
+        "protectionSeconds": 300,
+        "recoveryMetabolicPoints": 0.0,
+        "uiGroups": ["fruits", "vegetables"],
+        "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "requiresThirst": False
+    }
+}

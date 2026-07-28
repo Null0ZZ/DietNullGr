@@ -39,6 +39,7 @@ def loadPlayerData(playerId, compFactory):
         'dirty': False,
         'dehydrationTicks': 0,
         'sprintLimited': False,
+        'sprintLimitSources': {},
         'sprinting': False
     }
 
