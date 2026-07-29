@@ -145,6 +145,19 @@ def test_trigger_and_recovery_thresholds():
     assert_close(Disease.getTriggerMultiplier("constipation", dry_fiber_shortage), 0.5, "constipation fiber-only rate")
 
 
+def test_client_tips_contract():
+    for disease_id in config.diseaseOrder:
+        disease_config = config.diseases[disease_id]
+        tips = disease_config["tips"]
+        assert_true(isinstance(tips, str) and tips, "{} concise tips exist".format(disease_id))
+        assert_true(len(tips) <= 20, "{} concise tips stay within 20 characters".format(disease_id))
+
+        data = Disease.createDefaultData()
+        assert_true(Disease.diagnoseDisease(data, disease_id), "{} client tips setup".format(disease_id))
+        client_data = Disease.buildClientData(data)
+        assert_equal(client_data["active"][0]["tips"], tips, "{} client tips contract".format(disease_id))
+
+
 def test_new_player_protection():
     data = Disease.createDefaultData()
     trigger = make_snapshot(fruits=0.20, grains=0.15, sugars=0.20)
@@ -422,14 +435,32 @@ def test_system_registration_and_ui_bindings():
                 "symptom damage uses a Hurt-compatible no-attacker damage cause")
     assert_true("actorDamageCause.Custom" not in server_text,
                 "unsupported Custom damage cause is not reintroduced")
-    binding_names = ["disease_healthy_visible"]
-    for slot_index in range(2):
-        for field_name in ("visible", "icon", "name", "duration", "progress", "symptom", "cause", "relief"):
-            binding_names.append("disease_slot_{}_{}".format(slot_index, field_name))
+    binding_names = (
+        "disease_button_visible",
+        "disease_button_icon",
+        "disease_button_click",
+        "disease_panel_visible",
+        "disease_icon",
+        "disease_name",
+        "disease_tips",
+    )
     for binding_name in binding_names:
         full_name = "#diet_screen.{}".format(binding_name)
         assert_true(full_name in ui_text, "UI declares {}".format(full_name))
         assert_true(full_name in logic_text, "Python binds {}".format(full_name))
+    assert_true('@ViewBinder.binding_collection(ViewBinder.BF_BindBool, "disease_grid", "#diet_screen.disease_button_visible")' in logic_text,
+                "disease button visibility uses disease grid collection binding")
+    assert_true('@ViewBinder.binding_collection(ViewBinder.BF_BindString, "disease_grid", "#diet_screen.disease_button_icon")' in logic_text,
+                "disease button icon uses disease grid collection binding")
+    assert_true('@ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#diet_screen.disease_button_click")' in logic_text and
+                "args['#collection_index']" in logic_text,
+                "disease button click receives its collection index")
+    assert_true("self.selectedDiseaseId = ''" in logic_text and "if self.selectedDiseaseId == diseaseId:" in logic_text,
+                "disease details default closed and toggle by disease ID")
+    assert_true("self.selectedDiseaseData = self.emptyDiseaseData" in logic_text and
+                "active[0]['id'] == self.selectedDiseaseId" in logic_text and
+                "active[1]['id'] == self.selectedDiseaseId" in logic_text,
+                "disease selection is precomputed by ID and closes when the selected disease disappears")
     assert_true("#diet_screen.effects" not in ui_text and "#diet_screen.effects" not in logic_text, "removed effects binding remains absent")
     assert_true("def UpdateDiseaseData(" in logic_text, "DietUI disease update entry")
     assert_true("diseaseClientSys.diseaseData" in logic_text, "DietUI reads cached disease data")
@@ -437,22 +468,188 @@ def test_system_registration_and_ui_bindings():
 
     root = find_named_control(ui_data["main"], "root")
     nutrition_grid = find_named_control(root, "rows_grid")
-    healthy_label = find_named_control(root, "disease_healthy")
-    assert_true(root["size"][1] >= 292, "expanded Diet panel height")
+    disease_grid = find_named_control(root, "disease_grid")
+    disease_panel = find_named_control(root, "disease_panel")
+    disease_button = find_named_control(ui_data, "disease_button")
+    disease_button_icon = find_named_control(disease_button, "image")
+    disease_icon = find_named_control(disease_panel, "disease_icon")
+    disease_name = find_named_control(disease_panel, "disease_name")
+    disease_tips = find_named_control(disease_panel, "tips")
+
+    assert_equal(root["size"], [248, 148.0], "refactored Diet panel size remains unchanged")
+    assert_equal(len(root["controls"]), 6, "refactored Diet panel control count remains unchanged")
     assert_equal(nutrition_grid["grid_dimensions"], [1, 5], "five nutrition rows remain")
     assert_equal(nutrition_grid["maximum_grid_items"], 5, "nutrition row limit")
-    assert_equal(healthy_label["text"], "当前身体状况良好", "healthy state text")
-    assert_true(find_named_control(root, "disease_grid") is None and "disease_rows" not in ui_text,
-                "disease cards avoid a second collection grid")
+
+    assert_equal(disease_grid["anchor_from"], "top_left", "disease grid source anchor remains unchanged")
+    assert_equal(disease_grid["anchor_to"], "top_right", "disease grid target anchor remains unchanged")
+    assert_equal(disease_grid["size"], [20.0, "default"], "disease grid size remains unchanged")
+    assert_equal(disease_grid["layer"], 1, "disease grid layer remains unchanged")
+    assert_equal(disease_grid["collection_name"], "disease_grid", "disease grid collection name")
+    assert_equal(disease_grid["grid_dimensions"], [2, 2], "disease grid dimensions remain unchanged")
+    assert_equal(disease_grid["grid_item_template"], "diet_screen.disease_button", "disease grid item template")
+    assert_equal(disease_grid["grid_rescaling_type"], "horizontal", "disease grid rescaling remains unchanged")
+    assert_equal(disease_grid["maximum_grid_items"], 2, "disease grid only exposes two disease icons")
+
+    assert_equal(disease_button["size"], [20.0, 20.0], "disease button size remains unchanged")
+    assert_equal(disease_button["layer"], 6, "disease button layer remains unchanged")
+    assert_equal(len(disease_button["controls"]), 5, "disease button control count remains unchanged")
+    assert_equal(disease_button["$pressed_button_name"], "#diet_screen.disease_button_click", "disease button click mapping")
+    assert_true("button_mappings" not in disease_button, "disease button inherits common input mappings")
+    assert_equal(disease_button["bindings"], [
+        {
+            "binding_type": "collection_details",
+            "binding_collection_name": "disease_grid",
+            "binding_condition": "always_when_visible",
+        },
+        {
+            "binding_type": "collection",
+            "binding_collection_name": "disease_grid",
+            "binding_condition": "always",
+            "binding_name": "#diet_screen.disease_button_visible",
+            "binding_name_override": "#visible",
+        },
+    ], "disease button collection bindings")
+    assert_equal(disease_button_icon["size"], [18.0, 18.0], "disease button icon size remains unchanged")
+    assert_equal(disease_button_icon["layer"], 4, "disease button icon layer remains unchanged")
+    assert_equal(disease_button_icon["bindings"], [{
+        "binding_type": "collection",
+        "binding_collection_name": "disease_grid",
+        "binding_condition": "always",
+        "binding_name": "#diet_screen.disease_button_icon",
+        "binding_name_override": "#texture",
+    }], "disease button icon collection binding")
+
+    assert_equal(disease_panel["anchor_from"], "bottom_middle", "disease panel source anchor remains unchanged")
+    assert_equal(disease_panel["anchor_to"], "top_middle", "disease panel target anchor remains unchanged")
+    assert_equal(disease_panel["size"], ["100%+0px", 44.0], "disease panel size remains unchanged")
+    assert_equal(disease_panel["layer"], 1, "disease panel layer remains unchanged")
+    assert_equal(len(disease_panel["controls"]), 4, "disease panel control count remains unchanged")
+    assert_equal(disease_panel["bindings"], [{
+        "binding_condition": "always",
+        "binding_name": "#diet_screen.disease_panel_visible",
+        "binding_name_override": "#visible",
+    }], "disease panel visibility binding")
+    assert_equal([disease_icon["anchor_from"], disease_icon["anchor_to"], disease_icon["offset"], disease_icon["size"], disease_icon["layer"]],
+                 ["top_left", "top_left", [5.0, 5.0], [18.0, 18.0], 2], "detail icon layout remains unchanged")
+    assert_equal([disease_name["anchor_from"], disease_name["anchor_to"], disease_name["offset"], disease_name["layer"]],
+                 ["top_left", "top_left", [25.0, 5.0], 4], "detail name layout remains unchanged")
+    assert_equal([disease_tips["anchor_from"], disease_tips["anchor_to"], disease_tips["offset"], disease_tips["size"], disease_tips["layer"]],
+                 ["top_left", "top_left", [5.0, 24.0], ["100%+-12px", 16.0], 5], "detail tips layout remains unchanged")
+    full_icon_name = "#diet_screen.disease_icon"
+    assert_equal(disease_icon["texture"], full_icon_name, "disease_icon display property binding")
+    assert_equal(disease_icon["bindings"], [{
+        "binding_condition": "always",
+        "binding_name": full_icon_name,
+        "binding_name_override": "#texture",
+    }], "disease_icon detail binding")
+
+    for control, binding_name in (
+        (disease_name, "disease_name"),
+        (disease_tips, "disease_tips"),
+    ):
+        full_name = "#diet_screen.{}".format(binding_name)
+        assert_equal(control["text"], full_name, "{} display property binding".format(binding_name))
+        assert_equal(control["bindings"], [{
+            "binding_condition": "always",
+            "binding_name": full_name,
+        }], "{} detail binding".format(binding_name))
+
     for slot_index in range(2):
         template_name = "disease_slot_{}".format(slot_index)
-        assert_true(find_named_control(root, template_name) is not None, "disease slot {} instance".format(slot_index))
         assert_true(template_name in ui_data, "disease slot {} template".format(slot_index))
-        assert_true(find_named_control(ui_data[template_name], "symptom") is not None,
-                    "disease slot {} shows symptoms".format(slot_index))
+        assert_true(find_named_control(root, template_name) is None,
+                    "legacy disease slot {} template is not instantiated".format(slot_index))
     assert_true("refreshDiseaseGroupFlags" in logic_text and "diseaseRelated" in logic_text and
                 "diseaseGroupHighlightColor" in logic_text,
                 "nutrition rows highlight precomputed disease-related groups")
+
+
+def test_disease_ui_detail_binding_reads_precomputed_selection():
+    diet_ui_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
+    source = diet_ui_logic_path.read_text(encoding="utf-8-sig")
+    tree = ast.parse(source, filename=str(diet_ui_logic_path))
+    diet_ui_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "DietUI")
+    method_names = {
+        "UpdateDiseaseData",
+        "selectDiseaseButton",
+        "bindDiseasePanelVisible",
+        "bindDiseaseIcon",
+        "bindDiseaseName",
+        "bindDiseaseTips",
+    }
+    method_nodes = []
+    for node in diet_ui_class.body:
+        if isinstance(node, ast.FunctionDef) and node.name in method_names:
+            node.decorator_list = []
+            method_nodes.append(node)
+
+    class ViewRequestStub(object):
+        Nothing = "nothing"
+        Refresh = "refresh"
+
+    method_module = ast.Module(body=method_nodes, type_ignores=[])
+    ast.fix_missing_locations(method_module)
+    namespace = {"ViewRequest": ViewRequestStub}
+    exec(compile(method_module, str(diet_ui_logic_path), "exec"), namespace)
+    update_disease_data = namespace["UpdateDiseaseData"]
+    select_disease_button = namespace["selectDiseaseButton"]
+    bind_disease_panel_visible = namespace["bindDiseasePanelVisible"]
+    bind_disease_icon = namespace["bindDiseaseIcon"]
+    bind_disease_name = namespace["bindDiseaseName"]
+    bind_disease_tips = namespace["bindDiseaseTips"]
+
+    class UiState(object):
+        def refreshDiseaseGroupFlags(self):
+            self.groupFlagsRefreshed = True
+
+        def UpdateScreen(self, force):
+            self.screenRefreshForce = force
+
+    first = {
+        "id": "hypoglycemia",
+        "icon": "textures/ui/diet_nullgr/disease/hypoglycemia_effect",
+        "name": "低血糖",
+        "tips": "能量不足；吃主食、水果或甜食",
+    }
+    second = {
+        "id": "scurvy",
+        "icon": "textures/ui/diet_nullgr/disease/scurvy_effect",
+        "name": "坏血病",
+        "tips": "水果蔬菜不足；补充水果或蔬菜",
+    }
+    state = UiState()
+    state.emptyDiseaseData = {"id": ""}
+    state.selectedDiseaseData = first
+    state.selectedDiseaseId = "hypoglycemia"
+    state.diseaseData = None
+    assert_true(bind_disease_panel_visible(state), "selected disease opens the detail panel")
+    assert_equal(bind_disease_icon(state), first["icon"], "detail icon reads the precomputed selection")
+    assert_equal(bind_disease_name(state), first["name"], "detail name reads the precomputed selection")
+    assert_equal(bind_disease_tips(state), first["tips"], "detail tips read the precomputed selection")
+
+    state.selectedDiseaseId = "scurvy"
+    state.selectedDiseaseData = second
+    update_disease_data(state, {"active": [second, first]})
+    assert_true(state.selectedDiseaseData is second and state.selectedDiseaseId == "scurvy",
+                "selected disease survives a collection reorder by ID")
+    update_disease_data(state, {"active": [first]})
+    assert_true(state.selectedDiseaseData is state.emptyDiseaseData and state.selectedDiseaseId == "",
+                "selected disease recovery closes details instead of switching rows")
+    assert_true(state.groupFlagsRefreshed and state.screenRefreshForce,
+                "disease synchronization refreshes group flags and bindings")
+
+    state.diseaseData = {"active": [first, second]}
+    assert_equal(select_disease_button(state, {"#collection_index": 0}), ViewRequestStub.Refresh,
+                 "first disease button requests a binding refresh")
+    assert_true(state.selectedDiseaseData is first and state.selectedDiseaseId == "hypoglycemia",
+                "first disease button selects its disease ID and row")
+    select_disease_button(state, {"#collection_index": 1})
+    assert_true(state.selectedDiseaseData is second and state.selectedDiseaseId == "scurvy",
+                "second disease button switches details directly")
+    select_disease_button(state, {"#collection_index": 1})
+    assert_true(state.selectedDiseaseData is state.emptyDiseaseData and state.selectedDiseaseId == "",
+                "clicking the selected disease again closes details")
 
 
 def test_modsdk_import_whitelist():
@@ -487,6 +684,7 @@ def test_modsdk_import_whitelist():
 def main():
     tests = [
         test_trigger_and_recovery_thresholds,
+        test_client_tips_contract,
         test_new_player_protection,
         test_two_slots_and_half_progress_cap,
         test_blood_sugar_mutual_exclusion,
@@ -494,6 +692,7 @@ def main():
         test_recovery_transactions,
         test_resources_and_languages,
         test_system_registration_and_ui_bindings,
+        test_disease_ui_detail_binding_reads_precomputed_selection,
         test_modsdk_import_whitelist,
     ]
     for test in tests:

@@ -386,6 +386,7 @@ def buildClientData(data):
             'id': diseaseId,
             'name': diseaseConfig['name'],
             'icon': diseaseConfig['icon'],
+            'tips': diseaseConfig['tips'],
             'durationText': "已持续 {} / 最长 {}".format(
                 formatDuration(data['activeSeconds'][diseaseId]),
                 formatDuration(diseaseConfig['maxActiveSeconds'])

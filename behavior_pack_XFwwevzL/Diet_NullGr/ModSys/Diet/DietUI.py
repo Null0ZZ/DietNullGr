@@ -28,10 +28,12 @@ class DietUI(ScreenNode):
             })
         self.dietData = {'active': True, 'groups': defaultGroups}
         self.diseaseData = {'active': []}
+        self.selectedDiseaseId = ''
         self.emptyDiseaseData = {
             'id': '',
             'name': '',
             'icon': '',
+            'tips': '',
             'durationText': '',
             'progressText': '',
             'symptom': '',
@@ -39,6 +41,7 @@ class DietUI(ScreenNode):
             'relief': '',
             'groups': []
         }
+        self.selectedDiseaseData = self.emptyDiseaseData
         self.itemAuxCache = {}
         compFactory = clientApi.GetEngineCompFactory()
         self.itemComp = compFactory.CreateItem(clientApi.GetLevelId())
@@ -65,12 +68,23 @@ class DietUI(ScreenNode):
     # 疾病变化与营养变化使用独立同步事件，面板打开期间由疾病客户端系统直接刷新此数据源。
     def UpdateDiseaseData(self, data):
         self.diseaseData = data
+        self.selectedDiseaseData = self.emptyDiseaseData
+        if self.selectedDiseaseId:
+            active = self.diseaseData['active']
+            if len(active) > 0 and active[0]['id'] == self.selectedDiseaseId:
+                self.selectedDiseaseData = active[0]
+            elif len(active) > 1 and active[1]['id'] == self.selectedDiseaseId:
+                self.selectedDiseaseData = active[1]
+            else:
+                self.selectedDiseaseId = ''
         self.refreshDiseaseGroupFlags()
         self.UpdateScreen(True)
 
     # 关闭按钮通过绑定事件弹出 PushScreen 栈，避免控件路径变化导致回调注册失败。
     @ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#diet_screen.close")
     def CloseDietScreen(self, args):
+        self.selectedDiseaseId = ''
+        self.selectedDiseaseData = self.emptyDiseaseData
         clientApi.PopScreen()
         return ViewRequest.Nothing
 
@@ -194,6 +208,45 @@ class DietUI(ScreenNode):
         if index < len(self.diseaseData['active']):
             return self.diseaseData['active'][index]
         return self.emptyDiseaseData
+
+    @ViewBinder.binding_collection(ViewBinder.BF_BindBool, "disease_grid", "#diet_screen.disease_button_visible")
+    def bindDiseaseButtonVisible(self, index):
+        return index < len(self.diseaseData['active'])
+
+    @ViewBinder.binding_collection(ViewBinder.BF_BindString, "disease_grid", "#diet_screen.disease_button_icon")
+    def bindDiseaseButtonIcon(self, index):
+        return self.getDiseaseData(index)['icon']
+
+    @ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#diet_screen.disease_button_click")
+    def selectDiseaseButton(self, args):
+        index = args['#collection_index']
+        if index >= len(self.diseaseData['active']):
+            return ViewRequest.Nothing
+        diseaseId = self.diseaseData['active'][index]['id']
+        if self.selectedDiseaseId == diseaseId:
+            self.selectedDiseaseId = ''
+            self.selectedDiseaseData = self.emptyDiseaseData
+        else:
+            self.selectedDiseaseId = diseaseId
+            self.selectedDiseaseData = self.diseaseData['active'][index]
+        return ViewRequest.Refresh
+
+    # 详情绑定只读同步与点击事件预先维护的标量行，避免 ViewBinder 刷新期间遍历或比较疾病集合。
+    @ViewBinder.binding(ViewBinder.BF_BindBool, "#diet_screen.disease_panel_visible")
+    def bindDiseasePanelVisible(self):
+        return bool(self.selectedDiseaseData['id'])
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_icon")
+    def bindDiseaseIcon(self):
+        return self.selectedDiseaseData['icon']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_name")
+    def bindDiseaseName(self):
+        return self.selectedDiseaseData['name']
+
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.disease_tips")
+    def bindDiseaseTips(self):
+        return self.selectedDiseaseData['tips']
 
     @ViewBinder.binding(ViewBinder.BF_BindBool, "#diet_screen.disease_slot_0_visible")
     def bindDiseaseSlot0Visible(self):

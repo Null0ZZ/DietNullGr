@@ -224,6 +224,97 @@
             }
         ]
     },
+    "disease_button@common.button": {
+        "type": "button",
+        "$control_alpha": 1.0,
+        "$default_texture": "textures/ui/hud_mob_effect_background",
+        "$hover_texture": "textures/ui/hud_mob_effect_background",
+        "$is_new_nine_slice": false,
+        "$label_color": [
+            1,
+            1,
+            1
+        ],
+        "$label_font_scale_factor": 1.0,
+        "$label_font_size": "large",
+        "$label_layer": 3,
+        "$label_offset": [
+            0,
+            0
+        ],
+        "$label_text": "",
+        "$nine_slice_buttom": 0,
+        "$nine_slice_left": 0,
+        "$nine_slice_right": 0,
+        "$nine_slice_top": 0,
+        "$nineslice_size": [
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "$pressed_button_name": "#diet_screen.disease_button_click",
+        "$pressed_texture": "textures/ui/hud_mob_effect_background",
+        "$texture_layer": 2,
+        "size": [
+            20.0,
+            20.0
+        ],
+        "layer": 6,
+        "visible": "#diet_screen.disease_button_visible",
+        "default_control": "default",
+        "hover_control": "hover",
+        "is_handle_button_move_event": true,
+        "pressed_control": "pressed",
+        "bindings": [
+            {
+                "binding_type": "collection_details",
+                "binding_collection_name": "disease_grid",
+                "binding_condition": "always_when_visible"
+            },
+            {
+                "binding_type": "collection",
+                "binding_collection_name": "disease_grid",
+                "binding_condition": "always",
+                "binding_name": "#diet_screen.disease_button_visible",
+                "binding_name_override": "#visible"
+            }
+        ],
+        "controls": [
+            {
+                "default@netease_editor_template_namespace.default": {}
+            },
+            {
+                "hover@netease_editor_template_namespace.hover": {}
+            },
+            {
+                "pressed@netease_editor_template_namespace.pressed": {}
+            },
+            {
+                "button_label@netease_editor_template_namespace.button_label": {}
+            },
+            {
+                "image": {
+                    "type": "image",
+                    "size": [
+                        18.0,
+                        18.0
+                    ],
+                    "layer": 4,
+                    "texture": "#diet_screen.disease_button_icon",
+                    "bindings": [
+                        {
+                            "binding_type": "collection",
+                            "binding_collection_name": "disease_grid",
+                            "binding_condition": "always",
+                            "binding_name": "#diet_screen.disease_button_icon",
+                            "binding_name_override": "#texture"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
     "disease_slot_0": {
         "type": "panel",
         "anchor_from": "top_middle",
@@ -248,25 +339,24 @@
             {
                 "row_bg": {
                     "type": "image",
-                    "layer": 0,
                     "size": [
                         224,
                         58
                     ],
+                    "layer": 0,
+                    "alpha": 0.92,
                     "nineslice_size": [
                         3,
                         3,
                         3,
                         3
                     ],
-                    "texture": "textures/ui/diet_nullgr/row",
-                    "alpha": 0.92
+                    "texture": "textures/ui/diet_nullgr/row"
                 }
             },
             {
                 "icon": {
                     "type": "image",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -277,6 +367,7 @@
                         18,
                         18
                     ],
+                    "layer": 1,
                     "texture": "#diet_screen.disease_slot_0_icon",
                     "bindings": [
                         {
@@ -290,7 +381,6 @@
             {
                 "name": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -301,6 +391,7 @@
                         88,
                         12
                     ],
+                    "layer": 1,
                     "color": [
                         1.0,
                         0.46,
@@ -321,7 +412,6 @@
             {
                 "duration": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "right_middle",
                     "anchor_to": "right_middle",
                     "offset": [
@@ -332,6 +422,7 @@
                         96,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.8,
                         0.78,
@@ -351,7 +442,6 @@
             {
                 "progress": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -362,6 +452,7 @@
                         186,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         1.0,
                         0.8,
@@ -381,7 +472,6 @@
             {
                 "symptom": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -392,6 +482,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.92,
                         0.72,
@@ -411,7 +502,6 @@
             {
                 "cause": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -422,6 +512,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.73,
                         0.7,
@@ -441,7 +532,6 @@
             {
                 "relief": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -452,6 +542,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.55,
                         0.88,
@@ -494,25 +585,24 @@
             {
                 "row_bg": {
                     "type": "image",
-                    "layer": 0,
                     "size": [
                         224,
                         58
                     ],
+                    "layer": 0,
+                    "alpha": 0.92,
                     "nineslice_size": [
                         3,
                         3,
                         3,
                         3
                     ],
-                    "texture": "textures/ui/diet_nullgr/row",
-                    "alpha": 0.92
+                    "texture": "textures/ui/diet_nullgr/row"
                 }
             },
             {
                 "icon": {
                     "type": "image",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -523,6 +613,7 @@
                         18,
                         18
                     ],
+                    "layer": 1,
                     "texture": "#diet_screen.disease_slot_1_icon",
                     "bindings": [
                         {
@@ -536,7 +627,6 @@
             {
                 "name": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -547,6 +637,7 @@
                         88,
                         12
                     ],
+                    "layer": 1,
                     "color": [
                         1.0,
                         0.46,
@@ -567,7 +658,6 @@
             {
                 "duration": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "right_middle",
                     "anchor_to": "right_middle",
                     "offset": [
@@ -578,6 +668,7 @@
                         96,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.8,
                         0.78,
@@ -597,7 +688,6 @@
             {
                 "progress": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -608,6 +698,7 @@
                         186,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         1.0,
                         0.8,
@@ -627,7 +718,6 @@
             {
                 "symptom": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -638,6 +728,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.92,
                         0.72,
@@ -657,7 +748,6 @@
             {
                 "cause": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -668,6 +758,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.73,
                         0.7,
@@ -687,7 +778,6 @@
             {
                 "relief": {
                     "type": "label",
-                    "layer": 1,
                     "anchor_from": "left_middle",
                     "anchor_to": "left_middle",
                     "offset": [
@@ -698,6 +788,7 @@
                         210,
                         10
                     ],
+                    "layer": 1,
                     "color": [
                         0.55,
                         0.88,
@@ -741,7 +832,7 @@
                                 "anchor_to": "center",
                                 "size": [
                                     248,
-                                    292.0
+                                    148.0
                                 ],
                                 "controls": [
                                     {
@@ -773,7 +864,11 @@
                                                 160,
                                                 12
                                             ],
-                                            "color": "#diet_screen.title_color",
+                                            "color": [
+                                                0.1372549019607843,
+                                                0.1372549019607843,
+                                                0.1372549019607843
+                                            ],
                                             "font_size": "normal",
                                             "shadow": false,
                                             "text": "#diet_screen.title",
@@ -813,68 +908,6 @@
                                             "grid_rescaling_type": "none",
                                             "maximum_grid_items": 5
                                         }
-                                    },
-                                    {
-                                        "disease_title": {
-                                            "type": "label",
-                                            "anchor_from": "top_middle",
-                                            "anchor_to": "top_middle",
-                                            "offset": [
-                                                0,
-                                                138.0
-                                            ],
-                                            "size": [
-                                                224,
-                                                12
-                                            ],
-                                            "color": [
-                                                0.96,
-                                                0.86,
-                                                0.66
-                                            ],
-                                            "font_size": "normal",
-                                            "shadow": false,
-                                            "text": "疾病状态",
-                                            "text_alignment": "left"
-                                        }
-                                    },
-                                    {
-                                        "disease_healthy": {
-                                            "type": "label",
-                                            "anchor_from": "top_middle",
-                                            "anchor_to": "top_middle",
-                                            "offset": [
-                                                0,
-                                                166.0
-                                            ],
-                                            "size": [
-                                                224,
-                                                14
-                                            ],
-                                            "visible": "#diet_screen.disease_healthy_visible",
-                                            "color": [
-                                                0.5,
-                                                0.9,
-                                                0.58
-                                            ],
-                                            "font_size": "normal",
-                                            "shadow": false,
-                                            "text": "当前身体状况良好",
-                                            "text_alignment": "center",
-                                            "bindings": [
-                                                {
-                                                    "binding_name_override": "#visible",
-                                                    "binding_condition": "always",
-                                                    "binding_name": "#diet_screen.disease_healthy_visible"
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "disease_slot_0@diet_screen.disease_slot_0": {}
-                                    },
-                                    {
-                                        "disease_slot_1@diet_screen.disease_slot_1": {}
                                     },
                                     {
                                         "button@common.button": {
@@ -950,6 +983,125 @@
                                                 },
                                                 {
                                                     "button_label@netease_editor_template_namespace.button_label": {}
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "disease_grid": {
+                                            "type": "grid",
+                                            "anchor_from": "top_left",
+                                            "anchor_to": "top_right",
+                                            "size": [
+                                                20.0,
+                                                "default"
+                                            ],
+                                            "layer": 1,
+                                            "collection_name": "disease_grid",
+                                            "grid_dimensions": [
+                                                2,
+                                                2
+                                            ],
+                                            "grid_item_template": "diet_screen.disease_button",
+                                            "grid_rescaling_type": "horizontal",
+                                            "maximum_grid_items": 2
+                                        }
+                                    },
+                                    {
+                                        "disease_panel": {
+                                            "type": "panel",
+                                            "anchor_from": "bottom_middle",
+                                            "anchor_to": "top_middle",
+                                            "size": [
+                                                "100%+0px",
+                                                44.0
+                                            ],
+                                            "layer": 1,
+                                            "visible": "#diet_screen.disease_panel_visible",
+                                            "bindings": [
+                                                {
+                                                    "binding_condition": "always",
+                                                    "binding_name": "#diet_screen.disease_panel_visible",
+                                                    "binding_name_override": "#visible"
+                                                }
+                                            ],
+                                            "controls": [
+                                                {
+                                                    "bg": {
+                                                        "type": "image",
+                                                        "layer": 1,
+                                                        "texture": "textures/ui/effect_background"
+                                                    }
+                                                },
+                                                {
+                                                    "disease_icon": {
+                                                        "type": "image",
+                                                        "anchor_from": "top_left",
+                                                        "anchor_to": "top_left",
+                                                        "offset": [
+                                                            5.0,
+                                                            5.0
+                                                        ],
+                                                        "size": [
+                                                            18.0,
+                                                            18.0
+                                                        ],
+                                                        "layer": 2,
+                                                        "texture": "#diet_screen.disease_icon",
+                                                        "bindings": [
+                                                            {
+                                                                "binding_condition": "always",
+                                                                "binding_name": "#diet_screen.disease_icon",
+                                                                "binding_name_override": "#texture"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "disease_name": {
+                                                        "type": "label",
+                                                        "anchor_from": "top_left",
+                                                        "anchor_to": "top_left",
+                                                        "offset": [
+                                                            25.0,
+                                                            5.0
+                                                        ],
+                                                        "layer": 4,
+                                                        "font_type": "default",
+                                                        "text": "#diet_screen.disease_name",
+                                                        "text_alignment": "center",
+                                                        "bindings": [
+                                                            {
+                                                                "binding_condition": "always",
+                                                                "binding_name": "#diet_screen.disease_name"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "tips": {
+                                                        "type": "label",
+                                                        "anchor_from": "top_left",
+                                                        "anchor_to": "top_left",
+                                                        "offset": [
+                                                            5.0,
+                                                            24.0
+                                                        ],
+                                                        "size": [
+                                                            "100%+-12px",
+                                                            16.0
+                                                        ],
+                                                        "layer": 5,
+                                                        "font_type": "default",
+                                                        "shadow": true,
+                                                        "text": "#diet_screen.disease_tips",
+                                                        "bindings": [
+                                                            {
+                                                                "binding_condition": "always",
+                                                                "binding_name": "#diet_screen.disease_tips"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             ]
                                         }
