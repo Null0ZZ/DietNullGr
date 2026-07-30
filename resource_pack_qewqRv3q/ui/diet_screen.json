@@ -273,11 +273,11 @@
                 "binding_condition": "always_when_visible"
             },
             {
-                "binding_type": "collection",
+                "binding_name_override": "#visible",
                 "binding_collection_name": "disease_grid",
                 "binding_condition": "always",
-                "binding_name": "#diet_screen.disease_button_visible",
-                "binding_name_override": "#visible"
+                "binding_type": "collection",
+                "binding_name": "#diet_screen.disease_button_visible"
             }
         ],
         "controls": [
@@ -304,11 +304,11 @@
                     "texture": "#diet_screen.disease_button_icon",
                     "bindings": [
                         {
-                            "binding_type": "collection",
+                            "binding_name_override": "#texture",
                             "binding_collection_name": "disease_grid",
                             "binding_condition": "always",
-                            "binding_name": "#diet_screen.disease_button_icon",
-                            "binding_name_override": "#texture"
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.disease_button_icon"
                         }
                     ]
                 }
@@ -1020,9 +1020,9 @@
                                             "visible": "#diet_screen.disease_panel_visible",
                                             "bindings": [
                                                 {
+                                                    "binding_name_override": "#visible",
                                                     "binding_condition": "always",
-                                                    "binding_name": "#diet_screen.disease_panel_visible",
-                                                    "binding_name_override": "#visible"
+                                                    "binding_name": "#diet_screen.disease_panel_visible"
                                                 }
                                             ],
                                             "controls": [
@@ -1050,9 +1050,9 @@
                                                         "texture": "#diet_screen.disease_icon",
                                                         "bindings": [
                                                             {
+                                                                "binding_name_override": "#texture",
                                                                 "binding_condition": "always",
-                                                                "binding_name": "#diet_screen.disease_icon",
-                                                                "binding_name_override": "#texture"
+                                                                "binding_name": "#diet_screen.disease_icon"
                                                             }
                                                         ]
                                                     }
