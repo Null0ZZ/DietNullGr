@@ -416,7 +416,8 @@ def buildClientData(data):
             'symptom': diseaseConfig['symptom'],
             'cause': diseaseConfig['cause'],
             'relief': diseaseConfig['relief'],
-            'groups': diseaseConfig['uiGroups']
+            'lowGroups': diseaseConfig['lowGroups'],
+            'highGroups': diseaseConfig['highGroups']
         })
     return {
         'active': activeRows,

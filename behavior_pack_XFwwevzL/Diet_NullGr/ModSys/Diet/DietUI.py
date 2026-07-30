@@ -24,7 +24,7 @@ class DietUI(ScreenNode):
                 'color': groupConfig['color'],
                 'value': groupConfig['defaultValue'],
                 'tracked': True,
-                'diseaseRelated': False
+                'diseaseOutline': ''
             })
         self.dietData = {'active': True, 'groups': defaultGroups}
         self.diseaseData = {'active': []}
@@ -39,7 +39,8 @@ class DietUI(ScreenNode):
             'symptom': '',
             'cause': '',
             'relief': '',
-            'groups': []
+            'lowGroups': [],
+            'highGroups': []
         }
         self.selectedDiseaseData = self.emptyDiseaseData
         self.itemAuxCache = {}
@@ -53,7 +54,7 @@ class DietUI(ScreenNode):
         diseaseClientSys = clientApi.GetSystem(com.modName, diseaseConfig.csname)
         if diseaseClientSys and diseaseClientSys.diseaseData is not None:
             self.diseaseData = diseaseClientSys.diseaseData
-        self.refreshDiseaseGroupFlags()
+        self.refreshDiseaseOutlineStates()
         self.UpdateScreen(True)
 
     def Creat(self):
@@ -62,7 +63,7 @@ class DietUI(ScreenNode):
     # 服务端同步只更新绑定数据源，控件树路径变化不会影响面板刷新。
     def UpdateDietData(self, data):
         self.dietData = data
-        self.refreshDiseaseGroupFlags()
+        self.refreshDiseaseOutlineStates()
         self.UpdateScreen(True)
 
     # 疾病变化与营养变化使用独立同步事件，面板打开期间由疾病客户端系统直接刷新此数据源。
@@ -77,7 +78,7 @@ class DietUI(ScreenNode):
                 self.selectedDiseaseData = active[1]
             else:
                 self.selectedDiseaseId = ''
-        self.refreshDiseaseGroupFlags()
+        self.refreshDiseaseOutlineStates()
         self.UpdateScreen(True)
 
     # 关闭按钮通过绑定事件弹出 PushScreen 栈，避免控件路径变化导致回调注册失败。
@@ -120,14 +121,21 @@ class DietUI(ScreenNode):
         color = self.getGroupData(index)['color']
         return (color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
 
-    # 疾病同步先把关联组压成营养行标量，绑定刷新时不再跨读第二套集合数据。
-    def refreshDiseaseGroupFlags(self):
-        diseaseGroups = {}
+    # 疾病同步先把高低异常方向压成营养行标量，行绑定无需遍历疾病复合数据。
+    def refreshDiseaseOutlineStates(self):
+        outlineStates = {}
         for diseaseData in self.diseaseData['active']:
-            for groupId in diseaseData['groups']:
-                diseaseGroups[groupId] = True
+            for groupId in diseaseData['lowGroups']:
+                outlineStates[groupId] = 'low'
+            # 高值异常优先显示红色，避免未来并发疾病配置同组时被低值颜色覆盖。
+            for groupId in diseaseData['highGroups']:
+                outlineStates[groupId] = 'high'
         for groupData in self.dietData['groups']:
-            groupData['diseaseRelated'] = groupData['id'] in diseaseGroups
+            groupId = groupData['id']
+            if groupId in outlineStates:
+                groupData['diseaseOutline'] = outlineStates[groupId]
+            else:
+                groupData['diseaseOutline'] = ''
 
     # 百分比颜色沿用旧面板阈值，绑定刷新和原手动刷新表现保持一致。
     def getPercentColor(self, progress):
@@ -152,8 +160,6 @@ class DietUI(ScreenNode):
         groupData = self.getGroupData(index)
         if not groupData['tracked']:
             return (0.48, 0.48, 0.48)
-        if groupData['diseaseRelated']:
-            return config.diseaseGroupHighlightColor
         return self.getGroupDisplayColor(index)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_tooltip")
@@ -165,8 +171,6 @@ class DietUI(ScreenNode):
         groupData = self.getGroupData(index)
         if not groupData['tracked']:
             return (0.42, 0.42, 0.42)
-        if groupData['diseaseRelated']:
-            return config.diseaseGroupTooltipColor
         return (0.62, 0.6, 0.56)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_percent")
@@ -188,9 +192,18 @@ class DietUI(ScreenNode):
         groupData = self.getGroupData(index)
         if not groupData['tracked']:
             return (0.22, 0.22, 0.22)
-        if groupData['diseaseRelated']:
-            return config.diseaseGroupHighlightColor
         return self.getGroupDisplayColor(index)
+
+    @ViewBinder.binding_collection(ViewBinder.BF_BindBool, "diet_rows", "#diet_screen.row_bar_outline_visible")
+    def bindRowBarOutlineVisible(self, index):
+        groupData = self.getGroupData(index)
+        return groupData['tracked'] and bool(groupData['diseaseOutline'])
+
+    @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_bar_outline_color")
+    def bindRowBarOutlineColor(self, index):
+        if self.getGroupData(index)['diseaseOutline'] == 'high':
+            return config.diseaseHighOutlineColor
+        return config.diseaseLowOutlineColor
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindFloat, "diet_rows", "#diet_screen.row_bar_clip")
     def bindRowBarClip(self, index):

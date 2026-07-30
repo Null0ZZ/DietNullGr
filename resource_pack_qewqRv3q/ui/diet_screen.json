@@ -236,11 +236,9 @@
                         143.0,
                         7.0
                     ],
-                    "color": [
-                        1.0,
-                        0.2509803921568627,
-                        0.1019607843137255
-                    ],
+                    "layer": 2,
+                    "visible": "#diet_screen.row_bar_outline_visible",
+                    "color": "#diet_screen.row_bar_outline_color",
                     "fill": true,
                     "nineslice_size": [
                         1.0,
@@ -252,6 +250,22 @@
                     "uv": [
                         0.0,
                         0.0
+                    ],
+                    "bindings": [
+                        {
+                            "binding_name_override": "#visible",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_bar_outline_visible"
+                        },
+                        {
+                            "binding_name_override": "#color",
+                            "binding_collection_name": "diet_rows",
+                            "binding_condition": "always",
+                            "binding_type": "collection",
+                            "binding_name": "#diet_screen.row_bar_outline_color"
+                        }
                     ]
                 }
             }

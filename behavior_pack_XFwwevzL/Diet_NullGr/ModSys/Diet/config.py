@@ -83,8 +83,8 @@ percentColorHealthy = (0.96, 0.96, 0.96)
 percentColorCaution = (1.0, 0.92, 0.18)
 percentColorWarning = (1.0, 0.55, 0.08)
 percentColorDanger = (1.0, 0.16, 0.12)
-diseaseGroupHighlightColor = (1.0, 0.56, 0.2)
-diseaseGroupTooltipColor = (1.0, 0.78, 0.42)
+diseaseHighOutlineColor = (1.0, 0.2509803921568627, 0.1019607843137255)
+diseaseLowOutlineColor = (0.3058823529411765, 0.9098039215686274, 1.0)
 
 groups = {
     "fruits": {

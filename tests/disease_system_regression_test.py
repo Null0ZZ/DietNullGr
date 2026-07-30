@@ -15,6 +15,7 @@ sys.path.insert(0, str(behavior_root))
 
 from Diet_NullGr.ModSys.Disease import Disease
 from Diet_NullGr.ModSys.Disease import config
+from Diet_NullGr.ModSys.Diet import config as diet_config
 
 
 def assert_true(condition, message):
@@ -155,7 +156,11 @@ def test_client_tips_contract():
         data = Disease.createDefaultData()
         assert_true(Disease.diagnoseDisease(data, disease_id), "{} client tips setup".format(disease_id))
         client_data = Disease.buildClientData(data)
-        assert_equal(client_data["active"][0]["tips"], tips, "{} client tips contract".format(disease_id))
+        active_data = client_data["active"][0]
+        assert_equal(active_data["tips"], tips, "{} client tips contract".format(disease_id))
+        assert_equal(active_data["lowGroups"], disease_config["lowGroups"], "{} low outline groups".format(disease_id))
+        assert_equal(active_data["highGroups"], disease_config["highGroups"], "{} high outline groups".format(disease_id))
+        assert_true("groups" not in active_data, "{} removed generic highlight groups".format(disease_id))
 
 
 def test_disease_master_switch_state():
@@ -352,6 +357,15 @@ def test_resources_and_languages():
     assert_equal(languages, ["zh_CN"], "language registration")
     translations = parse_language_file(resource_root / "texts" / "zh_CN.lang")
 
+    expected_outline_groups = {
+        "hypoglycemia": (["fruits", "grains", "sugars"], []),
+        "hyperglycemia": ([], ["sugars"]),
+        "constipation": (["fruits", "grains", "vegetables"], []),
+        "rickets": (["proteins"], []),
+        "fever": (["fruits", "grains", "proteins", "vegetables"], []),
+        "mouth_ulcer": (["grains", "proteins"], []),
+        "scurvy": (["fruits", "vegetables"], []),
+    }
     for disease_id in config.diseaseOrder:
         disease_config = config.diseases[disease_id]
         effect_path = effect_root / "diet_nullgr_{}.json".format(disease_id)
@@ -372,7 +386,24 @@ def test_resources_and_languages():
         assert_true(len(particle_color) == 3 and all(isinstance(value, int) and 0 <= value <= 255 for value in particle_color), "{} particle color".format(disease_id))
         assert_equal(translations[disease_config["customEffect"]], disease_config["name"], "{} language key".format(disease_id))
         assert_true(disease_config["symptom"], "{} symptom text".format(disease_id))
-        assert_true(disease_config["uiGroups"], "{} highlighted nutrition groups".format(disease_id))
+        low_groups, high_groups = expected_outline_groups[disease_id]
+        assert_equal(disease_config["lowGroups"], low_groups, "{} low outline group mapping".format(disease_id))
+        assert_equal(disease_config["highGroups"], high_groups, "{} high outline group mapping".format(disease_id))
+        outline_groups = low_groups + high_groups
+        assert_true(outline_groups, "{} has abnormal nutrition groups".format(disease_id))
+        assert_equal(len(outline_groups), len(set(outline_groups)), "{} outline groups do not overlap".format(disease_id))
+        assert_true(all(group_id in diet_config.groupOrder for group_id in outline_groups),
+                    "{} outline groups use visible nutrition IDs".format(disease_id))
+
+    assert_equal(diet_config.diseaseHighOutlineColor,
+                 (1.0, 0.2509803921568627, 0.1019607843137255),
+                 "high outline color is #ff401a")
+    assert_equal(diet_config.diseaseLowOutlineColor,
+                 (0.3058823529411765, 0.9098039215686274, 1.0),
+                 "low outline color is #4ee8ff")
+    outline_path = resource_root / "textures" / "gui" / "diet_nullgr" / "outline.png"
+    assert_true(outline_path.is_file(), "nutrition outline texture exists")
+    assert_equal(read_png_size(outline_path), (141, 5), "nutrition outline texture matches bar size")
 
     animation_path = resource_root / "animations" / "diet_disease.animation.json"
     animation_data = json.loads(animation_path.read_text(encoding="utf-8-sig"))
@@ -525,6 +556,8 @@ def test_system_registration_and_ui_bindings():
     assert_true("actorDamageCause.Custom" not in server_text,
                 "unsupported Custom damage cause is not reintroduced")
     binding_names = (
+        "row_bar_outline_visible",
+        "row_bar_outline_color",
         "disease_button_visible",
         "disease_button_icon",
         "disease_button_click",
@@ -561,6 +594,7 @@ def test_system_registration_and_ui_bindings():
     disease_panel = find_named_control(root, "disease_panel")
     disease_button = find_named_control(ui_data, "disease_button")
     disease_button_icon = find_named_control(disease_button, "image")
+    bar_outline = find_named_control(ui_data, "bar_outline")
     disease_icon = find_named_control(disease_panel, "disease_icon")
     disease_name = find_named_control(disease_panel, "disease_name")
     disease_tips = find_named_control(disease_panel, "tips")
@@ -569,6 +603,26 @@ def test_system_registration_and_ui_bindings():
     assert_equal(len(root["controls"]), 6, "refactored Diet panel control count remains unchanged")
     assert_equal(nutrition_grid["grid_dimensions"], [1, 5], "five nutrition rows remain")
     assert_equal(nutrition_grid["maximum_grid_items"], 5, "nutrition row limit")
+    assert_equal(bar_outline["texture"], "textures/gui/diet_nullgr/outline", "nutrition outline texture")
+    assert_equal(bar_outline["layer"], 2, "nutrition outline renders above the bar")
+    assert_equal(bar_outline["visible"], "#diet_screen.row_bar_outline_visible", "nutrition outline visibility property")
+    assert_equal(bar_outline["color"], "#diet_screen.row_bar_outline_color", "nutrition outline color property")
+    assert_equal(bar_outline["bindings"], [
+        {
+            "binding_name_override": "#visible",
+            "binding_collection_name": "diet_rows",
+            "binding_condition": "always",
+            "binding_type": "collection",
+            "binding_name": "#diet_screen.row_bar_outline_visible",
+        },
+        {
+            "binding_name_override": "#color",
+            "binding_collection_name": "diet_rows",
+            "binding_condition": "always",
+            "binding_type": "collection",
+            "binding_name": "#diet_screen.row_bar_outline_color",
+        },
+    ], "nutrition outline collection bindings")
 
     assert_equal(disease_grid["anchor_from"], "top_left", "disease grid source anchor remains unchanged")
     assert_equal(disease_grid["anchor_to"], "top_right", "disease grid target anchor remains unchanged")
@@ -649,9 +703,12 @@ def test_system_registration_and_ui_bindings():
         assert_true(template_name in ui_data, "disease slot {} template".format(slot_index))
         assert_true(find_named_control(root, template_name) is None,
                     "legacy disease slot {} template is not instantiated".format(slot_index))
-    assert_true("refreshDiseaseGroupFlags" in logic_text and "diseaseRelated" in logic_text and
-                "diseaseGroupHighlightColor" in logic_text,
-                "nutrition rows highlight precomputed disease-related groups")
+    assert_true("refreshDiseaseOutlineStates" in logic_text and "diseaseOutline" in logic_text and
+                "diseaseHighOutlineColor" in logic_text and "diseaseLowOutlineColor" in logic_text,
+                "nutrition rows bind precomputed high and low disease outlines")
+    assert_true("diseaseRelated" not in logic_text and "diseaseGroupHighlightColor" not in logic_text and
+                "diseaseGroupTooltipColor" not in logic_text,
+                "disease outlines do not recolor nutrition text or bar fill")
 
 
 def test_disease_ui_detail_binding_reads_precomputed_selection():
@@ -689,8 +746,8 @@ def test_disease_ui_detail_binding_reads_precomputed_selection():
     bind_disease_tips = namespace["bindDiseaseTips"]
 
     class UiState(object):
-        def refreshDiseaseGroupFlags(self):
-            self.groupFlagsRefreshed = True
+        def refreshDiseaseOutlineStates(self):
+            self.outlineStatesRefreshed = True
 
         def UpdateScreen(self, force):
             self.screenRefreshForce = force
@@ -725,8 +782,8 @@ def test_disease_ui_detail_binding_reads_precomputed_selection():
     update_disease_data(state, {"active": [first]})
     assert_true(state.selectedDiseaseData is state.emptyDiseaseData and state.selectedDiseaseId == "",
                 "selected disease recovery closes details instead of switching rows")
-    assert_true(state.groupFlagsRefreshed and state.screenRefreshForce,
-                "disease synchronization refreshes group flags and bindings")
+    assert_true(state.outlineStatesRefreshed and state.screenRefreshForce,
+                "disease synchronization refreshes outline states and bindings")
 
     state.diseaseData = {"active": [first, second]}
     assert_equal(select_disease_button(state, {"#collection_index": 0}), ViewRequestStub.Refresh,
@@ -739,6 +796,74 @@ def test_disease_ui_detail_binding_reads_precomputed_selection():
     select_disease_button(state, {"#collection_index": 1})
     assert_true(state.selectedDiseaseData is state.emptyDiseaseData and state.selectedDiseaseId == "",
                 "clicking the selected disease again closes details")
+
+
+def test_disease_nutrition_outline_state():
+    diet_ui_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
+    source = diet_ui_logic_path.read_text(encoding="utf-8-sig")
+    tree = ast.parse(source, filename=str(diet_ui_logic_path))
+    diet_ui_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "DietUI")
+    method_names = {
+        "getGroupData",
+        "refreshDiseaseOutlineStates",
+        "bindRowBarOutlineVisible",
+        "bindRowBarOutlineColor",
+    }
+    method_nodes = []
+    for node in diet_ui_class.body:
+        if isinstance(node, ast.FunctionDef) and node.name in method_names:
+            node.decorator_list = []
+            method_nodes.append(node)
+    method_module = ast.Module(body=method_nodes, type_ignores=[])
+    ast.fix_missing_locations(method_module)
+    namespace = {"config": diet_config}
+    exec(compile(method_module, str(diet_ui_logic_path), "exec"), namespace)
+    refresh_outline_states = namespace["refreshDiseaseOutlineStates"]
+
+    class UiState(object):
+        getGroupData = namespace["getGroupData"]
+
+    state = UiState()
+    state.dietData = {
+        "groups": [
+            {"id": "fruits", "tracked": True, "diseaseOutline": "stale"},
+            {"id": "grains", "tracked": True, "diseaseOutline": "stale"},
+            {"id": "proteins", "tracked": True, "diseaseOutline": "stale"},
+            {"id": "vegetables", "tracked": True, "diseaseOutline": "stale"},
+            {"id": "sugars", "tracked": True, "diseaseOutline": "stale"},
+        ]
+    }
+    state.diseaseData = {
+        "active": [
+            {"lowGroups": ["fruits", "grains"], "highGroups": []},
+            {"lowGroups": ["proteins"], "highGroups": ["sugars"]},
+        ]
+    }
+    refresh_outline_states(state)
+    assert_equal(
+        [group["diseaseOutline"] for group in state.dietData["groups"]],
+        ["low", "low", "low", "", "high"],
+        "two diseases merge low and high nutrition outline states",
+    )
+    assert_true(namespace["bindRowBarOutlineVisible"](state, 0), "low disease outline is visible")
+    assert_equal(namespace["bindRowBarOutlineColor"](state, 0),
+                 diet_config.diseaseLowOutlineColor,
+                 "low disease outline uses #4ee8ff")
+    assert_true(namespace["bindRowBarOutlineVisible"](state, 4), "high disease outline is visible")
+    assert_equal(namespace["bindRowBarOutlineColor"](state, 4),
+                 diet_config.diseaseHighOutlineColor,
+                 "high disease outline uses #ff401a")
+    assert_true(not namespace["bindRowBarOutlineVisible"](state, 3), "unrelated nutrition outline stays hidden")
+
+    state.dietData["groups"][4]["tracked"] = False
+    assert_true(not namespace["bindRowBarOutlineVisible"](state, 4), "disabled nutrition outline stays hidden")
+
+    state.diseaseData = {"active": []}
+    refresh_outline_states(state)
+    assert_true(
+        all(not group["diseaseOutline"] for group in state.dietData["groups"]),
+        "healthy state hides every nutrition outline",
+    )
 
 
 def test_modsdk_import_whitelist():
@@ -783,6 +908,7 @@ def main():
         test_resources_and_languages,
         test_system_registration_and_ui_bindings,
         test_disease_ui_detail_binding_reads_precomputed_selection,
+        test_disease_nutrition_outline_state,
         test_modsdk_import_whitelist,
     ]
     for test in tests:

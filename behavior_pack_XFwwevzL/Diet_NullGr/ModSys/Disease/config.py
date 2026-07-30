@@ -143,7 +143,8 @@ diseases = {
         "maxActiveSeconds": 240,
         "protectionSeconds": 180,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["grains", "fruits", "sugars"],
+        "lowGroups": ["fruits", "grains", "sugars"],
+        "highGroups": [],
         "requiredGroups": ["grains", "fruits", "sugars"],
         "requiresThirst": False
     },
@@ -160,7 +161,8 @@ diseases = {
         "maxActiveSeconds": 480,
         "protectionSeconds": 240,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["sugars", "fruits", "grains", "proteins", "vegetables"],
+        "lowGroups": [],
+        "highGroups": ["sugars"],
         "requiredGroups": ["fruits", "grains", "proteins", "vegetables", "sugars"],
         "requiresThirst": False
     },
@@ -177,7 +179,8 @@ diseases = {
         "maxActiveSeconds": 600,
         "protectionSeconds": 180,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["fruits", "grains", "vegetables"],
+        "lowGroups": ["fruits", "grains", "vegetables"],
+        "highGroups": [],
         "requiredGroups": ["fruits", "grains", "vegetables"],
         "requiresThirst": True
     },
@@ -194,7 +197,8 @@ diseases = {
         "maxActiveSeconds": 600,
         "protectionSeconds": 300,
         "recoveryMetabolicPoints": 3.0,
-        "uiGroups": ["proteins"],
+        "lowGroups": ["proteins"],
+        "highGroups": [],
         "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
         "requiresThirst": False
     },
@@ -211,7 +215,8 @@ diseases = {
         "maxActiveSeconds": 360,
         "protectionSeconds": 240,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "lowGroups": ["fruits", "grains", "proteins", "vegetables"],
+        "highGroups": [],
         "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
         "requiresThirst": True
     },
@@ -228,7 +233,8 @@ diseases = {
         "maxActiveSeconds": 480,
         "protectionSeconds": 180,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["grains", "proteins"],
+        "lowGroups": ["grains", "proteins"],
+        "highGroups": [],
         "requiredGroups": ["grains", "proteins"],
         "requiresThirst": False
     },
@@ -245,7 +251,8 @@ diseases = {
         "maxActiveSeconds": 600,
         "protectionSeconds": 300,
         "recoveryMetabolicPoints": 0.0,
-        "uiGroups": ["fruits", "vegetables"],
+        "lowGroups": ["fruits", "vegetables"],
+        "highGroups": [],
         "requiredGroups": ["fruits", "grains", "proteins", "vegetables"],
         "requiresThirst": False
     }
