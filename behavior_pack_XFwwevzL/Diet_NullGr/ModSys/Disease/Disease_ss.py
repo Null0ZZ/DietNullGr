@@ -194,7 +194,20 @@ class ServerSys(ServerSystem):
         # 一次完整站立→下蹲→站立事务只在结束事件结算，按住下蹲不会重复累计。
         cured = Disease.recordConstipationSquat(data)
         if cured:
+            # 下蹲治愈先完成效果和数据收敛，再只给患者播放音效，并把结果广播给所有在线玩家。
             self._finishDiseaseChanges(playerId, data, [], ['constipation'])
+            self.NotifyToClient(playerId, config.symptomEvent, {
+                'sound': config.constipationReliefSound,
+                'volume': config.constipationReliefSoundVolume,
+                'pitch': config.constipationReliefSoundPitch
+            })
+            playerName = compFactory.CreateName(playerId).GetName()
+            messageComp = compFactory.CreateMsg(serverApi.GetLevelId())
+            for onlinePlayerId in serverApi.GetPlayerList():
+                messageComp.NotifyOneMessage(
+                    onlinePlayerId,
+                    "{}玩家拉了一坨大的".format(playerName)
+                )
             return
         Disease.savePlayerData(playerId, data, compFactory)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))

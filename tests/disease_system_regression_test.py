@@ -383,7 +383,22 @@ def test_resources_and_languages():
     assert_equal(animation["bones"]["head"]["scale"], [compensated_head_scale] * 3, "head scale compensates body parent")
     assert_equal(set(animation["bones"]), {"body", "head"}, "hat inherits compensated head without duplicate scaling")
 
-    for json_path in list(effect_root.glob("*.json")) + list((resource_root / "animations").glob("*.json")) + list((resource_root / "ui").glob("*.json")):
+    sound_definitions_path = resource_root / "sounds" / "sound_definitions.json"
+    sound_definitions = json.loads(sound_definitions_path.read_text(encoding="utf-8-sig"))
+    relief_sound = sound_definitions["sound_definitions"][config.constipationReliefSound]
+    assert_equal(relief_sound["category"], "player", "constipation relief sound category")
+    assert_equal(
+        relief_sound["sounds"],
+        [{
+            "name": "sounds/diet_nullgr/constipation_relief",
+            "load_on_low_memory": True,
+        }],
+        "constipation relief sound resource",
+    )
+    relief_sound_path = resource_root / "sounds" / "diet_nullgr" / "constipation_relief.ogg"
+    assert_true(relief_sound_path.read_bytes().startswith(b"OggS"), "constipation relief sound is an Ogg file")
+
+    for json_path in list(effect_root.glob("*.json")) + list((resource_root / "animations").glob("*.json")) + list((resource_root / "ui").glob("*.json")) + [sound_definitions_path]:
         json.loads(json_path.read_text(encoding="utf-8-sig"))
 
 
@@ -462,6 +477,12 @@ def test_system_registration_and_ui_bindings():
                 "constipation squat rejects water at the player's feet")
     assert_true("playerActionType.StartSwimming" in server_text and "playerActionType.StopSwimming" in server_text,
                 "constipation squat tracks swimming state")
+    assert_true("'sound': config.constipationReliefSound" in server_text,
+                "successful constipation squat cure plays the configured sound")
+    assert_true("playerName = compFactory.CreateName(playerId).GetName()" in server_text and
+                '"{}玩家拉了一坨大的".format(playerName)' in server_text and
+                "for onlinePlayerId in serverApi.GetPlayerList():" in server_text,
+                "successful constipation squat cure broadcasts the player result")
 
     diet_server_text = diet_server_path.read_text(encoding="utf-8-sig")
     diet_config_text = diet_config_path.read_text(encoding="utf-8-sig")

@@ -1,0 +1,16 @@
+{
+    "format_version": "1.14.0",
+    "sound_definitions": {
+        "diet_nullgr.constipation_relief": {
+            "category": "player",
+            "min_distance": 0.0,
+            "max_distance": 16.0,
+            "sounds": [
+                {
+                    "name": "sounds/diet_nullgr/constipation_relief",
+                    "load_on_low_memory": true
+                }
+            ]
+        }
+    }
+}
