@@ -158,6 +158,60 @@ def test_client_tips_contract():
         assert_equal(client_data["active"][0]["tips"], tips, "{} client tips contract".format(disease_id))
 
 
+def test_disease_master_switch_state():
+    class ModAttrStub(object):
+        def __init__(self, values):
+            self.values = values
+
+        def GetAttr(self, key, default):
+            return self.values[key] if key in self.values else default
+
+        def SetAttr(self, key, value, needRestore=False):
+            self.values[key] = value
+
+    class CompFactoryStub(object):
+        def __init__(self, values):
+            self.modAttr = ModAttrStub(values)
+
+        def CreateModAttr(self, player_id):
+            return self.modAttr
+
+    data = Disease.createDefaultData()
+    assert_true(data["enabled"], "disease system defaults to enabled")
+    data["validEatCount"] = 9
+    assert_true(Disease.diagnoseDisease(data, "hypoglycemia"), "master switch setup first disease")
+    assert_true(Disease.diagnoseDisease(data, "scurvy"), "master switch setup second disease")
+    for disease_id in config.diseaseOrder:
+        data["progress"][disease_id] = 1.0
+        data["activeSeconds"][disease_id] = 2
+        data["protectionSeconds"][disease_id] = 3
+        data["recoveryProgress"][disease_id] = 4.0
+    data["constipationSquatCount"] = 5
+    data["enabled"] = False
+
+    cleared = Disease.clearAllDiseaseState(data)
+
+    assert_equal(cleared, ["hypoglycemia", "scurvy"], "master switch reports cleared diseases")
+    assert_equal(data["active"], [], "master switch clears active diseases")
+    assert_true(not Disease.diagnoseDisease(data, "fever"), "master switch blocks direct diagnosis")
+    assert_equal(data["validEatCount"], 9, "master switch preserves onboarding progress")
+    assert_equal(data["constipationSquatCount"], 0, "master switch clears constipation progress")
+    for disease_id in config.diseaseOrder:
+        assert_close(data["progress"][disease_id], 0.0, "master switch clears candidate progress")
+        assert_equal(data["activeSeconds"][disease_id], 0, "master switch clears active duration")
+        assert_equal(data["protectionSeconds"][disease_id], 0, "master switch clears protection")
+        assert_close(data["recoveryProgress"][disease_id], 0.0, "master switch clears recovery progress")
+
+    stored = {}
+    comp_factory = CompFactoryStub(stored)
+    Disease.savePlayerData("player", data, comp_factory)
+    assert_true(stored[config.attrEnabled] is False, "master switch persists disabled state")
+    loaded = Disease.loadPlayerData("player", comp_factory)
+    assert_true(loaded["enabled"] is False and not loaded["active"], "master switch restores disabled clean state")
+    default_loaded = Disease.loadPlayerData("new_player", CompFactoryStub({}))
+    assert_true(default_loaded["enabled"], "missing master switch storage migrates to enabled")
+
+
 def test_new_player_protection():
     data = Disease.createDefaultData()
     trigger = make_snapshot(fruits=0.20, grains=0.15, sugars=0.20)
@@ -357,6 +411,7 @@ def test_system_registration_and_ui_bindings():
     client_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "Disease_cs.py"
     diet_client_path = behavior_root / "Diet_NullGr" / "Diet_main_cs.py"
     diet_server_path = behavior_root / "Diet_NullGr" / "Diet_main_ss.py"
+    diet_config_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "config.py"
     thirst_server_path = behavior_root / "Diet_NullGr" / "ModSys" / "Thirst" / "Thirst_ss.py"
     diet_ui_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
     diet_ui_path = resource_root / "ui" / "diet_screen.json"
@@ -395,6 +450,12 @@ def test_system_registration_and_ui_bindings():
                 "disease management command is disabled in production by default")
     assert_true("if not config.debugCommandEnabled:" in server_text,
                 "disease management command requires explicit development opt-in")
+    assert_equal(config.settingDef["key"], config.settingEnabledKey, "disease setting definition key")
+    assert_true(config.settingDef["default"], "disease setting defaults to enabled")
+    assert_true("config.settingEventUpdate" in server_text and "def DietSettingUpdate(" in server_text,
+                "disease server listens to the shared setting event")
+    assert_true("def _clearDiseaseSystemState(" in server_text and "Disease.clearAllDiseaseState(data)" in server_text,
+                "disease setting closes persistent and runtime state together")
     assert_true("gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator" in server_text,
                 "rickets jump damage excludes unrestricted game modes")
     assert_true("footBlockName in config.invalidBodyBlocks" in server_text,
@@ -403,6 +464,13 @@ def test_system_registration_and_ui_bindings():
                 "constipation squat tracks swimming state")
 
     diet_server_text = diet_server_path.read_text(encoding="utf-8-sig")
+    diet_config_text = diet_config_path.read_text(encoding="utf-8-sig")
+    diet_client_text = diet_client_path.read_text(encoding="utf-8-sig")
+    assert_true("diseaseConfig.settingDef" in diet_config_text, "general settings include disease master switch")
+    assert_true("settingKey in diseaseConfig.settingKeys" in diet_server_text,
+                "Diet server delegates disease settings to the disease module")
+    assert_true("diseaseConfig.ssname, config.settingEventSync" in diet_client_text,
+                "general settings receive disease setting synchronization")
     for call_name in ("recordFoodEat", "queueMetabolism", "hasActiveDisease", "isSugarRushPaused"):
         assert_true("diseaseSys.{}(".format(call_name) in diet_server_text, "Diet integration {}".format(call_name))
     assert_true(diet_server_text.index("diseaseSys.recordFoodEat(") < diet_server_text.index("if not gainValues:"),
@@ -685,6 +753,7 @@ def main():
     tests = [
         test_trigger_and_recovery_thresholds,
         test_client_tips_contract,
+        test_disease_master_switch_state,
         test_new_player_protection,
         test_two_slots_and_half_progress_cap,
         test_blood_sugar_mutual_exclusion,

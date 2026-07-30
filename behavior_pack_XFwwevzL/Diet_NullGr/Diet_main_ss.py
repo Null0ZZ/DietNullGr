@@ -56,8 +56,8 @@ class DietServerSystem(ServerSystem):
         playerId = args['__id__']
         settingKey = args['key']
         value = args['value']
-        # 口渴设置与均衡饮食共用客户端设置事件，但由独立服务端系统持久化，旧服务不重复解释这些 key。
-        if settingKey in thirstConfig.settingKeys:
+        # 口渴和疾病设置共用客户端设置事件，但分别由独立服务端系统持久化，主系统不重复解释这些 key。
+        if settingKey in thirstConfig.settingKeys or settingKey in diseaseConfig.settingKeys:
             return
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)

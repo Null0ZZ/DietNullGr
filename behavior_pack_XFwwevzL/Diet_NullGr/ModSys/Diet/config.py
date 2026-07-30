@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
 ssname = "Diet_Core_ServerSys"
@@ -250,7 +251,8 @@ settingDefs = [
         "groupId": ""
     },
     thirstConfig.settingDef,
-    thirstConfig.styleSettingDef
+    thirstConfig.styleSettingDef,
+    diseaseConfig.settingDef
 ]
 settingPriority = 20
 for groupId in groupOrder:

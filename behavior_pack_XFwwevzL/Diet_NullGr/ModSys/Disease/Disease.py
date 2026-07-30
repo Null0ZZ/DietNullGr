@@ -15,6 +15,7 @@ def createDefaultData():
         protectionSeconds[diseaseId] = 0
         recoveryProgress[diseaseId] = 0.0
     return {
+        'enabled': config.defaultEnabled,
         'validEatCount': 0,
         'progress': progress,
         'active': [],
@@ -25,10 +26,24 @@ def createDefaultData():
     }
 
 
+# 总开关关闭时清空所有疾病、候选与保护状态；有效进食计数保留，重新开启后无需重复度过新手保护。
+def clearAllDiseaseState(data):
+    active = list(data['active'])
+    data['active'] = []
+    for diseaseId in config.diseaseOrder:
+        data['progress'][diseaseId] = 0.0
+        data['activeSeconds'][diseaseId] = 0
+        data['protectionSeconds'][diseaseId] = 0
+        data['recoveryProgress'][diseaseId] = 0.0
+    data['constipationSquatCount'] = 0
+    return active
+
+
 # 从分字段 ModAttr 恢复疾病状态，并清理无效或重复的确诊标识。
 def loadPlayerData(playerId, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
     data = createDefaultData()
+    data['enabled'] = bool(compModAttr.GetAttr(config.attrEnabled, config.defaultEnabled))
     data['validEatCount'] = int(compModAttr.GetAttr(config.attrValidEatCount, 0))
     if data['validEatCount'] < 0:
         data['validEatCount'] = 0
@@ -69,12 +84,15 @@ def loadPlayerData(playerId, compFactory):
     data['constipationSquatCount'] = min(config.constipationSquatRequired, max(0, squatCount))
     if 'constipation' not in data['active']:
         data['constipationSquatCount'] = 0
+    if not data['enabled']:
+        clearAllDiseaseState(data)
     return data
 
 
 # 疾病状态分字段写入 ModAttr，避免单个复合对象在版本迁移时难以兼容。
 def savePlayerData(playerId, data, compFactory):
     compModAttr = compFactory.CreateModAttr(playerId)
+    compModAttr.SetAttr(config.attrEnabled, data['enabled'], needRestore=True)
     compModAttr.SetAttr(config.attrValidEatCount, data['validEatCount'], needRestore=True)
     compModAttr.SetAttr(config.attrActive, ';'.join(data['active']), needRestore=True)
     compModAttr.SetAttr(config.attrConstipationSquatCount, data['constipationSquatCount'], needRestore=True)
@@ -209,6 +227,8 @@ def isRecoveryConditionMet(diseaseId, snapshot):
 
 # 确诊只占用空闲槽位；低血糖与高血糖不能并存，并在确诊时清掉对方候选进度。
 def diagnoseDisease(data, diseaseId):
+    if not data['enabled']:
+        return False
     if diseaseId not in config.diseases or diseaseId in data['active']:
         return False
     if len(data['active']) >= config.maxActiveCount or data['protectionSeconds'][diseaseId] > 0:
@@ -404,3 +424,12 @@ def buildClientData(data):
         'maxActiveCount': config.maxActiveCount,
         'validEatCount': data['validEatCount']
     }
+
+
+# 疾病模块只同步自己的总开关，通用设置客户端负责把分批数据合并到同一页面。
+def syncSettingToClient(serverSys, playerId, data):
+    serverSys.NotifyToClient(playerId, config.settingEventSync, {
+        'values': {
+            config.settingEnabledKey: data['enabled']
+        }
+    })

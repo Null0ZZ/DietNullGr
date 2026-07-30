@@ -19,7 +19,21 @@ visualReadyEvent = "DiseaseVisualReady"
 symptomEvent = "DiseaseSymptom"
 clientReadyEvent = "DiseaseClientReady"
 jumpEvent = "DiseasePlayerJump"
+settingEnabledKey = "disease_enabled"
+settingEventUpdate = "DietSettingUpdate"
+settingEventSync = "DietSettingSync"
+settingKeys = (settingEnabledKey,)
+defaultEnabled = True
 debugCommandEnabled = False
+
+settingDef = {
+    "key": settingEnabledKey,
+    "name": "启用疾病系统（开启后长期饮食失衡可能触发疾病；关闭后清除全部疾病状态并停止判定）",
+    "control": "toggle",
+    "default": defaultEnabled,
+    "priority": 17,
+    "groupId": ""
+}
 
 effectRefreshTick = 100
 dataSaveTick = 600
@@ -68,6 +82,7 @@ invalidBodyBlocks = [
 ]
 
 attrPrefix = "diet_nullgr_disease_"
+attrEnabled = attrPrefix + "enabled"
 attrValidEatCount = attrPrefix + "valid_eat_count"
 attrActive = attrPrefix + "active"
 attrConstipationSquatCount = attrPrefix + "constipation_squat_count"

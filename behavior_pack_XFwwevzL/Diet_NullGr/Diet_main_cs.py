@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import mod.client.extraClientApi as clientApi
 import Diet_NullGr.com as com
+import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
@@ -33,6 +34,7 @@ class DietClientSystem(ClientSystem):
         self.ListenForEvent(com.modName, com.ssname, "OpenDietScreen", self, self.OpenDietScreen)
         self.ListenForEvent(com.modName, com.ssname, config.settingEventSync, self, self.DietSettingSync)
         self.ListenForEvent(com.modName, thirstConfig.ssname, config.settingEventSync, self, self.DietSettingSync)
+        self.ListenForEvent(com.modName, diseaseConfig.ssname, config.settingEventSync, self, self.DietSettingSync)
         self.ListenForEvent(com.modName, com.ssname, config.lowNutritionAlertEvent, self, self.DietLowNutritionAlert)
         print("[DietNullGr] client ready")
 

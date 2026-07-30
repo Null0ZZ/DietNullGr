@@ -42,6 +42,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(com.modName, config.csname, config.clientReadyEvent, self, self.DiseaseClientReady)
         self.ListenForEvent(com.modName, config.csname, config.visualReadyEvent, self, self.DiseaseVisualReady)
         self.ListenForEvent(com.modName, config.csname, config.jumpEvent, self, self.DiseasePlayerJump)
+        self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
         print("[DietNullGr] disease server ready")
 
     def AddServerPlayerEvent(self, args):
@@ -54,9 +55,14 @@ class ServerSys(ServerSystem):
     def ClientLoadAddonsFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
-        self._updateHypoglycemiaSprintLimit(playerId, data)
-        self._refreshDiseaseEffects(playerId, data)
-        self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
+        if data['enabled']:
+            self._updateHypoglycemiaSprintLimit(playerId, data)
+            self._refreshDiseaseEffects(playerId, data)
+            self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
+        else:
+            # 关闭状态可能来自上次存档，实体加载完成后必须再次收敛效果、疾跑来源和全员视觉。
+            self._clearDiseaseSystemState(playerId, data)
+        Disease.syncSettingToClient(self, playerId, data)
         for visualPlayerId in serverApi.GetPlayerList():
             visualData = self._getPlayerData(visualPlayerId)
             self.NotifyToClient(playerId, config.visualEvent, self._buildVisualData(visualPlayerId, visualData))
@@ -64,11 +70,35 @@ class ServerSys(ServerSystem):
     def DiseaseClientReady(self, args):
         playerId = args['__id__']
         data = self._getPlayerData(playerId)
-        self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
+        if data['enabled']:
+            self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
+        else:
+            # 热重载可能只重新触发客户端就绪，关闭状态仍需走完整清理事务，不能依赖玩家重进世界。
+            self._clearDiseaseSystemState(playerId, data)
+        Disease.syncSettingToClient(self, playerId, data)
         # 新客户端完成 AOI 玩家渲染注入后补发全部视觉状态，避免服务端状态先于实体创建到达。
         for visualPlayerId in serverApi.GetPlayerList():
             visualData = self._getPlayerData(visualPlayerId)
             self.NotifyToClient(playerId, config.visualEvent, self._buildVisualData(visualPlayerId, visualData))
+
+    def DietSettingUpdate(self, args):
+        playerId = args['__id__']
+        settingKey = args['key']
+        value = args['value']
+        if settingKey != config.settingEnabledKey:
+            return
+        data = self._getPlayerData(playerId)
+        # 通用设置回调属于客户端输入边界，兼容引擎可能回传的布尔值、数字或字符串形式。
+        enabled = not (value == False or value == 0 or value == "False" or value == "false" or value == "0")
+        if enabled == data['enabled']:
+            return
+        data['enabled'] = enabled
+        if not enabled:
+            # 总开关关闭必须同时清空持久状态、运行时症状和客户端表现，避免任一链路残留旧疾病。
+            self._clearDiseaseSystemState(playerId, data)
+        else:
+            Disease.savePlayerData(playerId, data, compFactory)
+        Disease.syncSettingToClient(self, playerId, data)
 
     def DiseaseVisualReady(self, args):
         clientPlayerId = args['__id__']
@@ -235,6 +265,8 @@ class ServerSys(ServerSystem):
             metabolicPoints = self.pendingMetabolism[playerId]
             del self.pendingMetabolism[playerId]
             data = self._getPlayerData(playerId)
+            if not data['enabled']:
+                continue
             snapshot = self._buildNutritionSnapshot(playerId)
             result = Disease.advanceMetabolism(data, metabolicPoints, snapshot)
             Disease.savePlayerData(playerId, data, compFactory)
@@ -247,6 +279,8 @@ class ServerSys(ServerSystem):
             return
         for playerId in serverApi.GetPlayerList():
             data = self._getPlayerData(playerId)
+            if not data['enabled']:
+                continue
             snapshot = self._buildNutritionSnapshot(playerId)
             cured = Disease.applyNutritionRecovery(data, 0.0, snapshot)
             for diseaseId in Disease.advanceSeconds(data, 1):
@@ -271,6 +305,8 @@ class ServerSys(ServerSystem):
     # 任何真实进食都按进食前患病状态结算症状；有效营养增益才参与计数与饮食恢复。
     def recordFoodEat(self, playerId, dietData, gainValues):
         data = self._getPlayerData(playerId)
+        if not data['enabled']:
+            return
         activeBefore = list(data['active'])
         cured = []
         if gainValues:
@@ -303,6 +339,8 @@ class ServerSys(ServerSystem):
 
     # Diet 饥饿回调只累计本轮真实下降量，疾病系统下一 Tick 使用最新口渴值统一判定。
     def queueMetabolism(self, playerId, metabolicPoints):
+        if not self._getPlayerData(playerId)['enabled']:
+            return
         if playerId in self.pendingMetabolism:
             self.pendingMetabolism[playerId] += metabolicPoints
         else:
@@ -334,6 +372,9 @@ class ServerSys(ServerSystem):
         if not config.debugCommandEnabled:
             return False
         data = self._getPlayerData(playerId)
+        if not data['enabled']:
+            self._sendMessage(playerId, "疾病系统已关闭。", "§e")
+            return True
         if len(parts) == 2 or parts[2] == 'status':
             names = []
             for diseaseId in data['active']:
@@ -385,6 +426,24 @@ class ServerSys(ServerSystem):
         }
         return Disease.buildNutritionSnapshot(dietData, thirstData)
 
+    # 总开关关闭和关闭存档恢复共用此事务，统一清理状态、效果、疾跑来源及所有客户端骨骼表现。
+    def _clearDiseaseSystemState(self, playerId, data):
+        Disease.clearAllDiseaseState(data)
+        if playerId in self.pendingMetabolism:
+            del self.pendingMetabolism[playerId]
+        if playerId in self.crouchStates:
+            del self.crouchStates[playerId]
+        self.jumpDamageCooldowns[playerId] = 0
+        self.jumpSequences[playerId] = 0
+        self.nauseaCooldowns[playerId] = 0
+        compEffect = compFactory.CreateEffect(playerId)
+        for diseaseId in config.diseaseOrder:
+            compEffect.RemoveEffectFromEntity(config.diseases[diseaseId]['customEffect'])
+        self._updateHypoglycemiaSprintLimit(playerId, data)
+        Disease.savePlayerData(playerId, data, compFactory)
+        self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
+        self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(playerId, data))
+
     # 确诊/痊愈事务按“效果→疾跑来源→保存→本地数据→全员视觉”顺序一次性收敛。
     def _finishDiseaseChanges(self, playerId, data, diagnosed, cured):
         compEffect = compFactory.CreateEffect(playerId)
@@ -403,6 +462,8 @@ class ServerSys(ServerSystem):
 
     # 自定义效果负责效果栏，原版短效果负责症状；短周期刷新不会误删其他模组同名效果。
     def _refreshDiseaseEffects(self, playerId, data):
+        if not data['enabled']:
+            return
         compEffect = compFactory.CreateEffect(playerId)
         for diseaseId in data['active']:
             diseaseConfig = config.diseases[diseaseId]
