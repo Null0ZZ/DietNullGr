@@ -160,6 +160,7 @@
                         141.0,
                         5
                     ],
+                    "layer": 1,
                     "clip_direction": "left",
                     "clip_ratio": "#diet_screen.row_bar_clip",
                     "color": "#diet_screen.row_bar_color",
@@ -219,6 +220,38 @@
                             "binding_type": "collection",
                             "binding_name": "#diet_screen.row_percent_color"
                         }
+                    ]
+                }
+            },
+            {
+                "bar_outline": {
+                    "type": "image",
+                    "anchor_from": "right_middle",
+                    "anchor_to": "right_middle",
+                    "offset": [
+                        -20.0,
+                        -1
+                    ],
+                    "size": [
+                        143.0,
+                        7.0
+                    ],
+                    "color": [
+                        1.0,
+                        0.2509803921568627,
+                        0.1019607843137255
+                    ],
+                    "fill": true,
+                    "nineslice_size": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "texture": "textures/gui/diet_nullgr/outline",
+                    "uv": [
+                        0.0,
+                        0.0
                     ]
                 }
             }
