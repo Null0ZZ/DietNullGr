@@ -52,7 +52,7 @@ Assert-Equal $values['hearthandharvest_nullgr:red_grape_wine'] '2.0' 'wine value
 Assert-Equal $values['vintage_delight_nullgr:pickle_soup'] '4.0' 'soup value'
 Assert-Equal $values['foragersinsight_nullgr:seed_milk_bucket'] '8.0' 'large milk value'
 
-if ($configText -notmatch 'for itemName, defaultValue in foodDrinkDefaultValues\.items\(\):[\s\S]*"event": playerEatDrinkEvent[\s\S]*"defaultValue": defaultValue[\s\S]*"auxValues": \{\}') {
+if ($configText -notmatch 'for itemName, drinkDefaultValue in foodDrinkDefaultValues\.items\(\):[\s\S]*"event": playerEatDrinkEvent[\s\S]*"defaultValue": drinkDefaultValue[\s\S]*"auxValues": \{\}') {
     throw 'Assertion failed: external drink data merge'
 }
 

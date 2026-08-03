@@ -531,10 +531,10 @@ foodDrinkDefaultValues = {
     "vintage_delight_nullgr:pickle_soup": 4.0,
 }
 
-for itemName, defaultValue in foodDrinkDefaultValues.items():
+for itemName, drinkDefaultValue in foodDrinkDefaultValues.items():
     drinkItemValues[itemName] = {
         "event": playerEatDrinkEvent,
-        "defaultValue": defaultValue,
+        "defaultValue": drinkDefaultValue,
         "auxValues": {}
     }
 

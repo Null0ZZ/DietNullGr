@@ -26,7 +26,7 @@ class DietClientSystem(ClientSystem):
         self.settingSyncValues = {}
         self.settingCallbacks = {}
         for settingDef in config.settingDefs:
-            self.settingCallbacks[settingDef['key']] = self.CreateDietSettingCallback(settingDef['key'])
+            self.settingCallbacks[settingDef['key']] = self.CreateDietSettingCallback(settingDef)
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
         self.ListenForEvent(engineNamespace, engineSystemName, "HudButtonChangedClientEvent", self, self.HudButtonChangedClientEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ScreenSizeChangedClientEvent", self, self.ScreenSizeChangedClientEvent)
@@ -111,9 +111,13 @@ class DietClientSystem(ClientSystem):
         )
 
     # 通用设置控件回调可能只回传 value，这里给每个控件绑定固定 key，保证写回服务端时不依赖回调参数形态。
-    def CreateDietSettingCallback(self, settingKey):
+    def CreateDietSettingCallback(self, settingDef):
+        settingKey = settingDef['key']
         def DietSettingControlChanged(*args):
             value = args[0] if len(args) == 1 else args[1]
+            # 下拉框回调返回选项索引，发送服务端前转换为双方约定的稳定样式字符串。
+            if settingDef['control'] == config.controlDropDown:
+                value = settingDef['options'][int(value)]
             self.NotifyDietSettingChanged(settingKey, value)
         return DietSettingControlChanged
 
