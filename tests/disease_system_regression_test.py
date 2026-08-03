@@ -1038,10 +1038,7 @@ def test_low_penalty_effect_message():
         "two low nutrition groups apply weakness and slowness",
     )
     message = Diet.buildLowPenaltyEffectMessage(data, matched_results)
-    assert_true("营养不足、严重营养不足" in message, "message names every applied low penalty")
-    assert_true("水果营养值 10%（苹果、浆果或西瓜片）" in message, "message recommends fruit sources")
-    assert_true("蛋白质营养值 5%（肉类、鱼、蛋或牛奶）" in message, "message recommends protein sources")
-    assert_true("谷物营养值" not in message, "message omits nutrition groups above the penalty threshold")
+    assert_equal(message, "营养不足，请及时补充水果、蛋白质。", "message only names low nutrition groups")
 
     disease_results = Diet.applyEffects("player", data, comp_factory, diseaseActive=True)
     assert_equal(disease_results, [], "active disease suppresses ordinary low penalties")

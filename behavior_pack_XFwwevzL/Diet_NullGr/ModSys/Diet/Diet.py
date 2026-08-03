@@ -441,26 +441,21 @@ def applyEffects(playerId, data, compFactory, diseaseActive=False, pauseSugarRus
     return matched
 
 
-# 负面效果刷新提示合并所有低值营养及推荐食物，避免同一轮惩罚连续刷出多条聊天消息。
+# 负面效果刷新时只播报低值营养类别，避免百分比和食物举例占用过多聊天区域。
 def buildLowPenaltyEffectMessage(data, matchedResults):
-    penaltyNames = []
+    penaltyApplied = False
     for effectResult in matchedResults:
         if effectResult['kind'] == 'penalty':
-            penaltyNames.append(config.dietPenalties[effectResult['id']]['name'])
-    if not penaltyNames:
+            penaltyApplied = True
+    if not penaltyApplied:
         return ""
 
-    lowGroupTexts = []
+    lowGroupNames = []
     for groupId in config.essentialGroupOrder:
         if not data['tracking'][groupId] or data['values'][groupId] > data['nutritionPenaltyValue']:
             continue
-        groupConfig = config.groups[groupId]
-        lowGroupTexts.append("{}营养值 {}%（{}）".format(
-            groupConfig['name'],
-            formatDietPercent(data['values'][groupId]),
-            groupConfig['suggestion']
-        ))
-    return "饮食不均衡，已触发{}。请及时补充：{}。".format("、".join(penaltyNames), "；".join(lowGroupTexts))
+        lowGroupNames.append(config.groups[groupId]['name'])
+    return "营养不足，请及时补充{}。".format("、".join(lowGroupNames))
 
 
 # 百分比反馈统一经过 0-100 限制，命令消息和导出结果保持同一种显示。
