@@ -635,9 +635,17 @@ def test_hypoglycemia_custom_postprocess_resources():
                 "custom postprocess fragment shader exposes time and configured parameters")
     assert_equal(fragment_shader_text.count("texture(TEXTURE_0"), 7,
                  "custom postprocess uses exactly seven texture samples")
-    assert_true("sin(TIME * swaySpeed)" in fragment_shader_text and
-                "cos(TIME * swaySpeed)" in fragment_shader_text,
-                "custom postprocess double image drifts on a six-second cycle")
+    assert_true("float slowSway = sin(TIME * swaySpeed);" in fragment_shader_text and
+                "float tremor = sin(TIME * swaySpeed * 4.25 + slowSway * 1.5);" in fragment_shader_text and
+                "float faintPulse = pow(0.5 + 0.5 * sin(TIME * swaySpeed - 1.5708), 6.0);" in fragment_shader_text,
+                "custom postprocess combines six-second sway, fast tremor and fainting pulse")
+    assert_true("positiveGhostOffset" in fragment_shader_text and
+                "negativeGhostOffset" in fragment_shader_text and
+                "doubleImageOffset" not in fragment_shader_text,
+                "custom postprocess moves the two ghost images asymmetrically")
+    assert_true("float blurOffset = EXTRA_VECTOR1.y;" in fragment_shader_text and
+                "float ghostOffset = EXTRA_VECTOR1.z;" in fragment_shader_text,
+                "custom postprocess strength controls blending without suppressing ghost motion")
     assert_true("mix(sourceColor, ghostedColor, strength)" in fragment_shader_text,
                 "zero custom strength preserves the original image")
 
