@@ -15,6 +15,7 @@ sys.path.insert(0, str(behavior_root))
 
 from Diet_NullGr.ModSys.Disease import Disease
 from Diet_NullGr.ModSys.Disease import config
+from Diet_NullGr.ModSys.Diet import Diet
 from Diet_NullGr.ModSys.Diet import config as diet_config
 
 
@@ -866,6 +867,66 @@ def test_disease_nutrition_outline_state():
     )
 
 
+def test_low_penalty_effect_message():
+    class EffectStub(object):
+        def __init__(self):
+            self.calls = []
+
+        def AddEffectToEntity(self, name, duration, amplifier, show_particles):
+            self.calls.append((name, duration, amplifier, show_particles))
+
+    class CompFactoryStub(object):
+        def __init__(self):
+            self.effect = EffectStub()
+
+        def CreateEffect(self, player_id):
+            return self.effect
+
+    data = {
+        "values": {
+            "fruits": 0.10,
+            "grains": 0.50,
+            "proteins": 0.05,
+            "vegetables": 0.50,
+            "sugars": 0.50,
+        },
+        "tracking": {
+            "fruits": True,
+            "grains": True,
+            "proteins": True,
+            "vegetables": True,
+            "sugars": True,
+        },
+        "effectSettings": {
+            "balanced": False,
+            "sugarRush": False,
+        },
+        "penaltySettings": {
+            "singleLowNutrition": True,
+            "multipleLowNutrition": True,
+        },
+        "targetDietValue": 0.80,
+        "lowPenaltyEnabled": True,
+        "nutritionPenaltyValue": 0.15,
+    }
+    comp_factory = CompFactoryStub()
+    matched_results = Diet.applyEffects("player", data, comp_factory)
+    assert_equal(
+        comp_factory.effect.calls,
+        [("weakness", 6, 0, True), ("slowness", 6, 0, True)],
+        "two low nutrition groups apply weakness and slowness",
+    )
+    message = Diet.buildLowPenaltyEffectMessage(data, matched_results)
+    assert_true("营养不足、严重营养不足" in message, "message names every applied low penalty")
+    assert_true("水果营养值 10%（苹果、浆果或西瓜片）" in message, "message recommends fruit sources")
+    assert_true("蛋白质营养值 5%（肉类、鱼、蛋或牛奶）" in message, "message recommends protein sources")
+    assert_true("谷物营养值" not in message, "message omits nutrition groups above the penalty threshold")
+
+    disease_results = Diet.applyEffects("player", data, comp_factory, diseaseActive=True)
+    assert_equal(disease_results, [], "active disease suppresses ordinary low penalties")
+    assert_equal(Diet.buildLowPenaltyEffectMessage(data, disease_results), "", "suppressed penalties send no duplicate reminder")
+
+
 def test_modsdk_import_whitelist():
     python_paths = [
         behavior_root / "Diet_NullGr" / "com.py",
@@ -909,6 +970,7 @@ def main():
         test_system_registration_and_ui_bindings,
         test_disease_ui_detail_binding_reads_precomputed_selection,
         test_disease_nutrition_outline_state,
+        test_low_penalty_effect_message,
         test_modsdk_import_whitelist,
     ]
     for test in tests:

@@ -193,13 +193,17 @@ class DietServerSystem(ServerSystem):
             data = self.playerDietData[playerId]
             if data['active']:
                 diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
-                Diet.applyEffects(
+                matchedResults = Diet.applyEffects(
                     playerId,
                     data,
                     compFactory,
                     diseaseSys.hasActiveDisease(playerId),
                     diseaseSys.isSugarRushPaused(playerId)
                 )
+                # 提示必须与本轮实际施加结果保持一致；疾病接管低值惩罚时，返回结果中不会包含普通惩罚。
+                lowPenaltyMessage = Diet.buildLowPenaltyEffectMessage(data, matchedResults)
+                if lowPenaltyMessage:
+                    Diet.sendMessage(playerId, compFactory, lowPenaltyMessage, "§c")
 
     def Destroy(self):
         for playerId in self.playerDietData:

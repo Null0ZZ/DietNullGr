@@ -428,7 +428,7 @@ def getMatchedDietResults(data, diseaseActive=False, pauseSugarRush=False):
 def applyEffects(playerId, data, compFactory, diseaseActive=False, pauseSugarRush=False):
     matched = getMatchedDietResults(data, diseaseActive, pauseSugarRush)
     if not matched:
-        return
+        return matched
     compEffect = compFactory.CreateEffect(playerId)
     for effectResult in matched:
         if effectResult['kind'] == 'penalty':
@@ -438,6 +438,29 @@ def applyEffects(playerId, data, compFactory, diseaseActive=False, pauseSugarRus
         for statusEffect in effectConfig['statusEffects']:
             amplifier = statusEffect['amplifier'] + (effectResult['multiplier'] - 1) * statusEffect['increment']
             compEffect.AddEffectToEntity(statusEffect['name'], statusEffect['duration'], amplifier, True)
+    return matched
+
+
+# 负面效果刷新提示合并所有低值营养及推荐食物，避免同一轮惩罚连续刷出多条聊天消息。
+def buildLowPenaltyEffectMessage(data, matchedResults):
+    penaltyNames = []
+    for effectResult in matchedResults:
+        if effectResult['kind'] == 'penalty':
+            penaltyNames.append(config.dietPenalties[effectResult['id']]['name'])
+    if not penaltyNames:
+        return ""
+
+    lowGroupTexts = []
+    for groupId in config.essentialGroupOrder:
+        if not data['tracking'][groupId] or data['values'][groupId] > data['nutritionPenaltyValue']:
+            continue
+        groupConfig = config.groups[groupId]
+        lowGroupTexts.append("{}营养值 {}%（{}）".format(
+            groupConfig['name'],
+            formatDietPercent(data['values'][groupId]),
+            groupConfig['suggestion']
+        ))
+    return "饮食不均衡，已触发{}。请及时补充：{}。".format("、".join(penaltyNames), "；".join(lowGroupTexts))
 
 
 # 百分比反馈统一经过 0-100 限制，命令消息和导出结果保持同一种显示。
