@@ -53,6 +53,7 @@ dataSaveTick = 600
 customEffectDurationPadding = 10
 statusEffectDuration = 6
 nauseaDuration = 4
+intermittentNauseaDuration = 10
 nauseaSharedCooldownSeconds = 30
 hypoglycemiaLateSeconds = 45
 hypoglycemiaNauseaIntervalSeconds = 30

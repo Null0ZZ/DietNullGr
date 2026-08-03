@@ -688,6 +688,12 @@ def test_system_registration_and_ui_bindings():
     assert_true("clientApi.RegisterSystem(com.modName, key, com.clientSysKey[key])" in mod_main_text, "client registry is executed")
 
     server_text = server_path.read_text(encoding="utf-8-sig")
+    assert_equal(config.nauseaDuration, 4, "food-triggered constipation nausea remains four seconds")
+    assert_equal(config.intermittentNauseaDuration, 10, "intermittent disease nausea lasts ten seconds")
+    assert_equal(server_text.count("AddEffectToEntity('nausea', config.nauseaDuration"), 1,
+                 "food-triggered nausea keeps its independent duration")
+    assert_equal(server_text.count("AddEffectToEntity('nausea', config.intermittentNauseaDuration"), 1,
+                 "intermittent nausea uses its dedicated duration")
     for required_event in (
         "AddServerPlayerEvent",
         "DelServerPlayerEvent",

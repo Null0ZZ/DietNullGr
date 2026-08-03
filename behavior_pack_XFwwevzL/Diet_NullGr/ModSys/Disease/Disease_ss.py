@@ -548,7 +548,7 @@ class ServerSys(ServerSystem):
             'hypoglycemia' in data['active']
         )
 
-    # 三种间歇反胃共享冷却，便秘的进食反胃独立结算。
+    # 三种间歇反胃共用专属时长和冷却，便秘的进食反胃仍按独立时长结算。
     def _triggerIntermittentNausea(self, playerId, data):
         shouldTrigger = False
         if 'hypoglycemia' in data['active']:
@@ -564,7 +564,7 @@ class ServerSys(ServerSystem):
         if not shouldTrigger:
             return
         compEffect = compFactory.CreateEffect(playerId)
-        compEffect.AddEffectToEntity('nausea', config.nauseaDuration, 0, False)
+        compEffect.AddEffectToEntity('nausea', config.intermittentNauseaDuration, 0, False)
         self.nauseaCooldowns[playerId] = config.nauseaSharedCooldownSeconds
 
     # 下蹲只在非骑乘、非旁观且脚下是实体方块时有效，同时返回脚部位置供结束事件校验腾空。
