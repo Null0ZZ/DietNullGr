@@ -600,9 +600,9 @@ def test_hypoglycemia_custom_postprocess_resources():
         "enable": False,
         "paras": [
             {"name": "strength", "value": 0.0, "range": [0.0, 1.0]},
-            {"name": "blur_offset", "value": 0.0015, "range": [0.0, 0.005]},
-            {"name": "ghost_offset", "value": 0.005, "range": [0.0, 0.02]},
-            {"name": "sway_speed", "value": 1.0472, "range": [0.0, 4.0]},
+            {"name": "blur_offset", "value": 0.008, "range": [0.0, 0.015]},
+            {"name": "ghost_offset", "value": 0.018, "range": [0.0, 0.03]},
+            {"name": "sway_speed", "value": 2.4, "range": [0.0, 6.0]},
         ],
         "pass_array": [{
             "render_target": {"width": 1.0, "height": 1.0},
@@ -635,19 +635,32 @@ def test_hypoglycemia_custom_postprocess_resources():
                 "custom postprocess fragment shader exposes time and configured parameters")
     assert_equal(fragment_shader_text.count("texture(TEXTURE_0"), 7,
                  "custom postprocess uses exactly seven texture samples")
-    assert_true("float slowSway = sin(TIME * swaySpeed);" in fragment_shader_text and
-                "float tremor = sin(TIME * swaySpeed * 4.25 + slowSway * 1.5);" in fragment_shader_text and
-                "float faintPulse = pow(0.5 + 0.5 * sin(TIME * swaySpeed - 1.5708), 6.0);" in fragment_shader_text,
-                "custom postprocess combines six-second sway, fast tremor and fainting pulse")
+    assert_true("float symptomCycle = mod(TIME * 0.25, 1.0);" in fragment_shader_text and
+                "float clearWindow = smoothstep(0.66, 0.74, symptomCycle)" in fragment_shader_text and
+                "1.0 - smoothstep(0.82, 0.90, symptomCycle)" in fragment_shader_text,
+                "custom postprocess provides a perceptible full-clear window every four seconds")
+    assert_true("float blurPulse = 0.5 + 0.5 * sin(" in fragment_shader_text and
+                "float symptomAmount = (0.68 + blurPulse * 0.32) * (1.0 - clearWindow);" in fragment_shader_text and
+                "float blurOffset = baseBlurOffset * (0.45 + blurPulse * 0.55) * symptomAmount;" in fragment_shader_text,
+                "custom postprocess continuously varies blur severity outside each clear window")
+    assert_true("float shakeX = sin(TIME * swaySpeed * 3.20) * 0.65" in fragment_shader_text and
+                "sin(TIME * swaySpeed * 5.70" in fragment_shader_text and
+                "shakeX + separation" in fragment_shader_text and
+                "shakeX - separation" in fragment_shader_text,
+                "custom postprocess ghost pair shakes quickly and visibly from side to side")
     assert_true("positiveGhostOffset" in fragment_shader_text and
                 "negativeGhostOffset" in fragment_shader_text and
                 "doubleImageOffset" not in fragment_shader_text,
                 "custom postprocess moves the two ghost images asymmetrically")
-    assert_true("float blurOffset = EXTRA_VECTOR1.y;" in fragment_shader_text and
+    assert_true("float baseBlurOffset = EXTRA_VECTOR1.y;" in fragment_shader_text and
                 "float ghostOffset = EXTRA_VECTOR1.z;" in fragment_shader_text,
                 "custom postprocess strength controls blending without suppressing ghost motion")
-    assert_true("mix(sourceColor, ghostedColor, strength)" in fragment_shader_text,
-                "zero custom strength preserves the original image")
+    assert_true("mix(sourceColor, ghostedColor, strength * symptomAmount)" in fragment_shader_text,
+                "zero strength and clarity windows preserve the original image")
+    assert_true("blurredColor * 0.30" in fragment_shader_text and
+                "positiveGhostColor * 0.45" in fragment_shader_text and
+                "negativeGhostColor * 0.25" in fragment_shader_text,
+                "custom postprocess makes the rapidly moving ghost pair visually severe")
 
 
 def test_system_registration_and_ui_bindings():

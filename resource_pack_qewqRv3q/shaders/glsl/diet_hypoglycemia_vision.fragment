@@ -1,5 +1,5 @@
 // __multiversion__
-// 低血糖后期使用单次全屏采样制造柔化、晃动双影和短促下坠感。
+// 低血糖后期使用单次全屏采样制造动态模糊、剧烈晃动双影和短暂清晰窗口。
 
 precision highp float;
 
@@ -14,38 +14,48 @@ uniform vec4 EXTRA_VECTOR1;
 void main()
 {
     float strength = clamp(EXTRA_VECTOR1.x, 0.0, 1.0);
-    float blurOffset = EXTRA_VECTOR1.y;
+    float baseBlurOffset = EXTRA_VECTOR1.y;
     float ghostOffset = EXTRA_VECTOR1.z;
     float swaySpeed = EXTRA_VECTOR1.w;
 
-    // 六秒主摆动负责失衡感，较快轻颤避免重影像固定描边，窄脉冲模拟突然发虚下坠。
-    float slowSway = sin(TIME * swaySpeed);
-    float tremor = sin(TIME * swaySpeed * 4.25 + slowSway * 1.5);
-    float faintPulse = pow(0.5 + 0.5 * sin(TIME * swaySpeed - 1.5708), 6.0);
+    // 每四秒安排一次可感知的清晰窗口：两侧快速过渡，中间完整恢复原画面约 0.32 秒。
+    float symptomCycle = mod(TIME * 0.25, 1.0);
+    float clearWindow = smoothstep(0.66, 0.74, symptomCycle) * (
+        1.0 - smoothstep(0.82, 0.90, symptomCycle)
+    );
+
+    // 发作期仍持续改变模糊量，避免画面只在“模糊”和“清晰”两个固定状态间切换。
+    float blurPulse = 0.5 + 0.5 * sin(
+        TIME * swaySpeed * 0.75 + sin(TIME * swaySpeed * 0.31) * 1.40
+    );
+    float symptomAmount = (0.68 + blurPulse * 0.32) * (1.0 - clearWindow);
+    float blurOffset = baseBlurOffset * (0.45 + blurPulse * 0.55) * symptomAmount;
 
     vec3 sourceColor = texture(TEXTURE_0, uv).rgb;
-    vec3 blurredColor = sourceColor * 0.40;
-    blurredColor += texture(TEXTURE_0, uv + vec2(blurOffset, 0.0)).rgb * 0.15;
-    blurredColor += texture(TEXTURE_0, uv - vec2(blurOffset, 0.0)).rgb * 0.15;
-    blurredColor += texture(TEXTURE_0, uv + vec2(0.0, blurOffset)).rgb * 0.15;
-    blurredColor += texture(TEXTURE_0, uv - vec2(0.0, blurOffset)).rgb * 0.15;
+    vec3 blurredColor = sourceColor * 0.28;
+    blurredColor += texture(TEXTURE_0, uv + vec2(blurOffset, 0.0)).rgb * 0.18;
+    blurredColor += texture(TEXTURE_0, uv - vec2(blurOffset, 0.0)).rgb * 0.18;
+    blurredColor += texture(TEXTURE_0, uv + vec2(0.0, blurOffset)).rgb * 0.18;
+    blurredColor += texture(TEXTURE_0, uv - vec2(0.0, blurOffset)).rgb * 0.18;
 
-    float separation = 0.55 + abs(slowSway) * 0.25 + faintPulse * 0.15;
-    float horizontalWobble = slowSway * 0.10 + tremor * 0.05;
-    float verticalWobble = cos(TIME * swaySpeed * 0.75) * 0.20 +
-        sin(TIME * swaySpeed * 3.25) * 0.12 + faintPulse * 0.20;
-    // 两层重影不完全对称，既会分离和合拢，也会一起晃动；最大水平偏移仍小于 ghost_offset。
+    // 两组非整倍频横向振动形成不规则快速摇晃，双影间距始终足够大，避免退化成轻微描边。
+    float ghostScale = (0.60 + blurPulse * 0.40) * symptomAmount;
+    float shakeX = sin(TIME * swaySpeed * 3.20) * 0.65 +
+        sin(TIME * swaySpeed * 5.70 + sin(TIME * swaySpeed * 0.90)) * 0.35;
+    float shakeY = cos(TIME * swaySpeed * 2.70) * 0.18 +
+        sin(TIME * swaySpeed * 6.30) * 0.08;
+    float separation = 0.75 + sin(TIME * swaySpeed * 1.50) * 0.20;
     vec2 positiveGhostOffset = ghostOffset * vec2(
-        separation + horizontalWobble,
-        verticalWobble
-    );
+        shakeX + separation,
+        shakeY
+    ) * ghostScale;
     vec2 negativeGhostOffset = ghostOffset * vec2(
-        -separation + horizontalWobble,
-        -verticalWobble * 0.70
-    );
+        shakeX - separation,
+        -shakeY * 0.70
+    ) * ghostScale;
     vec3 positiveGhostColor = texture(TEXTURE_0, uv + positiveGhostOffset).rgb;
     vec3 negativeGhostColor = texture(TEXTURE_0, uv + negativeGhostOffset).rgb;
-    vec3 ghostedColor = blurredColor * 0.65 + positiveGhostColor * 0.20 + negativeGhostColor * 0.15;
+    vec3 ghostedColor = blurredColor * 0.30 + positiveGhostColor * 0.45 + negativeGhostColor * 0.25;
 
-    gl_FragColor = vec4(mix(sourceColor, ghostedColor, strength), 1.0);
+    gl_FragColor = vec4(mix(sourceColor, ghostedColor, strength * symptomAmount), 1.0);
 }
