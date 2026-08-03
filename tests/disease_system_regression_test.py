@@ -590,6 +590,7 @@ def test_system_registration_and_ui_bindings():
     client_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "Disease_cs.py"
     diet_client_path = behavior_root / "Diet_NullGr" / "Diet_main_cs.py"
     diet_server_path = behavior_root / "Diet_NullGr" / "Diet_main_ss.py"
+    diet_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "Diet.py"
     diet_config_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "config.py"
     thirst_server_path = behavior_root / "Diet_NullGr" / "ModSys" / "Thirst" / "Thirst_ss.py"
     diet_ui_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
@@ -671,8 +672,29 @@ def test_system_registration_and_ui_bindings():
                 "rickets no longer uses the vanilla skeleton hurt sound")
     assert_true("playerName = compFactory.CreateName(playerId).GetName()" in server_text and
                 '"{}玩家拉了一坨大的".format(playerName)' in server_text and
-                "for onlinePlayerId in serverApi.GetPlayerList():" in server_text,
-                "successful constipation squat cure broadcasts the player result")
+                "for onlinePlayerId in serverApi.GetPlayerList():" in server_text and
+                "compGame.SetOneTipMessage(" in server_text,
+                "successful constipation squat cure shows every online player a tip")
+
+    diet_logic_text = diet_logic_path.read_text(encoding="utf-8-sig")
+    assert_true("compGame = compFactory.CreateGame(playerId)" in diet_logic_text and
+                "compGame.SetOneTipMessage(playerId, color + message)" in diet_logic_text,
+                "diet feedback uses the player-specific tip API")
+    feedback_source_text = "\n".join(
+        path.read_text(encoding="utf-8-sig") for path in behavior_root.rglob("*.py")
+    )
+    for legacy_api in (
+        "CreateMsg(",
+        "NotifyOneMessage(",
+        "SetNotifyMsg(",
+        "SetTipMessage(",
+        "SetOnePopupNotice(",
+        "SetPopupNotice(",
+    ):
+        assert_true(legacy_api not in feedback_source_text,
+                    "all player feedback removes legacy message API {}".format(legacy_api))
+    assert_true(feedback_source_text.count("SetOneTipMessage(") >= 4,
+                "all diet and disease feedback roots use SetOneTipMessage")
 
     diet_server_text = diet_server_path.read_text(encoding="utf-8-sig")
     diet_config_text = diet_config_path.read_text(encoding="utf-8-sig")

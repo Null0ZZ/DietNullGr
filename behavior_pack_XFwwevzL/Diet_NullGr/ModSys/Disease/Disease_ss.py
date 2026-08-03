@@ -194,7 +194,7 @@ class ServerSys(ServerSystem):
         # 一次完整站立→下蹲→站立事务只在结束事件结算，按住下蹲不会重复累计。
         cured = Disease.recordConstipationSquat(data)
         if cured:
-            # 下蹲治愈先完成效果和数据收敛，再只给患者播放音效，并把结果广播给所有在线玩家。
+            # 下蹲治愈先完成效果和数据收敛，再只给患者播放音效，并逐个向所有在线玩家显示同一条 tip。
             self._finishDiseaseChanges(playerId, data, [], ['constipation'])
             self.NotifyToClient(playerId, config.symptomEvent, {
                 'sound': config.constipationReliefSound,
@@ -202,9 +202,8 @@ class ServerSys(ServerSystem):
                 'pitch': config.constipationReliefSoundPitch
             })
             playerName = compFactory.CreateName(playerId).GetName()
-            messageComp = compFactory.CreateMsg(serverApi.GetLevelId())
             for onlinePlayerId in serverApi.GetPlayerList():
-                messageComp.NotifyOneMessage(
+                compGame.SetOneTipMessage(
                     onlinePlayerId,
                     "{}玩家拉了一坨大的".format(playerName)
                 )
@@ -580,10 +579,9 @@ class ServerSys(ServerSystem):
             'headScale': headScale
         }
 
-    # 疾病文字统一使用聊天提示，音效由患者客户端播放以避免广播给无关玩家。
+    # 疾病文字统一覆盖物品栏上方的单条 tip，音效由患者客户端播放以避免广播给无关玩家。
     def _sendMessage(self, playerId, message, color):
-        compMsg = compFactory.CreateMsg(playerId)
-        compMsg.NotifyOneMessage(playerId, message, color)
+        compGame.SetOneTipMessage(playerId, color + message)
 
     def Destroy(self):
         onlinePlayers = serverApi.GetPlayerList()

@@ -156,10 +156,10 @@ def syncSettingToClient(serverSys, playerId, data):
     })
 
 
-# 普通玩家反馈统一走聊天提示，命令和进食记录保持同一种表现。
+# 普通玩家反馈统一覆盖物品栏上方的单条 tip，避免进食、设置和周期提醒持续刷聊天栏。
 def sendMessage(playerId, compFactory, message, color):
-    compMsg = compFactory.CreateMsg(playerId)
-    compMsg.NotifyOneMessage(playerId, message, color)
+    compGame = compFactory.CreateGame(playerId)
+    compGame.SetOneTipMessage(playerId, color + message)
 
 
 # 记录玩家已经吃过的食物，保留存档中的饮食历史供后续玩法复用。
