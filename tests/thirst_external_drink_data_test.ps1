@@ -19,7 +19,7 @@ $entryMatches = [regex]::Matches(
     $tableMatch.Groups['body'].Value,
     '(?m)^\s{4}"(?<id>[^"]+)":\s*(?<value>\d+\.0),\s*$'
 )
-Assert-Equal $entryMatches.Count 423 'external drink item count'
+Assert-Equal $entryMatches.Count 566 'external drink item count'
 
 $values = @{}
 foreach ($entryMatch in $entryMatches) {
@@ -35,10 +35,10 @@ foreach ($entryMatch in $entryMatches) {
 }
 
 Assert-Equal ($values.Values | Where-Object { $_ -eq '1.0' }).Count 11 '1.0 hydration count'
-Assert-Equal ($values.Values | Where-Object { $_ -eq '2.0' }).Count 29 '2.0 hydration count'
-Assert-Equal ($values.Values | Where-Object { $_ -eq '3.0' }).Count 150 '3.0 hydration count'
-Assert-Equal ($values.Values | Where-Object { $_ -eq '4.0' }).Count 114 '4.0 hydration count'
-Assert-Equal ($values.Values | Where-Object { $_ -eq '5.0' }).Count 110 '5.0 hydration count'
+Assert-Equal ($values.Values | Where-Object { $_ -eq '2.0' }).Count 54 '2.0 hydration count'
+Assert-Equal ($values.Values | Where-Object { $_ -eq '3.0' }).Count 164 '3.0 hydration count'
+Assert-Equal ($values.Values | Where-Object { $_ -eq '4.0' }).Count 193 '4.0 hydration count'
+Assert-Equal ($values.Values | Where-Object { $_ -eq '5.0' }).Count 135 '5.0 hydration count'
 Assert-Equal ($values.Values | Where-Object { $_ -eq '6.0' }).Count 7 '6.0 hydration count'
 Assert-Equal ($values.Values | Where-Object { $_ -eq '8.0' }).Count 2 '8.0 hydration count'
 
@@ -48,6 +48,10 @@ Assert-Equal $values['farmer_delight_nullgr:apple_cider'] '5.0' 'FarmerDelight f
 Assert-Equal $values['farmer_delight_nullgr:beef_stew'] '3.0' 'FarmerDelight thick stew value'
 Assert-Equal $values['farmer_delight_nullgr:bone_broth'] '4.0' 'FarmerDelight clear broth value'
 Assert-Equal $values['farmer_delight_nullgr:milk_bottle'] '6.0' 'FarmerDelight milk bottle value'
+Assert-Equal $values['fruitfarmersdelight_nullgr:fruit_juice_pean'] '5.0' 'FruitFarmerDelight fruit juice value'
+Assert-Equal $values['fruitfarmersdelight_nullgr:icecream_banana'] '4.0' 'FruitFarmerDelight ice recipe value'
+Assert-Equal $values['fruitfarmersdelight_nullgr:stewed_beef_with_red_wine'] '3.0' 'FruitFarmerDelight thick stew value'
+Assert-Equal $values['fruitfarmersdelight_nullgr:wine_grape'] '2.0' 'FruitFarmerDelight wine value'
 Assert-Equal $values['hearthandharvest_nullgr:red_grape_wine'] '2.0' 'wine value'
 Assert-Equal $values['vintage_delight_nullgr:pickle_soup'] '4.0' 'soup value'
 Assert-Equal $values['foragersinsight_nullgr:seed_milk_bucket'] '8.0' 'large milk value'
