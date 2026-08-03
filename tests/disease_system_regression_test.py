@@ -849,6 +849,8 @@ def test_system_registration_and_ui_bindings():
     assert_true("actorDamageCause.Custom" not in server_text,
                 "unsupported Custom damage cause is not reintroduced")
     binding_names = (
+        "title",
+        "title_color",
         "row_bar_outline_visible",
         "row_bar_outline_color",
         "disease_button_visible",
@@ -882,6 +884,7 @@ def test_system_registration_and_ui_bindings():
     assert_true("UpdateDiseaseData(self.diseaseData)" in client_text, "Disease client refreshes open DietUI")
 
     root = find_named_control(ui_data["main"], "root")
+    title = find_named_control(root, "title")
     nutrition_grid = find_named_control(root, "rows_grid")
     disease_grid = find_named_control(root, "disease_grid")
     disease_panel = find_named_control(root, "disease_panel")
@@ -894,6 +897,10 @@ def test_system_registration_and_ui_bindings():
 
     assert_equal(root["size"], [248, 148.0], "refactored Diet panel size remains unchanged")
     assert_equal(len(root["controls"]), 6, "refactored Diet panel control count remains unchanged")
+    assert_equal(title["color"], [0.3058823529411765, 0.203921568627451, 0.1803921568627451],
+                 "Diet title fallback color is deep brown #4E342E")
+    assert_true("return (0.3058823529411765, 0.203921568627451, 0.1803921568627451)" in logic_text,
+                "Diet title binding returns deep brown #4E342E")
     assert_equal(nutrition_grid["grid_dimensions"], [1, 5], "five nutrition rows remain")
     assert_equal(nutrition_grid["maximum_grid_items"], 5, "nutrition row limit")
     assert_equal(bar_outline["texture"], "textures/gui/diet_nullgr/outline", "nutrition outline texture")

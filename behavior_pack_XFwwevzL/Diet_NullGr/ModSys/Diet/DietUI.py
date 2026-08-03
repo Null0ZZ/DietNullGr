@@ -96,9 +96,7 @@ class DietUI(ScreenNode):
 
     @ViewBinder.binding(ViewBinder.BF_BindColor, "#diet_screen.title_color")
     def bindTitleColor(self):
-        if self.dietData['active']:
-            return (0.96, 0.94, 0.86)
-        return (0.78, 0.78, 0.78)
+        return (0.3058823529411765, 0.203921568627451, 0.1803921568627451)
 
     # 多个行绑定都按集合索引读取同一份同步数据，集中入口能保证字段来源一致。
     def getGroupData(self, index):
