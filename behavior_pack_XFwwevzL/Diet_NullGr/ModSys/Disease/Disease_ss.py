@@ -25,6 +25,7 @@ class ServerSys(ServerSystem):
         self.playerDiseaseData = {}
         self.pendingMetabolism = {}
         self.crouchStates = {}
+        self.sneakingPlayers = {}
         self.swimmingPlayers = {}
         self.jumpDamageCooldowns = {}
         self.jumpSequences = {}
@@ -35,6 +36,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerDieEvent", self, self.PlayerDieEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "ServerItemTryUseEvent", self, self.ServerItemTryUseEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnPlayerActionServerEvent", self, self.OnPlayerActionServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ActuallyHurtServerEvent", self, self.ActuallyHurtServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ActorHurtServerEvent", self, self.ActorHurtServerEvent)
@@ -118,6 +120,8 @@ class ServerSys(ServerSystem):
             del self.pendingMetabolism[playerId]
         if playerId in self.crouchStates:
             del self.crouchStates[playerId]
+        if playerId in self.sneakingPlayers:
+            del self.sneakingPlayers[playerId]
         if playerId in self.swimmingPlayers:
             del self.swimmingPlayers[playerId]
         if playerId in self.jumpDamageCooldowns:
@@ -138,6 +142,8 @@ class ServerSys(ServerSystem):
             del self.pendingMetabolism[playerId]
         if playerId in self.crouchStates:
             del self.crouchStates[playerId]
+        if playerId in self.sneakingPlayers:
+            del self.sneakingPlayers[playerId]
         if playerId in self.swimmingPlayers:
             del self.swimmingPlayers[playerId]
         self.jumpDamageCooldowns[playerId] = 0
@@ -151,6 +157,35 @@ class ServerSys(ServerSystem):
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
         self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(playerId, data))
 
+    def ServerItemTryUseEvent(self, args):
+        playerId = args['playerId']
+        itemDict = args['itemDict']
+        cancel = args['cancel']
+        if cancel or not config.debugItemEnabled:
+            return
+        itemName = itemDict['newItemName']
+        if itemName != config.debugClearItem and itemName not in config.debugDiseaseItemMap:
+            return
+        args['cancel'] = True
+        data = self._getPlayerData(playerId)
+        if not data['enabled']:
+            self._sendMessage(playerId, "疾病系统已关闭。", "§e")
+            return
+        if itemName == config.debugClearItem:
+            cured = Disease.clearAllDiseaseState(data)
+            self._finishDiseaseChanges(playerId, data, [], cured)
+            self._sendMessage(playerId, "已清除全部疾病测试状态。", "§a")
+            return
+        diseaseId = config.debugDiseaseItemMap[itemName]
+        replaceActive = playerId not in self.sneakingPlayers
+        # 物品和管理命令共用同一确诊事务，保证冲突、效果、存档与客户端同步不会因调试入口分叉。
+        if not self._applyDebugDisease(playerId, data, diseaseId, replaceActive):
+            self._sendMessage(playerId, "疾病槽位已满或该疾病已经存在。", "§c")
+            return
+        modeText = "追加" if not replaceActive else "切换"
+        self._sendMessage(playerId, "调试{}为{}；普通右键切换单病，潜行右键追加，纸可清空。".format(
+            modeText, config.diseases[diseaseId]['name']), "§e")
+
     def OnPlayerActionServerEvent(self, args):
         playerId = args['playerId']
         actionType = args['actionType']
@@ -159,12 +194,16 @@ class ServerSys(ServerSystem):
             # 游泳开始会中断正在记录的下蹲事务，避免出水后的 StopSneaking 被误结算。
             if playerId in self.crouchStates:
                 del self.crouchStates[playerId]
+            if playerId in self.sneakingPlayers:
+                del self.sneakingPlayers[playerId]
             return
         if actionType == playerActionType.StopSwimming:
             if playerId in self.swimmingPlayers:
                 del self.swimmingPlayers[playerId]
             return
         if actionType == playerActionType.StartSneaking:
+            if config.debugItemEnabled:
+                self.sneakingPlayers[playerId] = True
             data = self._getPlayerData(playerId)
             if 'constipation' not in data['active']:
                 return
@@ -177,6 +216,8 @@ class ServerSys(ServerSystem):
                 'dimensionId': groundedData['dimensionId']
             }
             return
+        if actionType == playerActionType.StopSneaking and playerId in self.sneakingPlayers:
+            del self.sneakingPlayers[playerId]
         if actionType != playerActionType.StopSneaking or playerId not in self.crouchStates:
             return
         crouchState = self.crouchStates[playerId]
@@ -405,16 +446,26 @@ class ServerSys(ServerSystem):
         if diseaseId not in config.diseases:
             self._sendMessage(playerId, "未知疾病：{}。".format(diseaseId), "§c")
             return True
-        cured = []
-        if diseaseId in config.bloodSugarConflict:
-            conflictId = config.bloodSugarConflict[diseaseId]
-            if conflictId in data['active']:
-                Disease.cureDisease(data, conflictId, False)
-                cured.append(conflictId)
-        data['protectionSeconds'][diseaseId] = 0
-        if not Disease.diagnoseDisease(data, diseaseId):
+        # 管理命令与物品入口必须共享完整确诊事务，实机调试才会得到一致的效果和 UI 状态。
+        if not self._applyDebugDisease(playerId, data, diseaseId, False):
             self._sendMessage(playerId, "疾病槽位已满或该疾病已经存在。", "§c")
             return True
+        return True
+
+    # 临时调试入口复用的确诊事务；普通物品切换单病，潜行物品和管理命令追加到空闲槽位。
+    def _applyDebugDisease(self, playerId, data, diseaseId, replaceActive):
+        if replaceActive:
+            cured = Disease.clearAllDiseaseState(data)
+        else:
+            cured = []
+            if diseaseId in config.bloodSugarConflict:
+                conflictId = config.bloodSugarConflict[diseaseId]
+                if conflictId in data['active']:
+                    Disease.cureDisease(data, conflictId, False)
+                    cured.append(conflictId)
+        data['protectionSeconds'][diseaseId] = 0
+        if not Disease.diagnoseDisease(data, diseaseId):
+            return False
         self._finishDiseaseChanges(playerId, data, [diseaseId], cured)
         return True
 

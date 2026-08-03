@@ -450,6 +450,120 @@ def find_named_control(value, target):
     return None
 
 
+def test_debug_item_shortcuts():
+    expected_item_map = {
+        "minecraft:apple": "hypoglycemia",
+        "minecraft:sugar": "hyperglycemia",
+        "minecraft:stick": "constipation",
+        "minecraft:bone": "rickets",
+        "minecraft:blaze_rod": "fever",
+        "minecraft:spider_eye": "mouth_ulcer",
+        "minecraft:rotten_flesh": "scurvy",
+    }
+    assert_true(config.debugItemEnabled, "temporary disease item shortcuts are enabled")
+    assert_equal(config.debugDiseaseItemMap, expected_item_map, "every disease has one direct debug item")
+    assert_equal(config.debugClearItem, "minecraft:paper", "paper clears disease debug state")
+    assert_equal(set(config.debugDiseaseItemMap.values()), set(config.diseaseOrder),
+                 "debug item shortcuts cover all configured diseases")
+
+    server_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "Disease_ss.py"
+    source = server_path.read_text(encoding="utf-8-sig")
+    tree = ast.parse(source, filename=str(server_path))
+    server_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "ServerSys")
+    method_names = {"ServerItemTryUseEvent", "_applyDebugDisease"}
+    method_nodes = []
+    for node in server_class.body:
+        if isinstance(node, ast.FunctionDef) and node.name in method_names:
+            method_nodes.append(node)
+    method_module = ast.Module(body=method_nodes, type_ignores=[])
+    ast.fix_missing_locations(method_module)
+    namespace = {"config": config, "Disease": Disease}
+    exec(compile(method_module, str(server_path), "exec"), namespace)
+
+    class DebugState(object):
+        def __init__(self):
+            self.data = Disease.createDefaultData()
+            self.sneakingPlayers = {}
+            self.finishedChanges = []
+            self.messages = []
+
+        def _getPlayerData(self, player_id):
+            return self.data
+
+        def _finishDiseaseChanges(self, player_id, data, diagnosed, cured):
+            self.finishedChanges.append((list(diagnosed), list(cured)))
+
+        def _sendMessage(self, player_id, message, color):
+            self.messages.append((message, color))
+
+    DebugState._applyDebugDisease = namespace["_applyDebugDisease"]
+    use_debug_item = namespace["ServerItemTryUseEvent"]
+    state = DebugState()
+
+    unrelated_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:diamond"},
+        "cancel": False,
+    }
+    use_debug_item(state, unrelated_args)
+    assert_true(not unrelated_args["cancel"] and not state.data["active"],
+                "unmapped items remain untouched")
+
+    stick_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:stick"},
+        "cancel": False,
+    }
+    use_debug_item(state, stick_args)
+    assert_true(stick_args["cancel"], "mapped debug item cancels vanilla air use")
+    assert_equal(state.data["active"], ["constipation"], "stick switches to constipation")
+
+    sugar_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:sugar"},
+        "cancel": False,
+    }
+    use_debug_item(state, sugar_args)
+    assert_equal(state.data["active"], ["hyperglycemia"], "normal use replaces the previous disease")
+
+    state.sneakingPlayers["player"] = True
+    bone_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:bone"},
+        "cancel": False,
+    }
+    use_debug_item(state, bone_args)
+    assert_equal(state.data["active"], ["hyperglycemia", "rickets"],
+                 "sneak use appends a second disease")
+
+    full_slot_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:stick"},
+        "cancel": False,
+    }
+    use_debug_item(state, full_slot_args)
+    assert_equal(state.data["active"], ["hyperglycemia", "rickets"],
+                 "sneak use preserves two occupied disease slots")
+
+    apple_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:apple"},
+        "cancel": False,
+    }
+    use_debug_item(state, apple_args)
+    assert_equal(state.data["active"], ["rickets", "hypoglycemia"],
+                 "debug blood sugar switch resolves the mutual exclusion")
+
+    paper_args = {
+        "playerId": "player",
+        "itemDict": {"newItemName": "minecraft:paper"},
+        "cancel": False,
+    }
+    use_debug_item(state, paper_args)
+    assert_true(paper_args["cancel"] and not state.data["active"],
+                "paper clears all disease debug state")
+
+
 def test_system_registration_and_ui_bindings():
     disease_config_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "config.py"
     com_path = behavior_root / "Diet_NullGr" / "com.py"
@@ -480,6 +594,7 @@ def test_system_registration_and_ui_bindings():
         "DelServerPlayerEvent",
         "PlayerDieEvent",
         "PlayerRespawnFinishServerEvent",
+        "ServerItemTryUseEvent",
         "OnPlayerActionServerEvent",
         "ActuallyHurtServerEvent",
         "ActorHurtServerEvent",
@@ -497,6 +612,10 @@ def test_system_registration_and_ui_bindings():
                 "disease management command is disabled in production by default")
     assert_true("if not config.debugCommandEnabled:" in server_text,
                 "disease management command requires explicit development opt-in")
+    assert_true("debugItemEnabled = True" in disease_config_path.read_text(encoding="utf-8-sig"),
+                "temporary disease item shortcuts are explicitly enabled")
+    assert_true("if cancel or not config.debugItemEnabled:" in server_text,
+                "disease item shortcuts require explicit development opt-in")
     assert_equal(config.settingDef["key"], config.settingEnabledKey, "disease setting definition key")
     assert_true(config.settingDef["default"], "disease setting defaults to enabled")
     assert_true("config.settingEventUpdate" in server_text and "def DietSettingUpdate(" in server_text,
@@ -509,6 +628,8 @@ def test_system_registration_and_ui_bindings():
                 "constipation squat rejects water at the player's feet")
     assert_true("playerActionType.StartSwimming" in server_text and "playerActionType.StopSwimming" in server_text,
                 "constipation squat tracks swimming state")
+    assert_true("self.sneakingPlayers[playerId] = True" in server_text,
+                "debug item shortcut tracks sneak mode through the official action event")
     assert_true("'sound': config.constipationReliefSound" in server_text,
                 "successful constipation squat cure plays the configured sound")
     assert_true("playerName = compFactory.CreateName(playerId).GetName()" in server_text and
@@ -967,6 +1088,7 @@ def main():
         test_constipation_squat_and_timeout_cure,
         test_recovery_transactions,
         test_resources_and_languages,
+        test_debug_item_shortcuts,
         test_system_registration_and_ui_bindings,
         test_disease_ui_detail_binding_reads_precomputed_selection,
         test_disease_nutrition_outline_state,

@@ -26,6 +26,19 @@ settingKeys = (settingEnabledKey,)
 defaultEnabled = True
 debugCommandEnabled = False
 
+# 临时疾病调试物品，发布正式版本前只需关闭此开关即可停用全部物品入口。
+debugItemEnabled = True
+debugClearItem = "minecraft:paper"
+debugDiseaseItemMap = {
+    "minecraft:apple": "hypoglycemia",
+    "minecraft:sugar": "hyperglycemia",
+    "minecraft:stick": "constipation",
+    "minecraft:bone": "rickets",
+    "minecraft:blaze_rod": "fever",
+    "minecraft:spider_eye": "mouth_ulcer",
+    "minecraft:rotten_flesh": "scurvy"
+}
+
 settingDef = {
     "key": settingEnabledKey,
     "name": "启用疾病系统（开启后长期饮食失衡可能触发疾病；关闭后清除全部疾病状态并停止判定）",
