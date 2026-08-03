@@ -147,7 +147,7 @@ class DietServerSystem(ServerSystem):
             self._queueTipMessage(
                 playerId,
                 tipMessageConfig.dietNutritionAlertKey,
-                "§e" + " ".join(nutritionAlertMessages),
+                "§e" + "\n".join(nutritionAlertMessages),
                 tipMessageConfig.priorityWarning
             )
             self.NotifyToClient(playerId, config.lowNutritionAlertEvent, {

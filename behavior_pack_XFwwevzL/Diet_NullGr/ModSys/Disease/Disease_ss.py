@@ -516,7 +516,7 @@ class ServerSys(ServerSystem):
             self._queueTipMessage(
                 playerId,
                 tipMessageConfig.diseaseChangeKey,
-                " ".join(changeMessages),
+                "\n".join(changeMessages),
                 tipMessageConfig.priorityImportant
             )
         self._updateHypoglycemiaSprintLimit(playerId, data)

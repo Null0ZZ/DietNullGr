@@ -1167,7 +1167,7 @@ def test_tip_message_aggregation():
     assert_equal(TipMessage.takeReadyMessage(state, 109), "", "fixed merge window waits ten ticks")
     assert_equal(
         TipMessage.takeReadyMessage(state, 110),
-        "§e谷物偏低。 §a补充了水果。",
+        "§e谷物偏低。\n§a补充了水果。",
         "one batch merges messages by priority instead of overwriting the first tip",
     )
     assert_equal(state["visibleUntilTick"], 160, "display lock protects the visible tip")
@@ -1236,7 +1236,7 @@ def test_tip_message_aggregation():
         TipMessage.queueMessage(overflow_state, 0, message_key, message, priority)
     assert_equal(
         TipMessage.takeReadyMessage(overflow_state, tip_message_config.mergeWindowTick),
-        "§c重要。 §e警告。 §a普通。 §b次要。 §7另有1条提示。",
+        "§c重要。\n§e警告。\n§a普通。\n§b次要。\n§7另有1条提示。",
         "overflow keeps four highest-priority messages and adds a compact summary",
     )
 

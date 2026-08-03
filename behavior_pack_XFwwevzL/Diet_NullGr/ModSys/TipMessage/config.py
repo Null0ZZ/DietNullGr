@@ -10,7 +10,7 @@ serverSysKey = {
 mergeWindowTick = 10
 displayHoldTick = 50
 maximumMergedMessageCount = 4
-messageSeparator = " "
+messageSeparator = "\n"
 omittedMessageColor = "§7"
 
 priorityProgress = 10
