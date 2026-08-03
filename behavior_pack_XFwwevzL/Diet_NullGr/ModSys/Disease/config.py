@@ -75,9 +75,12 @@ maximumBoneScale = 1.25
 visualScaleFadeTick = 20
 hyperglycemiaThirstMultiplier = 1.25
 feverThirstMultiplier = 1.5
-gaussianBlurMaxRadius = 6.0
-gaussianBlurGrowSeconds = 90.0
-gaussianBlurFadeTick = 20
+hypoglycemiaVisionPostProcess = "dietHypoglycemiaVision"
+hypoglycemiaVisionStrengthParameter = "strength"
+hypoglycemiaVisionInitialStrength = 0.1
+hypoglycemiaVisionMaxStrength = 1.0
+hypoglycemiaVisionGrowSeconds = 90.0
+hypoglycemiaVisionFadeTick = 20
 hypoglycemiaSprintLimitSource = "hypoglycemia"
 hypoglycemiaQuickProtectionSeconds = 60
 bloodSugarConversionProtectionSeconds = 120
@@ -148,7 +151,7 @@ diseases = {
         "tips": "能量不足；吃主食、水果或甜食",
         "cause": "谷物、水果和糖分均长期处于低位。",
         "relief": "补充谷物可稳定缓解，水果或甜食可快速缓解。",
-        "symptom": "初期疾跑不再加速并限制连续跳跃，持续后会视野模糊并间歇反胃。",
+        "symptom": "初期疾跑不再加速并限制连续跳跃，持续后会视野模糊重影并间歇反胃。",
         "customEffect": "diet_nullgr:hypoglycemia",
         "icon": "textures/ui/diet_nullgr/disease/hypoglycemia_effect",
         "priority": 3,

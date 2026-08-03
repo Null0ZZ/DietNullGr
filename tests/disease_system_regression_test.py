@@ -564,6 +564,84 @@ def test_debug_item_shortcuts():
                 "paper clears all disease debug state")
 
 
+def test_hypoglycemia_custom_postprocess_resources():
+    post_process_path = resource_root / "graphics_settings" / "post_process.json"
+    material_path = resource_root / "materials" / "postprocess.material"
+    vertex_shader_path = resource_root / "shaders" / "glsl" / "diet_fullscreen.vertex"
+    fragment_shader_path = resource_root / "shaders" / "glsl" / "diet_hypoglycemia_vision.fragment"
+
+    for resource_path in (post_process_path, material_path, vertex_shader_path, fragment_shader_path):
+        assert_true(resource_path.is_file(), "custom postprocess resource {}".format(resource_path.relative_to(project_root)))
+
+    assert_equal(config.hypoglycemiaVisionPostProcess, "dietHypoglycemiaVision",
+                 "hypoglycemia custom postprocess name")
+    assert_equal(config.hypoglycemiaVisionStrengthParameter, "strength",
+                 "hypoglycemia custom postprocess strength parameter")
+    assert_close(config.hypoglycemiaVisionInitialStrength, 0.1,
+                 "hypoglycemia custom postprocess initial strength")
+    assert_close(config.hypoglycemiaVisionMaxStrength, 1.0,
+                 "hypoglycemia custom postprocess maximum strength")
+    assert_close(config.hypoglycemiaVisionGrowSeconds, 90.0,
+                 "hypoglycemia custom postprocess growth duration")
+    assert_equal(config.hypoglycemiaVisionFadeTick, 20,
+                 "hypoglycemia custom postprocess fade duration")
+
+    post_process_data = json.loads(post_process_path.read_text(encoding="utf-8-sig"))
+    assert_equal(post_process_data["render_order"][-1], config.hypoglycemiaVisionPostProcess,
+                 "hypoglycemia postprocess renders after the vanilla chain")
+    assert_equal(post_process_data["render_order"].count(config.hypoglycemiaVisionPostProcess), 1,
+                 "hypoglycemia postprocess appears once in render order")
+    processes = {process["name"]: process for process in post_process_data["process_array"]}
+    assert_equal(set(("bloom", "lensflare", "depthoffield", "gaussianblur", "coloradjustment",
+                      "vignette", "lensstain", "oldtv", "scanmap")) - set(processes), set(),
+                 "custom postprocess file preserves vanilla processes")
+    assert_equal(processes[config.hypoglycemiaVisionPostProcess], {
+        "name": "dietHypoglycemiaVision",
+        "enable": False,
+        "paras": [
+            {"name": "strength", "value": 0.0, "range": [0.0, 1.0]},
+            {"name": "blur_offset", "value": 0.0015, "range": [0.0, 0.005]},
+            {"name": "ghost_offset", "value": 0.005, "range": [0.0, 0.02]},
+            {"name": "sway_speed", "value": 1.0472, "range": [0.0, 4.0]},
+        ],
+        "pass_array": [{
+            "render_target": {"width": 1.0, "height": 1.0},
+            "material": "dietHypoglycemiaVisionMat",
+        }],
+    }, "hypoglycemia custom postprocess definition")
+
+    material_data = json.loads(material_path.read_text(encoding="utf-8-sig"))
+    assert_equal(material_data["dietHypoglycemiaVisionMat"], {
+        "vertexShader": "shaders/diet_fullscreen.vertex",
+        "fragmentShader": "shaders/diet_hypoglycemia_vision.fragment",
+        "vertexFields": [{"field": "Position"}, {"field": "UV0"}],
+        "samplerStates": [{
+            "samplerIndex": 0,
+            "textureWrap": "Clamp",
+            "textureFilter": "Bilinear",
+        }],
+        "states": ["DisableDepthTest"],
+        "msaaSupport": "Both",
+    }, "hypoglycemia custom postprocess material")
+
+    vertex_shader_text = vertex_shader_path.read_text(encoding="utf-8-sig")
+    fragment_shader_text = fragment_shader_path.read_text(encoding="utf-8-sig")
+    assert_true("// __multiversion__" in vertex_shader_text and "gl_Position" in vertex_shader_text and
+                "uv = TEXCOORD_0" in vertex_shader_text,
+                "custom postprocess vertex shader follows the official fullscreen pass")
+    assert_true("// __multiversion__" in fragment_shader_text and
+                '#include "uniformPerFrameConstants.h"' in fragment_shader_text and
+                "uniform vec4 EXTRA_VECTOR1" in fragment_shader_text,
+                "custom postprocess fragment shader exposes time and configured parameters")
+    assert_equal(fragment_shader_text.count("texture(TEXTURE_0"), 7,
+                 "custom postprocess uses exactly seven texture samples")
+    assert_true("sin(TIME * swaySpeed)" in fragment_shader_text and
+                "cos(TIME * swaySpeed)" in fragment_shader_text,
+                "custom postprocess double image drifts on a six-second cycle")
+    assert_true("mix(sourceColor, ghostedColor, strength)" in fragment_shader_text,
+                "zero custom strength preserves the original image")
+
+
 def test_system_registration_and_ui_bindings():
     disease_config_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "config.py"
     com_path = behavior_root / "Diet_NullGr" / "com.py"
@@ -668,8 +746,14 @@ def test_system_registration_and_ui_bindings():
     assert_true("def RemovePlayerAOIClientEvent(" in client_text, "disease client clears stale visual injection")
     assert_true("self.AddPlayerCreatedClientEvent({'playerId': playerId})" in client_text,
                 "UI initialization restores local player render injection after addon reload")
-    assert_true("not self.postProcessComp.CheckGaussianBlurEnabled()" in client_text,
-                "active disease restores blur after another screen disables it")
+    assert_true("SetEnableByName(" in client_text and "CheckEnabledByName(" in client_text and
+                "SetParameter(" in client_text,
+                "hypoglycemia uses the official custom postprocess control APIs")
+    assert_true("config.hypoglycemiaVisionPostProcess" in client_text and
+                "config.hypoglycemiaVisionStrengthParameter" in client_text,
+                "hypoglycemia client controls the configured custom postprocess")
+    assert_true("GaussianBlur" not in client_text and "gaussianBlur" not in disease_config_path.read_text(encoding="utf-8-sig"),
+                "hypoglycemia no longer uses the built-in Gaussian blur")
     assert_true("self.renderedVisualData" in client_text and "config.visualScaleFadeTick" in client_text,
                 "bone scale changes interpolate on the client")
     assert_true("clientApi.GetUI(com.modName, dietConfig.uiKey)" in client_text and
@@ -1093,6 +1177,7 @@ def main():
         test_recovery_transactions,
         test_resources_and_languages,
         test_debug_item_shortcuts,
+        test_hypoglycemia_custom_postprocess_resources,
         test_system_registration_and_ui_bindings,
         test_disease_ui_detail_binding_reads_precomputed_selection,
         test_disease_nutrition_outline_state,

@@ -1,0 +1,36 @@
+// __multiversion__
+// 低血糖后期使用单次全屏采样制造柔化和轻微漂移双影。
+
+precision highp float;
+
+#include "fragmentVersionCentroidUV.h"
+#include "uniformPerFrameConstants.h"
+
+LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
+
+// strength、柔化偏移、重影偏移和摆动速度依次由 post_process.json 注入。
+uniform vec4 EXTRA_VECTOR1;
+
+void main()
+{
+    float strength = clamp(EXTRA_VECTOR1.x, 0.0, 1.0);
+    float blurOffset = EXTRA_VECTOR1.y * strength;
+    float ghostOffset = EXTRA_VECTOR1.z * strength;
+    float swaySpeed = EXTRA_VECTOR1.w;
+
+    vec3 sourceColor = texture(TEXTURE_0, uv).rgb;
+    vec3 blurredColor = sourceColor * 0.40;
+    blurredColor += texture(TEXTURE_0, uv + vec2(blurOffset, 0.0)).rgb * 0.15;
+    blurredColor += texture(TEXTURE_0, uv - vec2(blurOffset, 0.0)).rgb * 0.15;
+    blurredColor += texture(TEXTURE_0, uv + vec2(0.0, blurOffset)).rgb * 0.15;
+    blurredColor += texture(TEXTURE_0, uv - vec2(0.0, blurOffset)).rgb * 0.15;
+
+    float horizontalSway = 0.85 + sin(TIME * swaySpeed) * 0.15;
+    float verticalSway = cos(TIME * swaySpeed) * 0.18;
+    vec2 doubleImageOffset = vec2(ghostOffset * horizontalSway, ghostOffset * verticalSway);
+    vec3 positiveGhostColor = texture(TEXTURE_0, uv + doubleImageOffset).rgb;
+    vec3 negativeGhostColor = texture(TEXTURE_0, uv - doubleImageOffset).rgb;
+    vec3 ghostedColor = blurredColor * 0.65 + positiveGhostColor * 0.20 + negativeGhostColor * 0.15;
+
+    gl_FragColor = vec4(mix(sourceColor, ghostedColor, strength), 1.0);
+}

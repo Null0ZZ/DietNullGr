@@ -27,9 +27,9 @@ class ClientSys(ClientSystem):
         self.injectedPlayers = {}
         self.tickCounter = 0
         self.lastSuccessfulJumpTick = -config.hypoglycemiaJumpIntervalTick
-        self.blurRadius = 0.0
-        self.blurTargetRadius = 0.0
-        self.diseaseOwnsBlur = False
+        self.hypoglycemiaVisionStrength = 0.0
+        self.hypoglycemiaVisionTargetStrength = 0.0
+        self.diseaseOwnsHypoglycemiaVision = False
         self.postProcessComp = compFactory.CreatePostProcess(levelId)
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
         self.ListenForEvent(engineNamespace, engineSystemName, "AddPlayerCreatedClientEvent", self, self.AddPlayerCreatedClientEvent)
@@ -125,30 +125,40 @@ class ClientSys(ClientSystem):
                 queryVariableComp = compFactory.CreateQueryVariable(playerId)
                 queryVariableComp.Set(config.bodyScaleQuery, float(renderedData['bodyScale']))
                 queryVariableComp.Set(config.headScaleQuery, float(renderedData['headScale']))
-        if self.blurRadius < self.blurTargetRadius:
-            self.blurRadius = min(
-                self.blurTargetRadius,
-                self.blurRadius + config.gaussianBlurMaxRadius / float(config.gaussianBlurFadeTick)
+        if self.hypoglycemiaVisionStrength < self.hypoglycemiaVisionTargetStrength:
+            self.hypoglycemiaVisionStrength = min(
+                self.hypoglycemiaVisionTargetStrength,
+                self.hypoglycemiaVisionStrength +
+                config.hypoglycemiaVisionMaxStrength / float(config.hypoglycemiaVisionFadeTick)
             )
-        elif self.blurRadius > self.blurTargetRadius:
-            self.blurRadius = max(
-                self.blurTargetRadius,
-                self.blurRadius - config.gaussianBlurMaxRadius / float(config.gaussianBlurFadeTick)
+        elif self.hypoglycemiaVisionStrength > self.hypoglycemiaVisionTargetStrength:
+            self.hypoglycemiaVisionStrength = max(
+                self.hypoglycemiaVisionTargetStrength,
+                self.hypoglycemiaVisionStrength -
+                config.hypoglycemiaVisionMaxStrength / float(config.hypoglycemiaVisionFadeTick)
             )
-        if self.blurTargetRadius > 0.0 and not self.diseaseOwnsBlur:
-            # 后处理是客户端全局状态；已有其他界面占用时不抢占，也不在疾病恢复时误关闭它。
-            if not self.postProcessComp.CheckGaussianBlurEnabled():
-                self.postProcessComp.SetEnableGaussianBlur(True)
-                self.diseaseOwnsBlur = True
-        if (self.diseaseOwnsBlur and self.blurTargetRadius > 0.0 and
-                not self.postProcessComp.CheckGaussianBlurEnabled()):
-            # 其他界面关闭时可能顺手关闭全局模糊；疾病仍持续则在下一 Tick 恢复症状表现。
-            self.postProcessComp.SetEnableGaussianBlur(True)
-        if self.diseaseOwnsBlur and self.blurRadius > 0.0:
-            self.postProcessComp.SetGaussianBlurRadius(self.blurRadius)
-        if self.diseaseOwnsBlur and self.blurRadius <= 0.0 and self.blurTargetRadius <= 0.0:
-            self.postProcessComp.SetEnableGaussianBlur(False)
-            self.diseaseOwnsBlur = False
+        if self.hypoglycemiaVisionStrength > 0.0:
+            # 自定义后处理只归疾病模块所有；先写强度再开启，避免默认参数造成一帧强重影。
+            self.postProcessComp.SetParameter(
+                config.hypoglycemiaVisionPostProcess,
+                config.hypoglycemiaVisionStrengthParameter,
+                self.hypoglycemiaVisionStrength
+            )
+            if (not self.diseaseOwnsHypoglycemiaVision or
+                    not self.postProcessComp.CheckEnabledByName(config.hypoglycemiaVisionPostProcess)):
+                # 资源重载或其他流程关闭效果后，低血糖仍持续时必须在下一 Tick 恢复表现。
+                self.postProcessComp.SetEnableByName(config.hypoglycemiaVisionPostProcess, True)
+                self.diseaseOwnsHypoglycemiaVision = True
+        elif (self.diseaseOwnsHypoglycemiaVision and
+              self.hypoglycemiaVisionTargetStrength <= 0.0):
+            # 淡出完成后再关闭渲染 pass，确保痊愈过程不会突然跳回清晰画面。
+            self.postProcessComp.SetParameter(
+                config.hypoglycemiaVisionPostProcess,
+                config.hypoglycemiaVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.hypoglycemiaVisionPostProcess, False)
+            self.diseaseOwnsHypoglycemiaVision = False
 
     def DiseaseSyncData(self, args):
         active = args['active']
@@ -171,11 +181,14 @@ class ClientSys(ClientSystem):
         if hypoglycemiaSeconds >= config.hypoglycemiaLateSeconds:
             growRatio = min(
                 1.0,
-                (hypoglycemiaSeconds - config.hypoglycemiaLateSeconds) / config.gaussianBlurGrowSeconds
+                (hypoglycemiaSeconds - config.hypoglycemiaLateSeconds) / config.hypoglycemiaVisionGrowSeconds
             )
-            self.blurTargetRadius = config.gaussianBlurMaxRadius * (0.1 + growRatio * 0.9)
+            self.hypoglycemiaVisionTargetStrength = (
+                config.hypoglycemiaVisionInitialStrength + growRatio *
+                (config.hypoglycemiaVisionMaxStrength - config.hypoglycemiaVisionInitialStrength)
+            )
         else:
-            self.blurTargetRadius = 0.0
+            self.hypoglycemiaVisionTargetStrength = 0.0
         mainClientSys = clientApi.GetSystem(com.modName, com.csname)
         uiNode = clientApi.GetUI(com.modName, dietConfig.uiKey)
         # 关闭或热重载后主系统可能仍保留陈旧 uiNode，只有 UI 管理器返回当前实例时才刷新。
@@ -211,6 +224,11 @@ class ClientSys(ClientSystem):
             queryVariableComp = compFactory.CreateQueryVariable(playerId)
             queryVariableComp.Set(config.bodyScaleQuery, 1.0)
             queryVariableComp.Set(config.headScaleQuery, 1.0)
-        if self.diseaseOwnsBlur:
-            self.postProcessComp.SetEnableGaussianBlur(False)
-            self.diseaseOwnsBlur = False
+        if self.diseaseOwnsHypoglycemiaVision:
+            self.postProcessComp.SetParameter(
+                config.hypoglycemiaVisionPostProcess,
+                config.hypoglycemiaVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.hypoglycemiaVisionPostProcess, False)
+            self.diseaseOwnsHypoglycemiaVision = False

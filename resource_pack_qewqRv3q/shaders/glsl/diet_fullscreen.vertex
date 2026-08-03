@@ -1,0 +1,14 @@
+// __multiversion__
+// 引擎会根据图形版本自动补充对应的 GLSL 版本声明。
+
+#include "vertexVersionCentroidUV.h"
+#include "uniformWorldConstants.h"
+
+attribute POS4 POSITION;
+attribute vec2 TEXCOORD_0;
+
+void main()
+{
+    gl_Position = vec4(POSITION.xyz, 1.0);
+    uv = TEXCOORD_0;
+}
