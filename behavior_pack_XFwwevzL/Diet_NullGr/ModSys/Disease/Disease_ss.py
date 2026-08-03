@@ -5,6 +5,7 @@ import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as config
 import Diet_NullGr.ModSys.Disease.Disease as Disease
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
+import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
@@ -202,19 +203,24 @@ class ServerSys(ServerSystem):
                 'pitch': config.constipationReliefSoundPitch
             })
             playerName = compFactory.CreateName(playerId).GetName()
+            broadcastKey = tipMessageConfig.constipationBroadcastKeyPrefix + playerId
             for onlinePlayerId in serverApi.GetPlayerList():
-                compGame.SetOneTipMessage(
+                self._queueTipMessage(
                     onlinePlayerId,
-                    "{}玩家拉了一坨大的".format(playerName)
+                    broadcastKey,
+                    "{}玩家拉了一坨大的".format(playerName),
+                    tipMessageConfig.priorityNormal
                 )
             return
         Disease.savePlayerData(playerId, data, compFactory)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
         self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(playerId, data))
-        compGame.SetOneTipMessage(
+        self._queueTipMessage(
             playerId,
+            tipMessageConfig.constipationProgressKey,
             serverApi.GenerateColor("GREEN") + "便秘缓解进度：{}/{}。".format(
-                data['constipationSquatCount'], config.constipationSquatRequired)
+                data['constipationSquatCount'], config.constipationSquatRequired),
+            tipMessageConfig.priorityProgress
         )
 
     def ActuallyHurtServerEvent(self, args):
@@ -333,7 +339,12 @@ class ServerSys(ServerSystem):
             compEffect = compFactory.CreateEffect(playerId)
             compEffect.AddEffectToEntity('nausea', config.nauseaDuration, 0, False)
         if 'mouth_ulcer' in activeBefore:
-            self._sendMessage(playerId, "口腔溃疡传来一阵刺痛。", "§c")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseSymptomKey,
+                "§c口腔溃疡传来一阵刺痛。",
+                tipMessageConfig.priorityWarning
+            )
             self.NotifyToClient(playerId, config.symptomEvent, {
                 'sound': 'game.player.hurt',
                 'volume': 1.0,
@@ -388,14 +399,24 @@ class ServerSys(ServerSystem):
             return False
         data = self._getPlayerData(playerId)
         if not data['enabled']:
-            self._sendMessage(playerId, "疾病系统已关闭。", "§e")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseCommandKey,
+                "§e疾病系统已关闭。",
+                tipMessageConfig.priorityImportant
+            )
             return True
         if len(parts) == 2 or parts[2] == 'status':
             names = []
             for diseaseId in data['active']:
                 names.append(config.diseases[diseaseId]['name'])
             message = "当前疾病：{}。".format('、'.join(names) if names else '无')
-            self._sendMessage(playerId, message, "§e")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseCommandKey,
+                "§e" + message,
+                tipMessageConfig.priorityImportant
+            )
             return True
         if parts[2] == 'clear':
             cured = list(data['active'])
@@ -405,7 +426,12 @@ class ServerSys(ServerSystem):
             return True
         diseaseId = parts[2]
         if diseaseId not in config.diseases:
-            self._sendMessage(playerId, "未知疾病：{}。".format(diseaseId), "§c")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseCommandKey,
+                "§c未知疾病：{}。".format(diseaseId),
+                tipMessageConfig.priorityImportant
+            )
             return True
         cured = []
         if diseaseId in config.bloodSugarConflict:
@@ -415,7 +441,12 @@ class ServerSys(ServerSystem):
                 cured.append(conflictId)
         data['protectionSeconds'][diseaseId] = 0
         if not Disease.diagnoseDisease(data, diseaseId):
-            self._sendMessage(playerId, "疾病槽位已满或该疾病已经存在。", "§c")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseCommandKey,
+                "§c疾病槽位已满或该疾病已经存在。",
+                tipMessageConfig.priorityImportant
+            )
             return True
         self._finishDiseaseChanges(playerId, data, [diseaseId], cured)
         return True
@@ -444,6 +475,11 @@ class ServerSys(ServerSystem):
     # 总开关关闭和关闭存档恢复共用此事务，统一清理状态、效果、疾跑来源及所有客户端骨骼表现。
     def _clearDiseaseSystemState(self, playerId, data):
         Disease.clearAllDiseaseState(data)
+        # 疾病关闭后撤销所有尚未展示的疾病状态提示，避免展示锁结束时播放失效内容。
+        tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.constipationProgressKey)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.diseaseSymptomKey)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.diseaseChangeKey)
         if playerId in self.pendingMetabolism:
             del self.pendingMetabolism[playerId]
         if playerId in self.crouchStates:
@@ -462,14 +498,27 @@ class ServerSys(ServerSystem):
     # 确诊/痊愈事务按“效果→疾跑来源→保存→本地数据→全员视觉”顺序一次性收敛。
     def _finishDiseaseChanges(self, playerId, data, diagnosed, cured):
         compEffect = compFactory.CreateEffect(playerId)
+        changeMessages = []
+        if 'constipation' in cured:
+            # 痊愈提示提交前先撤销尚未展示的下蹲进度，避免聚合批次在治愈后播报旧进度。
+            tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+            tipMessageSys.removeTip(playerId, tipMessageConfig.constipationProgressKey)
         for diseaseId in cured:
             compEffect.RemoveEffectFromEntity(config.diseases[diseaseId]['customEffect'])
-            self._sendMessage(playerId, "{}已经缓解。".format(config.diseases[diseaseId]['name']), "§a")
+            changeMessages.append("§a{}已经缓解。".format(config.diseases[diseaseId]['name']))
         self._refreshDiseaseEffects(playerId, data)
         for diseaseId in diagnosed:
             diseaseConfig = config.diseases[diseaseId]
-            self._sendMessage(playerId, "你患上了{}：{} 缓解方式：{}".format(
-                diseaseConfig['name'], diseaseConfig['symptom'], diseaseConfig['relief']), "§c")
+            changeMessages.append(
+                "§c你患上了{}，请打开饮食界面查看症状和缓解方式。".format(diseaseConfig['name'])
+            )
+        if changeMessages:
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.diseaseChangeKey,
+                " ".join(changeMessages),
+                tipMessageConfig.priorityImportant
+            )
         self._updateHypoglycemiaSprintLimit(playerId, data)
         Disease.savePlayerData(playerId, data, compFactory)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
@@ -579,9 +628,10 @@ class ServerSys(ServerSystem):
             'headScale': headScale
         }
 
-    # 疾病文字统一覆盖物品栏上方的单条 tip，音效由患者客户端播放以避免广播给无关玩家。
-    def _sendMessage(self, playerId, message, color):
-        compGame.SetOneTipMessage(playerId, color + message)
+    # 多个疾病事务共享同一提示服务，聚合窗口避免症状、确诊和痊愈消息互相覆盖。
+    def _queueTipMessage(self, playerId, messageKey, message, priority):
+        tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+        tipMessageSys.enqueueTip(playerId, messageKey, message, priority)
 
     def Destroy(self):
         onlinePlayers = serverApi.GetPlayerList()

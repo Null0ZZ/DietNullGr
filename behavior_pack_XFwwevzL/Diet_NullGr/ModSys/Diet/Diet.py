@@ -156,12 +156,6 @@ def syncSettingToClient(serverSys, playerId, data):
     })
 
 
-# 普通玩家反馈统一覆盖物品栏上方的单条 tip，避免进食、设置和周期提醒持续刷聊天栏。
-def sendMessage(playerId, compFactory, message, color):
-    compGame = compFactory.CreateGame(playerId)
-    compGame.SetOneTipMessage(playerId, color + message)
-
-
 # 记录玩家已经吃过的食物，保留存档中的饮食历史供后续玩法复用。
 def addEatenFood(data, itemName):
     if data['eaten'] == "":
@@ -440,7 +434,7 @@ def applyEffects(playerId, data, compFactory, diseaseActive=False, pauseSugarRus
     return matched
 
 
-# 负面效果刷新时只播报低值营养类别，避免百分比和食物举例占用过多聊天区域。
+# 负面效果刷新时只播报低值营养类别，避免百分比和食物举例占用过多悬浮提示空间。
 def buildLowPenaltyEffectMessage(data, matchedResults):
     penaltyApplied = False
     for effectResult in matchedResults:

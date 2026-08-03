@@ -17,6 +17,8 @@ from Diet_NullGr.ModSys.Disease import Disease
 from Diet_NullGr.ModSys.Disease import config
 from Diet_NullGr.ModSys.Diet import Diet
 from Diet_NullGr.ModSys.Diet import config as diet_config
+from Diet_NullGr.ModSys.TipMessage import TipMessage
+from Diet_NullGr.ModSys.TipMessage import config as tip_message_config
 
 
 def assert_true(condition, message):
@@ -590,9 +592,9 @@ def test_system_registration_and_ui_bindings():
     client_path = behavior_root / "Diet_NullGr" / "ModSys" / "Disease" / "Disease_cs.py"
     diet_client_path = behavior_root / "Diet_NullGr" / "Diet_main_cs.py"
     diet_server_path = behavior_root / "Diet_NullGr" / "Diet_main_ss.py"
-    diet_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "Diet.py"
     diet_config_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "config.py"
     thirst_server_path = behavior_root / "Diet_NullGr" / "ModSys" / "Thirst" / "Thirst_ss.py"
+    tip_message_server_path = behavior_root / "Diet_NullGr" / "ModSys" / "TipMessage" / "TipMessage_ss.py"
     diet_ui_logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
     diet_ui_path = resource_root / "ui" / "diet_screen.json"
 
@@ -602,7 +604,15 @@ def test_system_registration_and_ui_bindings():
 
     com_text = com_path.read_text(encoding="utf-8-sig")
     assert_true("serverSysKey.update(diseaseConfig.serverSysKey)" in com_text, "server registry includes disease")
+    assert_true("serverSysKey.update(tipMessageConfig.serverSysKey)" in com_text,
+                "server registry includes the shared tip service")
     assert_true("clientSysKey.update(diseaseConfig.clientSysKey)" in com_text, "client registry includes disease")
+    assert_equal(
+        tip_message_config.serverSysKey[tip_message_config.ssname],
+        tip_message_config.ssPath,
+        "tip message server config registration",
+    )
+    assert_true(tip_message_server_path.is_file(), "tip message server file exists")
     mod_main_text = mod_main_path.read_text(encoding="utf-8-sig")
     assert_true("serverApi.RegisterSystem(com.modName, key, com.serverSysKey[key])" in mod_main_text, "server registry is executed")
     assert_true("clientApi.RegisterSystem(com.modName, key, com.clientSysKey[key])" in mod_main_text, "client registry is executed")
@@ -659,9 +669,12 @@ def test_system_registration_and_ui_bindings():
                 "temporary sneak tracking is removed")
     assert_true("'sound': config.constipationReliefSound" in server_text,
                 "successful constipation squat cure plays the configured sound")
-    assert_true("compGame.SetOneTipMessage(" in server_text and
-                'serverApi.GenerateColor("GREEN") + "便秘缓解进度：{}/{}。"' in server_text,
-                "constipation squat progress replaces chat with a player tip")
+    assert_true("tipMessageConfig.constipationProgressKey" in server_text and
+                'serverApi.GenerateColor("GREEN") + "便秘缓解进度：{}/{}。"' in server_text and
+                "self._queueTipMessage(" in server_text,
+                "constipation squat progress enters the shared tip aggregation")
+    assert_true("tipMessageSys.removeTip(playerId, tipMessageConfig.constipationProgressKey)" in server_text,
+                "constipation cure removes stale pending squat progress")
     assert_true('_sendMessage(playerId, "便秘缓解进度' not in server_text,
                 "constipation squat progress no longer fills chat")
     assert_true("'sound': config.ricketsFractureSound" in server_text and
@@ -673,13 +686,9 @@ def test_system_registration_and_ui_bindings():
     assert_true("playerName = compFactory.CreateName(playerId).GetName()" in server_text and
                 '"{}玩家拉了一坨大的".format(playerName)' in server_text and
                 "for onlinePlayerId in serverApi.GetPlayerList():" in server_text and
-                "compGame.SetOneTipMessage(" in server_text,
-                "successful constipation squat cure shows every online player a tip")
+                "tipMessageConfig.constipationBroadcastKeyPrefix + playerId" in server_text,
+                "successful constipation squat cure queues one broadcast tip for every online player")
 
-    diet_logic_text = diet_logic_path.read_text(encoding="utf-8-sig")
-    assert_true("compGame = compFactory.CreateGame(playerId)" in diet_logic_text and
-                "compGame.SetOneTipMessage(playerId, color + message)" in diet_logic_text,
-                "diet feedback uses the player-specific tip API")
     feedback_source_text = "\n".join(
         path.read_text(encoding="utf-8-sig") for path in behavior_root.rglob("*.py")
     )
@@ -693,8 +702,11 @@ def test_system_registration_and_ui_bindings():
     ):
         assert_true(legacy_api not in feedback_source_text,
                     "all player feedback removes legacy message API {}".format(legacy_api))
-    assert_true(feedback_source_text.count("SetOneTipMessage(") >= 4,
-                "all diet and disease feedback roots use SetOneTipMessage")
+    assert_equal(feedback_source_text.count("SetOneTipMessage("), 1,
+                 "all floating feedback shares one SetOneTipMessage output")
+    tip_message_server_text = tip_message_server_path.read_text(encoding="utf-8-sig")
+    assert_true("compGame.SetOneTipMessage(playerId, message)" in tip_message_server_text,
+                "the aggregation service owns the only floating feedback output")
 
     diet_server_text = diet_server_path.read_text(encoding="utf-8-sig")
     diet_config_text = diet_config_path.read_text(encoding="utf-8-sig")
@@ -1135,6 +1147,100 @@ def test_low_penalty_effect_message():
     assert_equal(Diet.buildLowPenaltyEffectMessage(data, disease_results), "", "suppressed penalties send no duplicate reminder")
 
 
+def test_tip_message_aggregation():
+    state = TipMessage.createPlayerState()
+    TipMessage.queueMessage(
+        state,
+        100,
+        tip_message_config.dietFoodGainKey,
+        "§a补充了水果。",
+        tip_message_config.priorityNormal,
+    )
+    TipMessage.queueMessage(
+        state,
+        109,
+        tip_message_config.dietFoodWarningKey,
+        "§e谷物偏低。",
+        tip_message_config.priorityWarning,
+    )
+    assert_equal(state["firstPendingTick"], 100, "later messages do not extend the fixed merge window")
+    assert_equal(TipMessage.takeReadyMessage(state, 109), "", "fixed merge window waits ten ticks")
+    assert_equal(
+        TipMessage.takeReadyMessage(state, 110),
+        "§e谷物偏低。 §a补充了水果。",
+        "one batch merges messages by priority instead of overwriting the first tip",
+    )
+    assert_equal(state["visibleUntilTick"], 160, "display lock protects the visible tip")
+
+    TipMessage.queueMessage(
+        state,
+        111,
+        tip_message_config.constipationProgressKey,
+        "§a便秘缓解进度：1/12。",
+        tip_message_config.priorityProgress,
+    )
+    TipMessage.queueMessage(
+        state,
+        112,
+        tip_message_config.constipationProgressKey,
+        "§a便秘缓解进度：2/12。",
+        tip_message_config.priorityProgress,
+    )
+    assert_equal(len(state["pendingMessages"]), 1, "repeated semantic keys replace pending content")
+    assert_equal(TipMessage.takeReadyMessage(state, 121), "", "pending batch cannot overwrite the visible tip")
+    assert_equal(
+        TipMessage.takeReadyMessage(state, 160),
+        "§a便秘缓解进度：2/12。",
+        "the latest repeated progress appears as soon as the display lock ends",
+    )
+
+    stale_progress_state = TipMessage.createPlayerState()
+    TipMessage.queueMessage(
+        stale_progress_state,
+        0,
+        tip_message_config.dietFoodGainKey,
+        "§a补充了蔬菜。",
+        tip_message_config.priorityNormal,
+    )
+    TipMessage.takeReadyMessage(stale_progress_state, tip_message_config.mergeWindowTick)
+    TipMessage.queueMessage(
+        stale_progress_state,
+        11,
+        tip_message_config.constipationProgressKey,
+        "§a便秘缓解进度：11/12。",
+        tip_message_config.priorityProgress,
+    )
+    TipMessage.removeMessage(stale_progress_state, tip_message_config.constipationProgressKey)
+    TipMessage.queueMessage(
+        stale_progress_state,
+        12,
+        tip_message_config.diseaseChangeKey,
+        "§a便秘已经缓解。",
+        tip_message_config.priorityImportant,
+    )
+    assert_equal(
+        TipMessage.takeReadyMessage(stale_progress_state, 60),
+        "§a便秘已经缓解。",
+        "curing constipation cancels stale pending squat progress",
+    )
+
+    overflow_state = TipMessage.createPlayerState()
+    overflow_messages = (
+        ("low", "§7低优先级。", tip_message_config.priorityProgress),
+        ("normal", "§a普通。", tip_message_config.priorityNormal),
+        ("warning", "§e警告。", tip_message_config.priorityWarning),
+        ("important", "§c重要。", tip_message_config.priorityImportant),
+        ("normal_extra", "§b次要。", tip_message_config.priorityNormal),
+    )
+    for message_key, message, priority in overflow_messages:
+        TipMessage.queueMessage(overflow_state, 0, message_key, message, priority)
+    assert_equal(
+        TipMessage.takeReadyMessage(overflow_state, tip_message_config.mergeWindowTick),
+        "§c重要。 §e警告。 §a普通。 §b次要。 §7另有1条提示。",
+        "overflow keeps four highest-priority messages and adds a compact summary",
+    )
+
+
 def test_modsdk_import_whitelist():
     python_paths = [
         behavior_root / "Diet_NullGr" / "com.py",
@@ -1147,6 +1253,7 @@ def test_modsdk_import_whitelist():
         behavior_root / "Diet_NullGr" / "ModSys" / "Thirst" / "Thirst_ss.py",
     ]
     python_paths.extend((behavior_root / "Diet_NullGr" / "ModSys" / "Disease").glob("*.py"))
+    python_paths.extend((behavior_root / "Diet_NullGr" / "ModSys" / "TipMessage").glob("*.py"))
     allowed_roots = {"mod", "Diet_NullGr", "typing", "operator"}
     for python_path in python_paths:
         tree = ast.parse(python_path.read_text(encoding="utf-8-sig"), filename=str(python_path))
@@ -1181,6 +1288,7 @@ def main():
         test_disease_ui_detail_binding_reads_precomputed_selection,
         test_disease_nutrition_outline_state,
         test_low_penalty_effect_message,
+        test_tip_message_aggregation,
         test_modsdk_import_whitelist,
     ]
     for test in tests:

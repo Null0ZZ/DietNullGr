@@ -3,6 +3,7 @@
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
+import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
 modName = "diet_nullgr"
 ssname = "Diet_nullgr_ServerSys"
@@ -16,6 +17,7 @@ serverSysKey = {
 serverSysKey.update(config.serverSysKey)
 serverSysKey.update(thirstConfig.serverSysKey)
 serverSysKey.update(diseaseConfig.serverSysKey)
+serverSysKey.update(tipMessageConfig.serverSysKey)
 
 clientSysKey = {
     csname: csPath

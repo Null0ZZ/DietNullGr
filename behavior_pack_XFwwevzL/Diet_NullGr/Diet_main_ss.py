@@ -6,6 +6,7 @@ import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Diet.Diet as Diet
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
+import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
@@ -68,7 +69,12 @@ class DietServerSystem(ServerSystem):
             Diet.syncToClient(self, playerId, self.playerDietData[playerId])
             Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
         if settingResult['message']:
-            Diet.sendMessage(playerId, compFactory, settingResult['message'], settingResult['color'])
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.dietSettingKey,
+                settingResult['color'] + settingResult['message'],
+                tipMessageConfig.priorityNormal
+            )
 
     def DelServerPlayerEvent(self, args):
         playerId = args['id']
@@ -102,9 +108,19 @@ class DietServerSystem(ServerSystem):
         Diet.syncToClient(self, playerId, data)
         # 进食提示在保存后基于最新数值生成：先告知本次补充，再对其他低值营养给出补充建议。
         foodGainMessages = Diet.buildFoodGainMessages(data, gainValues)
-        Diet.sendMessage(playerId, compFactory, foodGainMessages['gainMessage'], "§a")
+        self._queueTipMessage(
+            playerId,
+            tipMessageConfig.dietFoodGainKey,
+            "§a" + foodGainMessages['gainMessage'],
+            tipMessageConfig.priorityNormal
+        )
         if foodGainMessages['warningMessage']:
-            Diet.sendMessage(playerId, compFactory, foodGainMessages['warningMessage'], "§e")
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.dietFoodWarningKey,
+                "§e" + foodGainMessages['warningMessage'],
+                tipMessageConfig.priorityWarning
+            )
 
     def PlayerHungerChangeServerEvent(self, args):
         playerId = args['playerId']
@@ -127,9 +143,13 @@ class DietServerSystem(ServerSystem):
         nutritionAlertMessages = Diet.buildNutritionAlertMessages(beforeValues, data)
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
-        for message in nutritionAlertMessages:
-            Diet.sendMessage(playerId, compFactory, message, "§e")
         if nutritionAlertMessages:
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.dietNutritionAlertKey,
+                "§e" + " ".join(nutritionAlertMessages),
+                tipMessageConfig.priorityWarning
+            )
             self.NotifyToClient(playerId, config.lowNutritionAlertEvent, {
                 'sound': config.lowNutritionAlertSound,
                 'volume': config.lowNutritionAlertVolume,
@@ -181,7 +201,12 @@ class DietServerSystem(ServerSystem):
             Diet.syncSettingToClient(self, entityId, self.playerDietData[entityId])
             self.NotifyToClient(entityId, "OpenDietScreen", {})
         if commandResult['message']:
-            Diet.sendMessage(entityId, compFactory, commandResult['message'], commandResult['color'])
+            self._queueTipMessage(
+                entityId,
+                tipMessageConfig.dietCommandKey,
+                commandResult['color'] + commandResult['message'],
+                tipMessageConfig.priorityImportant
+            )
 
     def OnScriptTickServer(self):
         self.tickCounter += 1
@@ -203,7 +228,17 @@ class DietServerSystem(ServerSystem):
                 # 提示必须与本轮实际施加结果保持一致；疾病接管低值惩罚时，返回结果中不会包含普通惩罚。
                 lowPenaltyMessage = Diet.buildLowPenaltyEffectMessage(data, matchedResults)
                 if lowPenaltyMessage:
-                    Diet.sendMessage(playerId, compFactory, lowPenaltyMessage, "§c")
+                    self._queueTipMessage(
+                        playerId,
+                        tipMessageConfig.dietLowPenaltyKey,
+                        "§c" + lowPenaltyMessage,
+                        tipMessageConfig.priorityWarning
+                    )
+
+    # 多个服务端回调共享同一提示服务，所有 Diet 消息先聚合再由唯一接口显示。
+    def _queueTipMessage(self, playerId, messageKey, message, priority):
+        tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+        tipMessageSys.enqueueTip(playerId, messageKey, message, priority)
 
     def Destroy(self):
         for playerId in self.playerDietData:
