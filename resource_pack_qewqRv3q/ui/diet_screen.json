@@ -93,40 +93,6 @@
                 }
             },
             {
-                "tooltip": {
-                    "type": "label",
-                    "anchor_from": "left_middle",
-                    "anchor_to": "left_middle",
-                    "offset": [
-                        32,
-                        6
-                    ],
-                    "size": [
-                        88,
-                        8
-                    ],
-                    "color": "#diet_screen.row_tooltip_color",
-                    "font_size": "small",
-                    "text": "#diet_screen.row_tooltip",
-                    "text_alignment": "left",
-                    "bindings": [
-                        {
-                            "binding_type": "collection",
-                            "binding_collection_name": "diet_rows",
-                            "binding_condition": "always",
-                            "binding_name": "#diet_screen.row_tooltip"
-                        },
-                        {
-                            "binding_name_override": "#color",
-                            "binding_collection_name": "diet_rows",
-                            "binding_condition": "always",
-                            "binding_type": "collection",
-                            "binding_name": "#diet_screen.row_tooltip_color"
-                        }
-                    ]
-                }
-            },
-            {
                 "bar_bg": {
                     "type": "image",
                     "anchor_from": "right_middle",

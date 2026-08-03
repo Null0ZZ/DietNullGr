@@ -112,7 +112,6 @@ def buildClientData(data):
         groupList.append({
             'id': groupId,
             'name': groupConfig['name'],
-            'tooltip': groupConfig['tooltip'],
             'icon': groupConfig['icon'],
             'color': groupConfig['color'],
             'value': data['values'][groupId],
@@ -163,7 +162,7 @@ def sendMessage(playerId, compFactory, message, color):
     compMsg.NotifyOneMessage(playerId, message, color)
 
 
-# 记录玩家已经吃过的食物，后续扩展 tooltip 隐藏规则时可以直接复用这份数据。
+# 记录玩家已经吃过的食物，保留存档中的饮食历史供后续玩法复用。
 def addEatenFood(data, itemName):
     if data['eaten'] == "":
         data['eaten'] = itemName

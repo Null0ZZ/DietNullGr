@@ -164,6 +164,27 @@ def test_client_tips_contract():
         assert_true("groups" not in active_data, "{} removed generic highlight groups".format(disease_id))
 
 
+def test_diet_tooltip_removal_contract():
+    ui_path = resource_root / "ui" / "diet_screen.json"
+    logic_path = behavior_root / "Diet_NullGr" / "ModSys" / "Diet" / "DietUI.py"
+    ui_text = ui_path.read_text(encoding="utf-8-sig")
+    logic_text = logic_path.read_text(encoding="utf-8-sig")
+    assert_true("#diet_screen.row_tooltip" not in ui_text, "removed tooltip UI binding stays absent")
+    assert_true("#diet_screen.row_tooltip" not in logic_text, "removed tooltip Python binding stays absent")
+
+    data = {
+        "active": True,
+        "values": Diet.createDefaultValues(),
+        "tracking": Diet.createDefaultTracking(),
+    }
+    client_data = Diet.buildClientData(data)
+    expected_fields = {"id", "name", "icon", "color", "value", "tracked"}
+    for group_id in diet_config.groupOrder:
+        assert_true("tooltip" not in diet_config.groups[group_id], "{} tooltip config removed".format(group_id))
+    for group_data in client_data["groups"]:
+        assert_equal(set(group_data), expected_fields, "{} client row fields".format(group_data["id"]))
+
+
 def test_disease_master_switch_state():
     class ModAttrStub(object):
         def __init__(self, values):
@@ -1228,6 +1249,7 @@ def main():
     tests = [
         test_trigger_and_recovery_thresholds,
         test_client_tips_contract,
+        test_diet_tooltip_removal_contract,
         test_disease_master_switch_state,
         test_new_player_protection,
         test_two_slots_and_half_progress_cap,

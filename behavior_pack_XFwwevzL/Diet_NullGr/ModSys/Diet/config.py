@@ -89,7 +89,6 @@ diseaseLowOutlineColor = (0.3058823529411765, 0.9098039215686274, 1.0)
 groups = {
     "fruits": {
         "name": "水果",
-        "tooltip": "你摄入的水果、浆果与甜瓜类食物。",
         "suggestion": "苹果、浆果或西瓜片",
         "icon": "minecraft:apple",
         "color": [212, 28, 83],
@@ -99,7 +98,6 @@ groups = {
     },
     "grains": {
         "name": "谷物",
-        "tooltip": "你摄入的面包、小麦、蛋糕等谷物来源。",
         "suggestion": "面包、小麦或蛋糕",
         "icon": "minecraft:bread",
         "color": [212, 163, 28],
@@ -109,7 +107,6 @@ groups = {
     },
     "proteins": {
         "name": "蛋白质",
-        "tooltip": "你摄入的肉类、鱼、蛋和奶类来源。",
         "suggestion": "肉类、鱼、蛋或牛奶",
         "icon": "minecraft:cooked_beef",
         "color": [212, 120, 28],
@@ -119,7 +116,6 @@ groups = {
     },
     "vegetables": {
         "name": "蔬菜",
-        "tooltip": "你摄入的根茎、蘑菇、海带和蔬菜汤。",
         "suggestion": "胡萝卜、马铃薯、蘑菇汤或海带",
         "icon": "minecraft:carrot",
         "color": [49, 212, 28],
@@ -129,7 +125,6 @@ groups = {
     },
     "sugars": {
         "name": "糖分",
-        "tooltip": "你摄入的糖、蜂蜜、甜点与高糖食物。",
         "suggestion": "蜂蜜、糖或甜点",
         "icon": "minecraft:honey_bottle",
         "color": [255, 143, 233],

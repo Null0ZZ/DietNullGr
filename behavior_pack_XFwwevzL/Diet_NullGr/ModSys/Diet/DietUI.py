@@ -19,7 +19,6 @@ class DietUI(ScreenNode):
             defaultGroups.append({
                 'id': groupId,
                 'name': groupConfig['name'],
-                'tooltip': groupConfig['tooltip'],
                 'icon': groupConfig['icon'],
                 'color': groupConfig['color'],
                 'value': groupConfig['defaultValue'],
@@ -161,17 +160,6 @@ class DietUI(ScreenNode):
         if not groupData['tracked']:
             return (0.48, 0.48, 0.48)
         return self.getGroupDisplayColor(index)
-
-    @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_tooltip")
-    def bindRowTooltip(self, index):
-        return self.getGroupData(index)['tooltip']
-
-    @ViewBinder.binding_collection(ViewBinder.BF_BindColor, "diet_rows", "#diet_screen.row_tooltip_color")
-    def bindRowTooltipColor(self, index):
-        groupData = self.getGroupData(index)
-        if not groupData['tracked']:
-            return (0.42, 0.42, 0.42)
-        return (0.62, 0.6, 0.56)
 
     @ViewBinder.binding_collection(ViewBinder.BF_BindString, "diet_rows", "#diet_screen.row_percent")
     def bindRowPercent(self, index):
