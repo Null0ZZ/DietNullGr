@@ -690,6 +690,11 @@ def test_system_registration_and_ui_bindings():
     server_text = server_path.read_text(encoding="utf-8-sig")
     assert_equal(config.nauseaDuration, 4, "food-triggered constipation nausea remains four seconds")
     assert_equal(config.intermittentNauseaDuration, 10, "intermittent disease nausea lasts ten seconds")
+    assert_equal(config.constipationMaximumBodyScale, 1.25, "constipation body scale remains unchanged")
+    assert_equal(config.feverMaximumHeadScale, 2.5, "fever head scale reaches 2.5")
+    assert_true("bodyScale += (config.constipationMaximumBodyScale - 1.0)" in server_text and
+                "headScale += (config.feverMaximumHeadScale - 1.0)" in server_text,
+                "server calculates constipation and fever visual limits independently")
     assert_equal(server_text.count("AddEffectToEntity('nausea', config.nauseaDuration"), 1,
                  "food-triggered nausea keeps its independent duration")
     assert_equal(server_text.count("AddEffectToEntity('nausea', config.intermittentNauseaDuration"), 1,
@@ -783,6 +788,10 @@ def test_system_registration_and_ui_bindings():
                 "hypoglycemia no longer uses the built-in Gaussian blur")
     assert_true("self.renderedVisualData" in client_text and "config.visualScaleFadeTick" in client_text,
                 "bone scale changes interpolate on the client")
+    assert_true("('bodyScale', config.constipationMaximumBodyScale)" in client_text and
+                "('headScale', config.feverMaximumHeadScale)" in client_text and
+                "config.maximumBoneScale" not in client_text + server_text,
+                "client interpolates each visual scale with its independent maximum")
     assert_true("clientApi.GetUI(com.modName, dietConfig.uiKey)" in client_text and
                 "uiNode.UpdateDiseaseData(self.diseaseData)" in client_text,
                 "disease sync only refreshes a live diet screen")

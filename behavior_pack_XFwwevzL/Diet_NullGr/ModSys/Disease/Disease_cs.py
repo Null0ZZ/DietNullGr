@@ -99,7 +99,6 @@ class ClientSys(ClientSystem):
 
     def OnScriptTickClient(self):
         self.tickCounter += 1
-        scaleStep = (config.maximumBoneScale - 1.0) / float(config.visualScaleFadeTick)
         # 服务端事件只更新目标倍率，客户端逐 Tick 逼近目标，使痊愈和远端玩家重建都平滑收敛。
         for playerId in self.injectedPlayers:
             if playerId not in self.playerVisualData:
@@ -112,7 +111,11 @@ class ClientSys(ClientSystem):
             targetData = self.playerVisualData[playerId]
             renderedData = self.renderedVisualData[playerId]
             changed = False
-            for scaleName in ('bodyScale', 'headScale'):
+            for scaleName, maximumScale in (
+                ('bodyScale', config.constipationMaximumBodyScale),
+                ('headScale', config.feverMaximumHeadScale)
+            ):
+                scaleStep = (maximumScale - 1.0) / float(config.visualScaleFadeTick)
                 targetScale = float(targetData[scaleName])
                 renderedScale = renderedData[scaleName]
                 if renderedScale < targetScale:

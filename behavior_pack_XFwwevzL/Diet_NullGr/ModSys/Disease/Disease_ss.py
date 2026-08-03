@@ -618,10 +618,10 @@ class ServerSys(ServerSystem):
         if 'constipation' in data['active']:
             growRatio = min(1.0, data['activeSeconds']['constipation'] / config.constipationBodyGrowSeconds)
             reliefRatio = 1.0 - data['constipationSquatCount'] / float(config.constipationSquatRequired)
-            bodyScale += (config.maximumBoneScale - 1.0) * growRatio * reliefRatio
+            bodyScale += (config.constipationMaximumBodyScale - 1.0) * growRatio * reliefRatio
         if 'fever' in data['active']:
             growRatio = min(1.0, data['activeSeconds']['fever'] / config.feverHeadGrowSeconds)
-            headScale += (config.maximumBoneScale - 1.0) * growRatio
+            headScale += (config.feverMaximumHeadScale - 1.0) * growRatio
         return {
             'playerId': playerId,
             'bodyScale': bodyScale,
