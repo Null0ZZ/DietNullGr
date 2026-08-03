@@ -148,7 +148,7 @@ diseases = {
         "tips": "能量不足；吃主食、水果或甜食",
         "cause": "谷物、水果和糖分均长期处于低位。",
         "relief": "补充谷物可稳定缓解，水果或甜食可快速缓解。",
-        "symptom": "初期限制疾跑和连续跳跃，持续后会视野模糊并间歇反胃。",
+        "symptom": "初期疾跑不再加速并限制连续跳跃，持续后会视野模糊并间歇反胃。",
         "customEffect": "diet_nullgr:hypoglycemia",
         "icon": "textures/ui/diet_nullgr/disease/hypoglycemia_effect",
         "priority": 3,

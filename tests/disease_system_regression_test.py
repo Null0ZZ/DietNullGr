@@ -657,6 +657,13 @@ def test_system_registration_and_ui_bindings():
     ui_text = diet_ui_path.read_text(encoding="utf-8-sig")
     logic_text = diet_ui_logic_path.read_text(encoding="utf-8-sig")
     client_text = client_path.read_text(encoding="utf-8-sig")
+    assert_true("thirstSys.setSprintLimitSource(" in server_text and
+                "config.hypoglycemiaSprintLimitSource" in server_text,
+                "hypoglycemia delegates sprint limiting to the shared thirst modifier")
+    assert_true("EndSprinting" not in client_text,
+                "hypoglycemia sprint limiting does not interrupt normal walking")
+    assert_true("OnLocalPlayerActionClientEvent" not in client_text,
+                "hypoglycemia does not maintain a separate client sprint interceptor")
     assert_true('"RemovePlayerAOIClientEvent"' in client_text, "disease client listens AOI removal")
     assert_true("def RemovePlayerAOIClientEvent(" in client_text, "disease client clears stale visual injection")
     assert_true("self.AddPlayerCreatedClientEvent({'playerId': playerId})" in client_text,

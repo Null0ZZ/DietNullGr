@@ -8,7 +8,6 @@ import Diet_NullGr.ModSys.Disease.config as config
 ClientSystem = clientApi.GetClientSystemCls()
 compFactory = clientApi.GetEngineCompFactory()
 levelId = clientApi.GetLevelId()
-playerActionType = clientApi.GetMinecraftEnum().PlayerActionType
 engineNamespace = clientApi.GetEngineNamespace()
 engineSystemName = clientApi.GetEngineSystemName()
 
@@ -37,7 +36,6 @@ class ClientSys(ClientSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "RemovePlayerAOIClientEvent", self, self.RemovePlayerAOIClientEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ClientJumpButtonPressDownEvent", self, self.ClientJumpButtonPressDownEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnLocalPlayerStartJumpClientEvent", self, self.OnLocalPlayerStartJumpClientEvent)
-        self.ListenForEvent(engineNamespace, engineSystemName, "OnLocalPlayerActionClientEvent", self, self.OnLocalPlayerActionClientEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickClient", self, self.OnScriptTickClient)
         self.ListenForEvent(com.modName, config.ssname, config.syncEvent, self, self.DiseaseSyncData)
         self.ListenForEvent(com.modName, config.ssname, config.visualEvent, self, self.DiseaseVisualSync)
@@ -98,13 +96,6 @@ class ClientSys(ClientSystem):
             self.lastSuccessfulJumpTick = self.tickCounter
         if 'rickets' in self.activeDiseaseIds:
             self.NotifyToServer(config.jumpEvent, {})
-
-    def OnLocalPlayerActionClientEvent(self, args):
-        actionType = args['actionType']
-        if actionType != playerActionType.StartSprinting or 'hypoglycemia' not in self.activeDiseaseIds:
-            return
-        playerId = clientApi.GetLocalPlayerId()
-        compFactory.CreateActorMotion(playerId).EndSprinting()
 
     def OnScriptTickClient(self):
         self.tickCounter += 1
@@ -185,9 +176,6 @@ class ClientSys(ClientSystem):
             self.blurTargetRadius = config.gaussianBlurMaxRadius * (0.1 + growRatio * 0.9)
         else:
             self.blurTargetRadius = 0.0
-        if 'hypoglycemia' in self.activeDiseaseIds:
-            playerId = clientApi.GetLocalPlayerId()
-            compFactory.CreateActorMotion(playerId).EndSprinting()
         mainClientSys = clientApi.GetSystem(com.modName, com.csname)
         uiNode = clientApi.GetUI(com.modName, dietConfig.uiKey)
         # 关闭或热重载后主系统可能仍保留陈旧 uiNode，只有 UI 管理器返回当前实例时才刷新。
