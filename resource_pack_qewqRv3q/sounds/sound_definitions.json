@@ -11,6 +11,17 @@
                     "load_on_low_memory": true
                 }
             ]
+        },
+        "diet_nullgr.rickets_fracture": {
+            "category": "player",
+            "min_distance": 0.0,
+            "max_distance": 16.0,
+            "sounds": [
+                {
+                    "name": "sounds/diet_nullgr/rickets_fracture",
+                    "load_on_low_memory": true
+                }
+            ]
         }
     }
 }

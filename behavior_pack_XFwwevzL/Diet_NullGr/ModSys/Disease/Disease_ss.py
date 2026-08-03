@@ -253,8 +253,11 @@ class ServerSys(ServerSystem):
         Disease.savePlayerData(playerId, data, compFactory)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
         self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(playerId, data))
-        self._sendMessage(playerId, "便秘缓解进度：{}/{}。".format(
-            data['constipationSquatCount'], config.constipationSquatRequired), "§a")
+        compGame.SetOneTipMessage(
+            playerId,
+            serverApi.GenerateColor("GREEN") + "便秘缓解进度：{}/{}。".format(
+                data['constipationSquatCount'], config.constipationSquatRequired)
+        )
 
     def ActuallyHurtServerEvent(self, args):
         srcId = args['srcId']
@@ -303,9 +306,9 @@ class ServerSys(ServerSystem):
         self.jumpDamageCooldowns[playerId] = config.ricketsJumpDamageCooldownTick
         self._hurtWithoutKilling(playerId)
         self.NotifyToClient(playerId, config.symptomEvent, {
-            'sound': 'mob.skeleton.hurt',
-            'volume': 1.0,
-            'pitch': 1.2
+            'sound': config.ricketsFractureSound,
+            'volume': config.ricketsFractureSoundVolume,
+            'pitch': config.ricketsFractureSoundPitch
         })
 
     def OnScriptTickServer(self):

@@ -429,6 +429,18 @@ def test_resources_and_languages():
     )
     relief_sound_path = resource_root / "sounds" / "diet_nullgr" / "constipation_relief.ogg"
     assert_true(relief_sound_path.read_bytes().startswith(b"OggS"), "constipation relief sound is an Ogg file")
+    fracture_sound = sound_definitions["sound_definitions"][config.ricketsFractureSound]
+    assert_equal(fracture_sound["category"], "player", "rickets fracture sound category")
+    assert_equal(
+        fracture_sound["sounds"],
+        [{
+            "name": "sounds/diet_nullgr/rickets_fracture",
+            "load_on_low_memory": True,
+        }],
+        "rickets fracture sound resource",
+    )
+    fracture_sound_path = resource_root / "sounds" / "diet_nullgr" / "rickets_fracture.ogg"
+    assert_true(fracture_sound_path.read_bytes().startswith(b"OggS"), "rickets fracture sound is an Ogg file")
 
     for json_path in list(effect_root.glob("*.json")) + list((resource_root / "animations").glob("*.json")) + list((resource_root / "ui").glob("*.json")) + [sound_definitions_path]:
         json.loads(json_path.read_text(encoding="utf-8-sig"))
@@ -742,6 +754,17 @@ def test_system_registration_and_ui_bindings():
                 "debug item shortcut tracks sneak mode through the official action event")
     assert_true("'sound': config.constipationReliefSound" in server_text,
                 "successful constipation squat cure plays the configured sound")
+    assert_true("compGame.SetOneTipMessage(" in server_text and
+                'serverApi.GenerateColor("GREEN") + "便秘缓解进度：{}/{}。"' in server_text,
+                "constipation squat progress replaces chat with a player tip")
+    assert_true('_sendMessage(playerId, "便秘缓解进度' not in server_text,
+                "constipation squat progress no longer fills chat")
+    assert_true("'sound': config.ricketsFractureSound" in server_text and
+                "'volume': config.ricketsFractureSoundVolume" in server_text and
+                "'pitch': config.ricketsFractureSoundPitch" in server_text,
+                "rickets jump injury plays the configured fracture sound")
+    assert_true("mob.skeleton.hurt" not in server_text,
+                "rickets no longer uses the vanilla skeleton hurt sound")
     assert_true("playerName = compFactory.CreateName(playerId).GetName()" in server_text and
                 '"{}玩家拉了一坨大的".format(playerName)' in server_text and
                 "for onlinePlayerId in serverApi.GetPlayerList():" in server_text,
