@@ -109,6 +109,20 @@ class DietClientSystem(ClientSystem):
             config.settingName,
             config.settingIconPath
         )
+        if not self.settingInst:
+            return
+        self.settingInst.AddButton(
+            config.settingResetOpenButtonPositionKey,
+            config.settingResetOpenButtonPositionName,
+            config.settingResetOpenButtonPositionText,
+            self.ResetOpenButtonPosition,
+            config.settingResetOpenButtonPositionPriority
+        )
+
+    # 重置按钮只恢复本机 HUD 坐标，不进入服务端饮食设置同步链。
+    def ResetOpenButtonPosition(self, *args):
+        if self.buttonUiNode:
+            self.buttonUiNode.ResetButtonPos()
 
     # 通用设置控件回调可能只回传 value，这里给每个控件绑定固定 key，保证写回服务端时不依赖回调参数形态。
     def CreateDietSettingCallback(self, settingDef):

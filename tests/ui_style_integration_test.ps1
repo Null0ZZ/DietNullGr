@@ -5,6 +5,8 @@ $buttonUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\diet_button.js
 $dietUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\diet_screen.json'
 $thirstUiPath = Join-Path $projectRoot 'resource_pack_qewqRv3q\ui\thirst_hud.json'
 $buttonLogicPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\DietButtonUI.py'
+$clientSystemPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\Diet_main_cs.py'
+$dietConfigPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\config.py'
 $dietLogicPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\DietUI.py'
 $dietDataPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Diet\Diet.py'
 $thirstConfigPath = Join-Path $projectRoot 'behavior_pack_XFwwevzL\Diet_NullGr\ModSys\Thirst\config.py'
@@ -31,6 +33,8 @@ $dietUi = $dietUiText | ConvertFrom-Json
 $thirstUiText = Get-Content -LiteralPath $thirstUiPath -Raw -Encoding UTF8
 $thirstUi = $thirstUiText | ConvertFrom-Json
 $buttonLogicText = Get-Content -LiteralPath $buttonLogicPath -Raw -Encoding UTF8
+$clientSystemText = Get-Content -LiteralPath $clientSystemPath -Raw -Encoding UTF8
+$dietConfigText = Get-Content -LiteralPath $dietConfigPath -Raw -Encoding UTF8
 $dietLogicText = Get-Content -LiteralPath $dietLogicPath -Raw -Encoding UTF8
 $dietDataText = Get-Content -LiteralPath $dietDataPath -Raw -Encoding UTF8
 $thirstConfigText = Get-Content -LiteralPath $thirstConfigPath -Raw -Encoding UTF8
@@ -43,6 +47,11 @@ Assert-Match $buttonUiText '"is_handle_button_move_event"\s*:\s*true' 'open butt
 Assert-Match $buttonLogicText "GetBaseUIControl\('/open_button'\)" 'open button control path'
 Assert-Match $buttonLogicText 'SetButtonTouchDownCallback[\s\S]*SetButtonTouchMoveCallback[\s\S]*SetButtonTouchUpCallback[\s\S]*SetButtonTouchCancelCallback' 'open button touch callbacks'
 Assert-Match $buttonLogicText 'buttonLayoutVersionKey[\s\S]*buttonLayoutVersion' 'open button position layout migration'
+Assert-Match $buttonLogicText 'self\.initialButtonPos\s*=\s*self\.buttonControl\.GetPosition\(\)' 'open button captures JSON initial position'
+Assert-Match $buttonLogicText 'def ResetButtonPos\(self\):[\s\S]*CancelLongPressTimer\(\)[\s\S]*ResetTouchState\(\)[\s\S]*SetPosition\(self\.initialButtonPos\)[\s\S]*CorrectCurrentButtonPos\(\)' 'open button reset transaction'
+Assert-Match $dietConfigText 'settingResetOpenButtonPositionPriority\s*=\s*18' 'open button reset setting priority'
+Assert-Match $clientSystemText 'AddButton\([\s\S]*config\.settingResetOpenButtonPositionKey[\s\S]*config\.settingResetOpenButtonPositionName[\s\S]*config\.settingResetOpenButtonPositionText[\s\S]*self\.ResetOpenButtonPosition[\s\S]*config\.settingResetOpenButtonPositionPriority' 'open button reset common setting registration'
+Assert-Match $clientSystemText 'def ResetOpenButtonPosition\(self, \*args\):[\s\S]*self\.buttonUiNode\.ResetButtonPos\(\)' 'open button reset common setting callback'
 
 # 主界面继承 common.base_screen，并通过 $screen_content 将内容放入安全区域画布。
 Assert-True ($null -ne $dietUi.'main@common.base_screen') 'diet main inherits the base screen'

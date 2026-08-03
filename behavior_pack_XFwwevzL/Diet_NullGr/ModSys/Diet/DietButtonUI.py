@@ -21,12 +21,14 @@ class DietButtonUI(ScreenNode):
         self.startTouchPos = (0.0, 0.0)
         self.startButtonPos = (0.0, 0.0)
         self.startButtonGlobalPos = (0.0, 0.0)
+        self.initialButtonPos = (0.0, 0.0)
         self.lastButtonGlobalPos = ()
         self.originCollisionBox = ()
         self.collisionBox = ()
 
     def Create(self):
         self.buttonControl = self.GetBaseUIControl('/open_button').asButton()
+        self.initialButtonPos = self.buttonControl.GetPosition()
         self.buttonControl.AddTouchEventParams({'isSwallow': True})
         self.buttonControl.SetButtonTouchDownCallback(self.ButtonTouchDown)
         self.buttonControl.SetButtonTouchMoveCallback(self.ButtonTouchMove)
@@ -113,6 +115,13 @@ class DietButtonUI(ScreenNode):
         pos = self.CorrectButtonGlobalPos(self.buttonControl.GetGlobalPosition())
         self.buttonControl.SetPosition(pos)
         self.SaveButtonPos()
+
+    # 通用设置重置会终止当前触摸事务，再恢复 JSON 初始坐标并重新执行安全区纠正与持久化。
+    def ResetButtonPos(self):
+        self.CancelLongPressTimer()
+        self.ResetTouchState()
+        self.buttonControl.SetPosition(self.initialButtonPos)
+        self.CorrectCurrentButtonPos()
 
     # 客户端配置用于保存 HUD 按钮位置；新版 UI 改变了锚点坐标系，旧版本坐标不能直接复用。
     def RestoreButtonPos(self):
