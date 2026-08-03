@@ -44,10 +44,11 @@ Assert-Match $buttonLogicText "GetBaseUIControl\('/open_button'\)" 'open button 
 Assert-Match $buttonLogicText 'SetButtonTouchDownCallback[\s\S]*SetButtonTouchMoveCallback[\s\S]*SetButtonTouchUpCallback[\s\S]*SetButtonTouchCancelCallback' 'open button touch callbacks'
 Assert-Match $buttonLogicText 'buttonLayoutVersionKey[\s\S]*buttonLayoutVersion' 'open button position layout migration'
 
-# 主界面暂时保持普通 screen，避免重新引入 common.base_screen 后阻断 UI 编辑器编辑。
-Assert-True ($dietUi.main.type -eq 'screen') 'diet main is a plain screen'
-Assert-True ($dietUiText -notmatch '"main@common\.base_screen"') 'diet main does not inherit base screen'
-Assert-True ($null -ne $dietUi.main.controls[0].netease_editor_root_panel_base_screen0) 'editable root panel remains in main tree'
+# 主界面继承 common.base_screen，并通过 $screen_content 将内容放入安全区域画布。
+Assert-True ($null -ne $dietUi.'main@common.base_screen') 'diet main inherits the base screen'
+Assert-True ($dietUi.'main@common.base_screen'.'$screen_content' -eq 'diet_screen.netease_editor_root_panel_base_screen0') 'diet main routes base screen content'
+Assert-True ($dietUi.'main@common.base_screen'.'$use_loading_bars' -eq $false) 'diet base screen loading bars disabled'
+Assert-True ($null -ne $dietUi.netease_editor_root_panel_base_screen0) 'diet root panel is a top-level screen content template'
 
 # 关闭按钮沿用编辑器生成的 common.button 外观，只恢复原有绑定事件；底部效果标签删除后不再生成或同步专用文本。
 Assert-Match $dietUiText '"button@common\.button"' 'redesigned close button exists'

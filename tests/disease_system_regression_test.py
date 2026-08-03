@@ -883,7 +883,9 @@ def test_system_registration_and_ui_bindings():
     assert_true("diseaseClientSys.diseaseData" in logic_text, "DietUI reads cached disease data")
     assert_true("UpdateDiseaseData(self.diseaseData)" in client_text, "Disease client refreshes open DietUI")
 
-    root = find_named_control(ui_data["main"], "root")
+    main = ui_data["main@common.base_screen"]
+    screen_content = ui_data["netease_editor_root_panel_base_screen0"]
+    root = find_named_control(screen_content, "root")
     title = find_named_control(root, "title")
     nutrition_grid = find_named_control(root, "rows_grid")
     disease_grid = find_named_control(root, "disease_grid")
@@ -895,6 +897,11 @@ def test_system_registration_and_ui_bindings():
     disease_name = find_named_control(disease_panel, "disease_name")
     disease_tips = find_named_control(disease_panel, "tips")
 
+    assert_true("main" not in ui_data, "Diet main no longer uses a plain screen")
+    assert_equal(main["$screen_content"], "diet_screen.netease_editor_root_panel_base_screen0",
+                 "Diet main routes content through the base screen safe area")
+    assert_true(main["$use_loading_bars"] is False, "Diet base screen disables loading bars")
+    assert_equal(screen_content["type"], "panel", "Diet screen content remains a top-level panel")
     assert_equal(root["size"], [248, 148.0], "refactored Diet panel size remains unchanged")
     assert_equal(len(root["controls"]), 6, "refactored Diet panel control count remains unchanged")
     assert_equal(title["color"], [0.3058823529411765, 0.203921568627451, 0.1803921568627451],
