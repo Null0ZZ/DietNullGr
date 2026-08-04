@@ -95,7 +95,7 @@ groups = {
         "name": "水果",
         "suggestion": "苹果、浆果或西瓜片",
         "icon": "minecraft:apple",
-        "color": [212, 28, 83],
+        "color": [238, 102, 119],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
@@ -104,7 +104,7 @@ groups = {
         "name": "谷物",
         "suggestion": "面包、小麦或蛋糕",
         "icon": "minecraft:bread",
-        "color": [212, 163, 28],
+        "color": [204, 187, 68],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
@@ -113,7 +113,7 @@ groups = {
         "name": "蛋白质",
         "suggestion": "肉类、鱼、蛋或牛奶",
         "icon": "minecraft:cooked_beef",
-        "color": [212, 120, 28],
+        "color": [68, 119, 170],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
@@ -122,7 +122,7 @@ groups = {
         "name": "蔬菜",
         "suggestion": "胡萝卜、马铃薯、蘑菇汤或海带",
         "icon": "minecraft:carrot",
-        "color": [49, 212, 28],
+        "color": [34, 136, 51],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
@@ -131,7 +131,7 @@ groups = {
         "name": "糖分",
         "suggestion": "蜂蜜、糖或甜点",
         "icon": "minecraft:honey_bottle",
-        "color": [255, 143, 233],
+        "color": [170, 51, 119],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
