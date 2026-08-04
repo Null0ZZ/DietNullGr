@@ -113,7 +113,7 @@ groups = {
         "name": "蛋白质",
         "suggestion": "肉类、鱼、蛋或牛奶",
         "icon": "minecraft:cooked_beef",
-        "color": [68, 119, 170],
+        "color": [250, 141, 84],
         "defaultValue": 0.0,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0

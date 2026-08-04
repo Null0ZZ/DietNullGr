@@ -18,7 +18,7 @@ $dietUiLogicText = Get-Content -LiteralPath $dietUiLogicPath -Raw -Encoding UTF8
 $dietUiText = Get-Content -LiteralPath $dietUiPath -Raw -Encoding UTF8
 
 # 五类颜色按配置块逐项锁定，同时检查服务端确实把该配置字段写入客户端同步数据。
-$expectedColors = [ordered]@{ fruits = @(238, 102, 119); grains = @(204, 187, 68); proteins = @(68, 119, 170); vegetables = @(34, 136, 51); sugars = @(170, 51, 119) }
+$expectedColors = [ordered]@{ fruits = @(238, 102, 119); grains = @(204, 187, 68); proteins = @(250, 141, 84); vegetables = @(34, 136, 51); sugars = @(170, 51, 119) }
 foreach ($groupId in $expectedColors.Keys) {
     $color = $expectedColors[$groupId]
     $pattern = '(?s)"' + [Regex]::Escape($groupId) + '"\s*:\s*\{[^}]*"color"\s*:\s*\[\s*' + $color[0] + '\s*,\s*' + $color[1] + '\s*,\s*' + $color[2] + '\s*\]'
