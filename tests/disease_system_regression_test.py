@@ -463,7 +463,23 @@ def test_resources_and_languages():
         "rickets fracture sound resource",
     )
     fracture_sound_path = resource_root / "sounds" / "diet_nullgr" / "rickets_fracture.ogg"
-    assert_true(fracture_sound_path.read_bytes().startswith(b"OggS"), "rickets fracture sound is an Ogg file")
+    fracture_sound_data = fracture_sound_path.read_bytes()
+    assert_true(fracture_sound_data.startswith(b"OggS"), "rickets fracture sound is an Ogg file")
+    first_packet_offset = 27 + fracture_sound_data[26]
+    assert_equal(
+        fracture_sound_data[first_packet_offset:first_packet_offset + 7],
+        b"\x01vorbis",
+        "rickets fracture sound uses Vorbis encoding",
+    )
+    # 网易打包错误码 33 检查 Vorbis 头中的标称码率，音效必须不超过 128 kbps。
+    fracture_sound_bitrate = struct.unpack(
+        "<i",
+        fracture_sound_data[first_packet_offset + 20:first_packet_offset + 24],
+    )[0]
+    assert_true(
+        0 < fracture_sound_bitrate <= 128000,
+        "rickets fracture sound bitrate must not exceed 128 kbps: {}".format(fracture_sound_bitrate),
+    )
 
     for json_path in list(effect_root.glob("*.json")) + list((resource_root / "animations").glob("*.json")) + list((resource_root / "ui").glob("*.json")) + [sound_definitions_path]:
         json.loads(json_path.read_text(encoding="utf-8-sig"))
