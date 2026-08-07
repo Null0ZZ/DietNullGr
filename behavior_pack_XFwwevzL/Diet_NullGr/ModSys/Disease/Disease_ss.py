@@ -4,6 +4,7 @@ import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as config
 import Diet_NullGr.ModSys.Disease.Disease as Disease
+import Diet_NullGr.ModSys.Diet.config as dietConfig
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
@@ -39,6 +40,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "OnPlayerActionServerEvent", self, self.OnPlayerActionServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ActuallyHurtServerEvent", self, self.ActuallyHurtServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ActorHurtServerEvent", self, self.ActorHurtServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "GameTypeChangedServerEvent", self, self.GameTypeChangedServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
         self.ListenForEvent(com.modName, config.csname, config.clientReadyEvent, self, self.DiseaseClientReady)
         self.ListenForEvent(com.modName, config.csname, config.visualReadyEvent, self, self.DiseaseVisualReady)
@@ -56,13 +58,18 @@ class ServerSys(ServerSystem):
     def ClientLoadAddonsFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
-        if data['enabled']:
+        gameType = compGame.GetPlayerGameType(playerId)
+        modeAffected = (gameType != gameTypeEnum.Spectator and
+                        (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
+        if data['enabled'] and modeAffected:
             self._updateHypoglycemiaSprintLimit(playerId, data)
             self._refreshDiseaseEffects(playerId, data)
             self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
-        else:
+        elif not data['enabled']:
             # 关闭状态可能来自上次存档，实体加载完成后必须再次收敛效果、疾跑来源和全员视觉。
             self._clearDiseaseSystemState(playerId, data)
+        else:
+            self._suspendDiseaseEffects(playerId, data)
         Disease.syncSettingToClient(self, playerId, data)
         for visualPlayerId in serverApi.GetPlayerList():
             visualData = self._getPlayerData(visualPlayerId)
@@ -71,11 +78,16 @@ class ServerSys(ServerSystem):
     def DiseaseClientReady(self, args):
         playerId = args['__id__']
         data = self._getPlayerData(playerId)
-        if data['enabled']:
+        gameType = compGame.GetPlayerGameType(playerId)
+        modeAffected = (gameType != gameTypeEnum.Spectator and
+                        (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
+        if data['enabled'] and modeAffected:
             self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
-        else:
+        elif not data['enabled']:
             # 热重载可能只重新触发客户端就绪，关闭状态仍需走完整清理事务，不能依赖玩家重进世界。
             self._clearDiseaseSystemState(playerId, data)
+        else:
+            self._suspendDiseaseEffects(playerId, data)
         Disease.syncSettingToClient(self, playerId, data)
         # 新客户端完成 AOI 玩家渲染注入后补发全部视觉状态，避免服务端状态先于实体创建到达。
         for visualPlayerId in serverApi.GetPlayerList():
@@ -100,6 +112,24 @@ class ServerSys(ServerSystem):
         else:
             Disease.savePlayerData(playerId, data, compFactory)
         Disease.syncSettingToClient(self, playerId, data)
+
+    def GameTypeChangedServerEvent(self, args):
+        playerId = args['playerId']
+        oldGameType = args['oldGameType']
+        newGameType = args['newGameType']
+        playerIds = [playerId] if playerId else serverApi.GetPlayerList()
+        for currentPlayerId in playerIds:
+            gameType = newGameType if playerId else compGame.GetPlayerGameType(currentPlayerId)
+            data = self._getPlayerData(currentPlayerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+                # 疾病进度留在服务端存档中，只暂停效果、症状、提示和客户端外观。
+                self._suspendDiseaseEffects(currentPlayerId, data)
+            elif data['enabled']:
+                self._updateHypoglycemiaSprintLimit(currentPlayerId, data)
+                self._refreshDiseaseEffects(currentPlayerId, data)
+                self.NotifyToClient(currentPlayerId, config.syncEvent, Disease.buildClientData(data))
+                self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(currentPlayerId, data))
 
     def DiseaseVisualReady(self, args):
         clientPlayerId = args['__id__']
@@ -133,6 +163,10 @@ class ServerSys(ServerSystem):
         attacker = args['attacker']
         customTag = args['customTag']
         cause = args['cause']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         data = self._getPlayerData(playerId)
         cured = Disease.resetAfterDeath(data)
         if playerId in self.pendingMetabolism:
@@ -148,6 +182,11 @@ class ServerSys(ServerSystem):
     def PlayerRespawnFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            self._suspendDiseaseEffects(playerId, data)
+            return
         self._updateHypoglycemiaSprintLimit(playerId, data)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
         self.BroadcastToAllClient(config.visualEvent, self._buildVisualData(playerId, data))
@@ -155,6 +194,14 @@ class ServerSys(ServerSystem):
     def OnPlayerActionServerEvent(self, args):
         playerId = args['playerId']
         actionType = args['actionType']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            if playerId in self.crouchStates:
+                del self.crouchStates[playerId]
+            if playerId in self.swimmingPlayers:
+                del self.swimmingPlayers[playerId]
+            return
         if actionType == playerActionType.StartSwimming:
             self.swimmingPlayers[playerId] = True
             # 游泳开始会中断正在记录的下蹲事务，避免出水后的 StopSneaking 被误结算。
@@ -234,6 +281,10 @@ class ServerSys(ServerSystem):
         customTag = args['customTag']
         if entityId not in self.playerDiseaseData or cause != actorDamageCause.Fall:
             return
+        gameType = compGame.GetPlayerGameType(entityId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         if 'rickets' not in self.playerDiseaseData[entityId]['active']:
             return
         # 当前官方事件只允许修改 damage；在实际伤害结算事件中放大它即可改变本次摔落伤害。
@@ -247,6 +298,10 @@ class ServerSys(ServerSystem):
         customTag = args['customTag']
         if entityId not in self.playerDiseaseData or damage <= 0.0:
             return
+        gameType = compGame.GetPlayerGameType(entityId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         if 'scurvy' not in self.playerDiseaseData[entityId]['active']:
             return
         compEffect = compFactory.CreateEffect(entityId)
@@ -255,7 +310,8 @@ class ServerSys(ServerSystem):
     def DiseasePlayerJump(self, args):
         playerId = args['__id__']
         gameType = compGame.GetPlayerGameType(playerId)
-        if gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator:
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
             return
         data = self._getPlayerData(playerId)
         if 'rickets' not in data['active'] or self.jumpDamageCooldowns[playerId] > 0:
@@ -278,6 +334,10 @@ class ServerSys(ServerSystem):
     def OnScriptTickServer(self):
         self.tickCounter += 1
         for playerId in self.jumpDamageCooldowns:
+            gameType = compGame.GetPlayerGameType(playerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+                continue
             if self.jumpDamageCooldowns[playerId] > 0:
                 self.jumpDamageCooldowns[playerId] -= 1
 
@@ -286,6 +346,10 @@ class ServerSys(ServerSystem):
             metabolicPoints = self.pendingMetabolism[playerId]
             del self.pendingMetabolism[playerId]
             data = self._getPlayerData(playerId)
+            gameType = compGame.GetPlayerGameType(playerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+                continue
             if not data['enabled']:
                 continue
             snapshot = self._buildNutritionSnapshot(playerId)
@@ -300,6 +364,10 @@ class ServerSys(ServerSystem):
             return
         for playerId in serverApi.GetPlayerList():
             data = self._getPlayerData(playerId)
+            gameType = compGame.GetPlayerGameType(playerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+                continue
             if not data['enabled']:
                 continue
             snapshot = self._buildNutritionSnapshot(playerId)
@@ -326,6 +394,10 @@ class ServerSys(ServerSystem):
     # 任何真实进食都按进食前患病状态结算症状；有效营养增益才参与计数与饮食恢复。
     def recordFoodEat(self, playerId, dietData, gainValues):
         data = self._getPlayerData(playerId)
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         if not data['enabled']:
             return
         activeBefore = list(data['active'])
@@ -365,6 +437,10 @@ class ServerSys(ServerSystem):
 
     # Diet 饥饿回调只累计本轮真实下降量，疾病系统下一 Tick 使用最新口渴值统一判定。
     def queueMetabolism(self, playerId, metabolicPoints):
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         if not self._getPlayerData(playerId)['enabled']:
             return
         if playerId in self.pendingMetabolism:
@@ -374,6 +450,10 @@ class ServerSys(ServerSystem):
 
     # 口渴系统只通过此公开入口读取疾病倍率，高血糖与发烧取较高值而不连乘。
     def getThirstConsumptionMultiplier(self, playerId):
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return 1.0
         data = self._getPlayerData(playerId)
         if 'fever' in data['active']:
             return config.feverThirstMultiplier
@@ -397,6 +477,10 @@ class ServerSys(ServerSystem):
             return False
         if not config.debugCommandEnabled:
             return False
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return True
         data = self._getPlayerData(playerId)
         if not data['enabled']:
             self._queueTipMessage(
@@ -472,6 +556,35 @@ class ServerSys(ServerSystem):
         }
         return Disease.buildNutritionSnapshot(dietData, thirstData)
 
+    # 创造或旁观模式只冻结疾病运行时表现，服务端疾病进度保持不变，返回生存后可继续结算。
+    def _suspendDiseaseEffects(self, playerId, data):
+        tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.constipationProgressKey)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.diseaseSymptomKey)
+        tipMessageSys.removeTip(playerId, tipMessageConfig.diseaseChangeKey)
+        if playerId in self.pendingMetabolism:
+            del self.pendingMetabolism[playerId]
+        if playerId in self.crouchStates:
+            del self.crouchStates[playerId]
+        if playerId in self.swimmingPlayers:
+            del self.swimmingPlayers[playerId]
+        compEffect = compFactory.CreateEffect(playerId)
+        for diseaseId in config.diseaseOrder:
+            compEffect.RemoveEffectFromEntity(config.diseases[diseaseId]['customEffect'])
+        for effectName in ('slowness', 'weakness', 'nausea', 'mining_fatigue'):
+            compEffect.RemoveEffectFromEntity(effectName)
+        thirstSys = serverApi.GetSystem(com.modName, thirstConfig.ssname)
+        thirstSys.setSprintLimitSource(playerId, config.hypoglycemiaSprintLimitSource, False)
+        clientData = Disease.buildClientData(data)
+        clientData['active'] = []
+        clientData['activeCount'] = 0
+        self.NotifyToClient(playerId, config.syncEvent, clientData)
+        self.BroadcastToAllClient(config.visualEvent, {
+            'playerId': playerId,
+            'bodyScale': 1.0,
+            'headScale': 1.0
+        })
+
     # 总开关关闭和关闭存档恢复共用此事务，统一清理状态、效果、疾跑来源及所有客户端骨骼表现。
     def _clearDiseaseSystemState(self, playerId, data):
         Disease.clearAllDiseaseState(data)
@@ -490,6 +603,8 @@ class ServerSys(ServerSystem):
         compEffect = compFactory.CreateEffect(playerId)
         for diseaseId in config.diseaseOrder:
             compEffect.RemoveEffectFromEntity(config.diseases[diseaseId]['customEffect'])
+        for effectName in ('slowness', 'weakness', 'nausea', 'mining_fatigue'):
+            compEffect.RemoveEffectFromEntity(effectName)
         self._updateHypoglycemiaSprintLimit(playerId, data)
         Disease.savePlayerData(playerId, data, compFactory)
         self.NotifyToClient(playerId, config.syncEvent, Disease.buildClientData(data))
@@ -528,6 +643,10 @@ class ServerSys(ServerSystem):
     def _refreshDiseaseEffects(self, playerId, data):
         if not data['enabled']:
             return
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         compEffect = compFactory.CreateEffect(playerId)
         for diseaseId in data['active']:
             diseaseConfig = config.diseases[diseaseId]
@@ -542,10 +661,13 @@ class ServerSys(ServerSystem):
     # 低血糖疾跑资格交给 Thirst 的共享来源集合，避免与低口渴逆修饰符重复叠加。
     def _updateHypoglycemiaSprintLimit(self, playerId, data):
         thirstSys = serverApi.GetSystem(com.modName, thirstConfig.ssname)
+        gameType = compGame.GetPlayerGameType(playerId)
+        modeAffected = (gameType != gameTypeEnum.Spectator and
+                        (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
         thirstSys.setSprintLimitSource(
             playerId,
             config.hypoglycemiaSprintLimitSource,
-            'hypoglycemia' in data['active']
+            modeAffected and 'hypoglycemia' in data['active']
         )
 
     # 三种间歇反胃共用专属时长和冷却，便秘的进食反胃仍按独立时长结算。
@@ -574,7 +696,8 @@ class ServerSys(ServerSystem):
         if playerId in self.swimmingPlayers:
             return None
         gameType = compGame.GetPlayerGameType(playerId)
-        if gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator:
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
             return None
         footPos = compFactory.CreatePos(playerId).GetFootPos()
         dimensionId = compFactory.CreateDimension(playerId).GetEntityDimensionId()
@@ -615,11 +738,14 @@ class ServerSys(ServerSystem):
     def _buildVisualData(self, playerId, data):
         bodyScale = 1.0
         headScale = 1.0
-        if 'constipation' in data['active']:
+        gameType = compGame.GetPlayerGameType(playerId)
+        modeAffected = (gameType != gameTypeEnum.Spectator and
+                        (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
+        if modeAffected and 'constipation' in data['active']:
             growRatio = min(1.0, data['activeSeconds']['constipation'] / config.constipationBodyGrowSeconds)
             reliefRatio = 1.0 - data['constipationSquatCount'] / float(config.constipationSquatRequired)
             bodyScale += (config.constipationMaximumBodyScale - 1.0) * growRatio * reliefRatio
-        if 'fever' in data['active']:
+        if modeAffected and 'fever' in data['active']:
             growRatio = min(1.0, data['activeSeconds']['fever'] / config.feverHeadGrowSeconds)
             headScale += (config.feverMaximumHeadScale - 1.0) * growRatio
         return {
@@ -628,8 +754,12 @@ class ServerSys(ServerSystem):
             'headScale': headScale
         }
 
-    # 多个疾病事务共享同一提示服务，聚合窗口避免症状、确诊和痊愈消息互相覆盖。
+    # 多个疾病事务共享同一提示服务，冻结模式不再提交疾病消息。
     def _queueTipMessage(self, playerId, messageKey, message, priority):
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
         tipMessageSys.enqueueTip(playerId, messageKey, message, priority)
 

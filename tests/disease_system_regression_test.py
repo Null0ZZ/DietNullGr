@@ -741,8 +741,9 @@ def test_system_registration_and_ui_bindings():
                 "disease server listens to the shared setting event")
     assert_true("def _clearDiseaseSystemState(" in server_text and "Disease.clearAllDiseaseState(data)" in server_text,
                 "disease setting closes persistent and runtime state together")
-    assert_true("gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator" in server_text,
-                "rickets jump damage excludes unrestricted game modes")
+    assert_true("gameType == gameTypeEnum.Spectator" in server_text and
+                "gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected" in server_text,
+                "rickets symptoms follow the shared creative and spectator mode gate")
     assert_true("footBlockName in config.invalidBodyBlocks" in server_text,
                 "constipation squat rejects water at the player's feet")
     assert_true("playerActionType.StartSwimming" in server_text and "playerActionType.StopSwimming" in server_text,
@@ -805,6 +806,27 @@ def test_system_registration_and_ui_bindings():
     thirst_server_text = thirst_server_path.read_text(encoding="utf-8-sig")
     assert_true("diseaseSys.getThirstConsumptionMultiplier(playerId)" in thirst_server_text, "thirst multiplier integration")
     assert_true("def setSprintLimitSource(" in thirst_server_text, "shared sprint restriction source")
+    assert_true("creativeModeAffected = False" in diet_config_text,
+                "creative mode participation defaults to disabled")
+    for mode_server_text, module_name in (
+            (diet_server_text, "diet"),
+            (thirst_server_text, "thirst"),
+            (server_text, "disease")):
+        assert_true('"GameTypeChangedServerEvent"' in mode_server_text,
+                    "{} listens for immediate game mode cleanup".format(module_name))
+        assert_true("gameTypeEnum.Spectator" in mode_server_text and
+                    "creativeModeAffected" in mode_server_text,
+                    "{} freezes spectator and optionally creative mode".format(module_name))
+    assert_true("def _suspendPlayerRuntime(" in diet_server_text and
+                "RemoveEffectFromEntity(effectName)" in diet_server_text,
+                "diet mode cleanup removes configured rewards and penalties")
+    assert_true("def _suspendDiseaseEffects(" in server_text and
+                "clientData['active'] = []" in server_text and
+                "'bodyScale': 1.0" in server_text and "'headScale': 1.0" in server_text,
+                "disease mode cleanup suppresses symptoms and restores client visuals")
+    assert_true("def setThirstValue(" in thirst_server_text and
+                "gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected" in thirst_server_text,
+                "thirst public mutations honor the creative freeze")
 
     ui_data = json.loads(diet_ui_path.read_text(encoding="utf-8-sig"))
     ui_text = diet_ui_path.read_text(encoding="utf-8-sig")

@@ -10,6 +10,8 @@ import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
+compGame = compFactory.CreateGame(serverApi.GetLevelId())
+gameTypeEnum = serverApi.GetMinecraftEnum().GameType
 engineNamespace = serverApi.GetEngineNamespace()
 engineSystemName = serverApi.GetEngineSystemName()
 
@@ -27,6 +29,7 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerDieEvent", self, self.PlayerDieEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "GameTypeChangedServerEvent", self, self.GameTypeChangedServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "CommandEvent", self, self.CommandEvent)
         # 奖励和低值惩罚依赖 Tick 周期刷新，必须显式监听引擎事件，否则只会停留在普通方法定义。
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
@@ -43,6 +46,10 @@ class DietServerSystem(ServerSystem):
         playerId = args['playerId']
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            self._suspendPlayerRuntime(playerId)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
 
@@ -50,6 +57,10 @@ class DietServerSystem(ServerSystem):
         playerId = args['__id__']
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            self._suspendPlayerRuntime(playerId)
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         Diet.syncSettingToClient(self, playerId, self.playerDietData[playerId])
 
@@ -90,6 +101,10 @@ class DietServerSystem(ServerSystem):
         itemDict = args['itemDict']
         hunger = args['hunger']
         nutrition = args['nutrition']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            return
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
@@ -126,6 +141,10 @@ class DietServerSystem(ServerSystem):
         playerId = args['playerId']
         hungerBefore = args['hungerBefore']
         hunger = args['hunger']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            return
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
@@ -159,6 +178,10 @@ class DietServerSystem(ServerSystem):
     def PlayerDieEvent(self, args):
         playerId = args['id']
         attacker = args['attacker']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            return
         if playerId in self.deadPlayers:
             return
         self.deadPlayers[playerId] = True
@@ -178,6 +201,18 @@ class DietServerSystem(ServerSystem):
         # 死亡事件已经完成扣除和保存；复活完成只负责刷新客户端并清理死亡事务标记。
         Diet.syncToClient(self, playerId, self.playerDietData[playerId])
         del self.deadPlayers[playerId]
+
+    def GameTypeChangedServerEvent(self, args):
+        playerId = args['playerId']
+        oldGameType = args['oldGameType']
+        newGameType = args['newGameType']
+        playerIds = [playerId] if playerId else serverApi.GetPlayerList()
+        for currentPlayerId in playerIds:
+            gameType = newGameType if playerId else compGame.GetPlayerGameType(currentPlayerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+                # 模式切换只撤销本模组运行时效果，营养存档保持冻结，返回生存后继续使用原值。
+                self._suspendPlayerRuntime(currentPlayerId)
 
     def CommandEvent(self, args):
         entityId = args['entityId']
@@ -216,6 +251,10 @@ class DietServerSystem(ServerSystem):
             if playerId not in self.playerDietData:
                 self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
             data = self.playerDietData[playerId]
+            gameType = compGame.GetPlayerGameType(playerId)
+            if (gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+                continue
             if data['active']:
                 diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
                 matchedResults = Diet.applyEffects(
@@ -235,8 +274,36 @@ class DietServerSystem(ServerSystem):
                         tipMessageConfig.priorityWarning
                     )
 
-    # 多个服务端回调共享同一提示服务，所有 Diet 消息先聚合再由唯一接口显示。
+    # 登录和模式切换共用此事务，撤销全部饮食效果及尚未展示的饮食提示，但不修改营养存档。
+    def _suspendPlayerRuntime(self, playerId):
+        compEffect = compFactory.CreateEffect(playerId)
+        removedEffectNames = {}
+        for effectId in config.effectOrder:
+            for statusEffect in config.dietEffects[effectId]['statusEffects']:
+                effectName = statusEffect['name']
+                if effectName not in removedEffectNames:
+                    compEffect.RemoveEffectFromEntity(effectName)
+                    removedEffectNames[effectName] = True
+        for penaltyId in config.penaltyOrder:
+            for statusEffect in config.dietPenalties[penaltyId]['statusEffects']:
+                effectName = statusEffect['name']
+                if effectName not in removedEffectNames:
+                    compEffect.RemoveEffectFromEntity(effectName)
+                    removedEffectNames[effectName] = True
+        tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
+        for messageKey in (
+                tipMessageConfig.dietFoodGainKey,
+                tipMessageConfig.dietFoodWarningKey,
+                tipMessageConfig.dietNutritionAlertKey,
+                tipMessageConfig.dietLowPenaltyKey):
+            tipMessageSys.removeTip(playerId, messageKey)
+
+    # 多个服务端回调共享同一提示服务，冻结模式不再提交 Diet 消息。
     def _queueTipMessage(self, playerId, messageKey, message, priority):
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            return
         tipMessageSys = serverApi.GetSystem(com.modName, tipMessageConfig.ssname)
         tipMessageSys.enqueueTip(playerId, messageKey, message, priority)
 

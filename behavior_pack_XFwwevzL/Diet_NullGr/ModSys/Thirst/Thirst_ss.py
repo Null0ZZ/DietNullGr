@@ -3,6 +3,7 @@
 import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as diseaseConfig
+import Diet_NullGr.ModSys.Diet.config as dietConfig
 import Diet_NullGr.ModSys.Thirst.config as config
 import Diet_NullGr.ModSys.Thirst.Thirst as Thirst
 
@@ -34,6 +35,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnPlayerActionServerEvent", self, self.OnPlayerActionServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "DimensionChangeServerEvent", self, self.DimensionChangeServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "GameTypeChangedServerEvent", self, self.GameTypeChangedServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
         self.ListenForEvent(com.modName, config.csname, config.clientReadyEvent, self, self.ThirstClientReady)
         self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
@@ -158,6 +160,23 @@ class ServerSys(ServerSystem):
         # 换维度会重建移动状态，主动撤销旧维度的逆修饰符，等待新的疾跑动作重新添加。
         self._updateSprintSpeedModifier(playerId, data)
 
+    def GameTypeChangedServerEvent(self, args):
+        playerId = args['playerId']
+        oldGameType = args['oldGameType']
+        newGameType = args['newGameType']
+        playerIds = [playerId] if playerId else serverApi.GetPlayerList()
+        for currentPlayerId in playerIds:
+            gameType = newGameType if playerId else compGame.GetPlayerGameType(currentPlayerId)
+            if (gameType != gameTypeEnum.Spectator and
+                    (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected)):
+                continue
+            data = self._getPlayerData(currentPlayerId)
+            data['sprinting'] = False
+            data['sprintLimited'] = False
+            data['dehydrationTicks'] = 0
+            # 模式冻结时立即撤销疾跑限制，口渴真值和疾病来源均原样保留。
+            self._updateSprintSpeedModifier(currentPlayerId, data)
+
     def PlayerRespawnFinishServerEvent(self, args):
         playerId = args['playerId']
         data = self._getPlayerData(playerId)
@@ -165,6 +184,10 @@ class ServerSys(ServerSystem):
         data['sprintLimited'] = False
         # 复活可能更换玩家实体，必须在口渴值早退判断前清理死亡前的疾跑事务。
         self._updateSprintSpeedModifier(playerId, data)
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
+            return
         if not data['enabled'] or data['value'] == config.respawnValue:
             return
         oldDisplayValue = Thirst.getDisplayValue(data['value'])
@@ -186,7 +209,8 @@ class ServerSys(ServerSystem):
                     sprintLimited = False
                 if sprintLimited:
                     gameType = compGame.GetPlayerGameType(playerId)
-                    sprintLimited = gameType != gameTypeEnum.Creative and gameType != gameTypeEnum.Spectator
+                    sprintLimited = (gameType != gameTypeEnum.Spectator and
+                                     (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
                 if sprintLimited != data['sprintLimited']:
                     data['sprintLimited'] = sprintLimited
                 # 每秒将资格与动作状态汇合到真实属性，维度切换或接口偶发失败后也能自动收敛。
@@ -198,7 +222,8 @@ class ServerSys(ServerSystem):
             gameType = compGame.GetPlayerGameType(playerId)
             if (not data['enabled'] or data['value'] > 0.0 or
                     gameDifficulty == gameDifficultyEnum.Peaceful or
-                    gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator):
+                    gameType == gameTypeEnum.Spectator or
+                    (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
                 data['dehydrationTicks'] = 0
                 continue
             data['dehydrationTicks'] += 1
@@ -237,7 +262,10 @@ class ServerSys(ServerSystem):
     def _updateSprintSpeedModifier(self, playerId, data):
         compAttr = compFactory.CreateAttr(playerId)
         hasModifier = compAttr.HasModifier(attrType.SPEED, config.sprintLimitModifierId)
-        shouldLimitSpeed = data['sprinting'] and (data['sprintLimited'] or bool(data['sprintLimitSources']))
+        gameType = compGame.GetPlayerGameType(playerId)
+        modeAffected = (gameType != gameTypeEnum.Spectator and
+                        (gameType != gameTypeEnum.Creative or dietConfig.creativeModeAffected))
+        shouldLimitSpeed = modeAffected and data['sprinting'] and (data['sprintLimited'] or bool(data['sprintLimitSources']))
         if shouldLimitSpeed == hasModifier:
             return
         if shouldLimitSpeed:
@@ -271,7 +299,8 @@ class ServerSys(ServerSystem):
         if not data['enabled'] or data['value'] <= 0.0:
             return data['value']
         gameType = compGame.GetPlayerGameType(playerId)
-        if gameType == gameTypeEnum.Creative or gameType == gameTypeEnum.Spectator:
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
             return data['value']
         if compGame.GetGameDiffculty() == gameDifficultyEnum.Peaceful:
             return data['value']
@@ -293,6 +322,10 @@ class ServerSys(ServerSystem):
     def setThirstValue(self, playerId, value):
         data = self._getPlayerData(playerId)
         if not data['enabled']:
+            return data['value']
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not dietConfig.creativeModeAffected)):
             return data['value']
         newValue = Thirst.clampThirstValue(value)
         if newValue == data['value']:

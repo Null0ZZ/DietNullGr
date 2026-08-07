@@ -53,6 +53,8 @@ clientSysKey = {
 
 attrPrefix = "diet_nullgr_"
 effectRefreshTick = 1200
+# 默认只有生存和冒险模式参与饮食系统；开启后创造模式也参与，旁观模式始终冻结。
+creativeModeAffected = False
 gainPenaltyPerGroup = 15.0
 decayPenaltyPerGroup = 15.0
 targetDietValue = 0.8
