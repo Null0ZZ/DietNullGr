@@ -287,7 +287,7 @@ def applyHungerDecay(data, foodDiff):
     return changed
 
 
-# 死亡惩罚按玩家设置选择固定扣除、比例扣除或独立重置值，默认方式等价于上游 AMOUNT 扣除 100%。
+# 死亡惩罚按玩家设置选择固定扣除、比例扣除或独立重置值，默认按当前值的 50% 扣除。
 def applyDeathPenalty(data):
     for groupId in config.groupOrder:
         if not data['tracking'][groupId]:

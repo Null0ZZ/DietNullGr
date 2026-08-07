@@ -65,13 +65,13 @@ lowNutritionAlertSound = "random.toast"
 lowNutritionAlertVolume = 1.0
 lowNutritionAlertPitch = 1.0
 deathPenaltyMin = 0.0
-deathPenaltyLoss = 1.0
+deathPenaltyLoss = 0.5
 # 首次营养起点与死亡重置必须分离，避免死亡把低营养玩家恢复到新玩家的 50%。
 deathResetValue = 0.0
 deathPenaltyMethodAmount = "AMOUNT"
 deathPenaltyMethodPercent = "PERCENT"
 deathPenaltyMethodReset = "RESET"
-deathPenaltyMethodDefault = deathPenaltyMethodAmount
+deathPenaltyMethodDefault = deathPenaltyMethodPercent
 deathPenaltyMethodOrder = [deathPenaltyMethodAmount, deathPenaltyMethodPercent, deathPenaltyMethodReset]
 deathPenaltyMethodNames = {
     deathPenaltyMethodAmount: "固定扣除",

@@ -211,6 +211,34 @@ def test_diet_initialization_persistence_and_death_boundary():
         assert_close(initial_data["values"][group_id], 0.5, "{} first initialization is 50%".format(group_id))
         assert_close(diet_config.groups[group_id]["initialValue"], 0.5, "{} initial config is explicit".format(group_id))
         assert_true("defaultValue" not in diet_config.groups[group_id], "{} has no ambiguous default value".format(group_id))
+    assert_equal(
+        initial_data["deathPenaltyMethod"],
+        diet_config.deathPenaltyMethodPercent,
+        "new player death penalty defaults to percent",
+    )
+    assert_close(initial_data["deathPenaltyLoss"], 0.5, "new player death penalty defaults to 50%")
+    assert_equal(
+        diet_config.settingDefByKey[diet_config.settingDeathPenaltyMethodKey]["default"],
+        diet_config.deathPenaltyMethodNames[diet_config.deathPenaltyMethodPercent],
+        "common setting displays percent as the default method",
+    )
+    assert_equal(
+        diet_config.settingDefByKey[diet_config.settingDeathPenaltyLossKey]["default"],
+        50,
+        "common setting displays 50 as the default loss",
+    )
+
+    stored_setting_values = {
+        diet_config.attrPrefix + "death_penalty_method": diet_config.deathPenaltyMethodAmount,
+        diet_config.attrPrefix + "death_penalty_loss": 1.0,
+    }
+    stored_setting_data = Diet.loadPlayerData("configured_player", CompFactoryStub(stored_setting_values))
+    assert_equal(
+        stored_setting_data["deathPenaltyMethod"],
+        diet_config.deathPenaltyMethodAmount,
+        "stored death penalty method is not migrated",
+    )
+    assert_close(stored_setting_data["deathPenaltyLoss"], 1.0, "stored death penalty loss is not migrated")
 
     stored = {}
     comp_factory = CompFactoryStub(stored)
@@ -235,7 +263,11 @@ def test_diet_initialization_persistence_and_death_boundary():
     Diet.savePlayerData("returning_player", reloaded_data, comp_factory)
     respawned_data = Diet.loadPlayerData("returning_player", comp_factory)
     for group_id in diet_config.groupOrder:
-        assert_close(respawned_data["values"][group_id], 0.0, "{} death result survives respawn and re-entry".format(group_id))
+        assert_close(
+            respawned_data["values"][group_id],
+            persisted_values[group_id] * 0.5,
+            "{} default percent death result survives respawn and re-entry".format(group_id),
+        )
 
     reset_death_data = Diet.loadPlayerData("new_player", CompFactoryStub({}))
     reset_death_data["deathPenaltyMethod"] = diet_config.deathPenaltyMethodReset
