@@ -14,11 +14,11 @@ def clampDietValue(value):
     return value
 
 
-# 创建五类食物组的默认玩家数据，新玩家和死亡重置都会走同一套默认值。
-def createDefaultValues():
+# 创建首次生成的五类营养值；主动 /diet reset 可回到该起点，死亡惩罚不复用它。
+def createInitialValues():
     values = {}
     for groupId in config.groupOrder:
-        values[groupId] = config.groups[groupId]['defaultValue']
+        values[groupId] = config.groups[groupId]['initialValue']
     return values
 
 
@@ -54,7 +54,8 @@ def loadPlayerData(playerId, compFactory):
     effectSettings = {}
     penaltySettings = {}
     for groupId in config.groupOrder:
-        values[groupId] = clampDietValue(compModAttr.GetAttr(config.attrPrefix + groupId, config.groups[groupId]['defaultValue']))
+        # 只有属性不存在时才使用 50% 起点；存档中的 0.0 是合法值，死亡或重进后必须原样恢复。
+        values[groupId] = clampDietValue(compModAttr.GetAttr(config.attrPrefix + groupId, config.groups[groupId]['initialValue']))
         tracking[groupId] = compModAttr.GetAttr(config.attrPrefix + 'track_' + groupId, True)
     for effectId in config.effectOrder:
         effectSettings[effectId] = compModAttr.GetAttr(config.attrPrefix + 'effect_' + effectId, config.dietEffects[effectId]['defaultEnabled'])
@@ -286,14 +287,14 @@ def applyHungerDecay(data, foodDiff):
     return changed
 
 
-# 死亡惩罚按玩家设置选择固定扣除、比例扣除或重置，默认值等价于上游 AMOUNT 扣除 100%。
+# 死亡惩罚按玩家设置选择固定扣除、比例扣除或独立重置值，默认方式等价于上游 AMOUNT 扣除 100%。
 def applyDeathPenalty(data):
     for groupId in config.groupOrder:
         if not data['tracking'][groupId]:
             continue
         originalValue = data['values'][groupId]
         if data['deathPenaltyMethod'] == config.deathPenaltyMethodReset:
-            value = config.groups[groupId]['defaultValue']
+            value = config.deathResetValue
         elif data['deathPenaltyMethod'] == config.deathPenaltyMethodPercent:
             value = originalValue * (1.0 - data['deathPenaltyLoss'])
         else:
@@ -758,7 +759,7 @@ def handleCommand(command, data):
         return result
     action = parts[1]
     if action == "reset":
-        data['values'] = createDefaultValues()
+        data['values'] = createInitialValues()
         result['changed'] = True
         result['message'] = "均衡饮食数据已重置。目标：{}".format(config.settingTargetText)
         return result

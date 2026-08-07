@@ -64,6 +64,8 @@ lowNutritionAlertVolume = 1.0
 lowNutritionAlertPitch = 1.0
 deathPenaltyMin = 0.0
 deathPenaltyLoss = 1.0
+# 首次营养起点与死亡重置必须分离，避免死亡把低营养玩家恢复到新玩家的 50%。
+deathResetValue = 0.0
 deathPenaltyMethodAmount = "AMOUNT"
 deathPenaltyMethodPercent = "PERCENT"
 deathPenaltyMethodReset = "RESET"
@@ -96,7 +98,7 @@ groups = {
         "suggestion": "苹果、浆果或西瓜片",
         "icon": "minecraft:apple",
         "color": [238, 102, 119],
-        "defaultValue": 0.0,
+        "initialValue": 0.5,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
     },
@@ -105,7 +107,7 @@ groups = {
         "suggestion": "面包、小麦或蛋糕",
         "icon": "minecraft:bread",
         "color": [204, 187, 68],
-        "defaultValue": 0.0,
+        "initialValue": 0.5,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
     },
@@ -114,7 +116,7 @@ groups = {
         "suggestion": "肉类、鱼、蛋或牛奶",
         "icon": "minecraft:cooked_beef",
         "color": [250, 141, 84],
-        "defaultValue": 0.0,
+        "initialValue": 0.5,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
     },
@@ -123,7 +125,7 @@ groups = {
         "suggestion": "胡萝卜、马铃薯、蘑菇汤或海带",
         "icon": "minecraft:carrot",
         "color": [34, 136, 51],
-        "defaultValue": 0.0,
+        "initialValue": 0.5,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
     },
@@ -132,7 +134,7 @@ groups = {
         "suggestion": "蜂蜜、糖或甜点",
         "icon": "minecraft:honey_bottle",
         "color": [170, 51, 119],
-        "defaultValue": 0.0,
+        "initialValue": 0.5,
         "gainMultiplier": 1.0,
         "decayMultiplier": 1.0
     }
@@ -328,7 +330,7 @@ for penaltyId in penaltyOrder:
 
 settingDefs.append({
     "key": settingDeathPenaltyMethodKey,
-    "name": "死亡惩罚方式（选择死亡时按固定值扣除、按当前值比例扣除或重置为初始值）",
+    "name": "死亡惩罚方式（选择死亡时按固定值扣除、按当前值比例扣除或重置为 {}%）".format(int(deathResetValue * 100.0)),
     "control": controlDropDown,
     "default": deathPenaltyMethodNames[deathPenaltyMethodDefault],
     "priority": settingPriority,

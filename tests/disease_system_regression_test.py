@@ -176,7 +176,7 @@ def test_diet_tooltip_removal_contract():
 
     data = {
         "active": True,
-        "values": Diet.createDefaultValues(),
+        "values": Diet.createInitialValues(),
         "tracking": Diet.createDefaultTracking(),
     }
     client_data = Diet.buildClientData(data)
@@ -185,6 +185,72 @@ def test_diet_tooltip_removal_contract():
         assert_true("tooltip" not in diet_config.groups[group_id], "{} tooltip config removed".format(group_id))
     for group_data in client_data["groups"]:
         assert_equal(set(group_data), expected_fields, "{} client row fields".format(group_data["id"]))
+
+
+def test_diet_initialization_persistence_and_death_boundary():
+    class ModAttrStub(object):
+        def __init__(self, values):
+            self.values = values
+
+        def GetAttr(self, key, default):
+            return self.values[key] if key in self.values else default
+
+        def SetAttr(self, key, value, needRestore=False):
+            assert_true(needRestore, "diet values persist across death and re-entry")
+            self.values[key] = value
+
+    class CompFactoryStub(object):
+        def __init__(self, values):
+            self.modAttr = ModAttrStub(values)
+
+        def CreateModAttr(self, player_id):
+            return self.modAttr
+
+    initial_data = Diet.loadPlayerData("new_player", CompFactoryStub({}))
+    for group_id in diet_config.groupOrder:
+        assert_close(initial_data["values"][group_id], 0.5, "{} first initialization is 50%".format(group_id))
+        assert_close(diet_config.groups[group_id]["initialValue"], 0.5, "{} initial config is explicit".format(group_id))
+        assert_true("defaultValue" not in diet_config.groups[group_id], "{} has no ambiguous default value".format(group_id))
+
+    stored = {}
+    comp_factory = CompFactoryStub(stored)
+    persisted_values = {
+        "fruits": 0.0,
+        "grains": 0.125,
+        "proteins": 0.25,
+        "vegetables": 0.75,
+        "sugars": 1.0,
+    }
+    initial_data["values"] = dict(persisted_values)
+    Diet.savePlayerData("returning_player", initial_data, comp_factory)
+    reloaded_data = Diet.loadPlayerData("returning_player", comp_factory)
+    for group_id in diet_config.groupOrder:
+        assert_close(
+            reloaded_data["values"][group_id],
+            persisted_values[group_id],
+            "{} re-entry restores the stored value including zero".format(group_id),
+        )
+
+    Diet.applyDeathPenalty(reloaded_data)
+    Diet.savePlayerData("returning_player", reloaded_data, comp_factory)
+    respawned_data = Diet.loadPlayerData("returning_player", comp_factory)
+    for group_id in diet_config.groupOrder:
+        assert_close(respawned_data["values"][group_id], 0.0, "{} death result survives respawn and re-entry".format(group_id))
+
+    reset_death_data = Diet.loadPlayerData("new_player", CompFactoryStub({}))
+    reset_death_data["deathPenaltyMethod"] = diet_config.deathPenaltyMethodReset
+    Diet.applyDeathPenalty(reset_death_data)
+    for group_id in diet_config.groupOrder:
+        assert_close(
+            reset_death_data["values"][group_id],
+            diet_config.deathResetValue,
+            "{} death reset does not reuse the first initialization value".format(group_id),
+        )
+
+    command_result = Diet.handleCommand("/diet reset", respawned_data)
+    assert_true(command_result["changed"], "explicit diet reset changes nutrition data")
+    for group_id in diet_config.groupOrder:
+        assert_close(respawned_data["values"][group_id], 0.5, "{} explicit reset returns to the initial value".format(group_id))
 
 
 def test_disease_master_switch_state():
@@ -1292,6 +1358,7 @@ def main():
         test_trigger_and_recovery_thresholds,
         test_client_tips_contract,
         test_diet_tooltip_removal_contract,
+        test_diet_initialization_persistence_and_death_boundary,
         test_disease_master_switch_state,
         test_new_player_protection,
         test_two_slots_and_half_progress_cap,

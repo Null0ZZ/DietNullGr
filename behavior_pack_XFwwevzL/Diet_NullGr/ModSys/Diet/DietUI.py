@@ -21,7 +21,7 @@ class DietUI(ScreenNode):
                 'name': groupConfig['name'],
                 'icon': groupConfig['icon'],
                 'color': groupConfig['color'],
-                'value': groupConfig['defaultValue'],
+                'value': groupConfig['initialValue'],
                 'tracked': True,
                 'diseaseOutline': ''
             })
