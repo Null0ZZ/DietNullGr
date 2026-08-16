@@ -2817,6 +2817,138 @@ for namespacePrefix, groupIds, itemNames in (
         farmerDelightDlcFoodGroups[namespacePrefix + itemName] = list(groupIds)
 foodGroups.update(farmerDelightDlcFoodGroups)
 
+# 屠宰工艺数据逐项核对物品定义、烹饪锅配方和进食合成链，避免仅按名称推断复合食品原料。
+butcherCraftFoodGroups = {}
+for groupIds, itemNames in (
+    (["fruits", "grains", "proteins", "vegetables", "sugars"], (
+        "rack_lamb",
+    )),
+    (["fruits", "proteins", "sugars"], (
+        "friedfish",
+    )),
+    (["fruits", "proteins", "vegetables", "sugars"], (
+        "pot_roast",
+    )),
+    (["grains"], (
+        "bread_slice",
+    )),
+    (["grains", "proteins"], (
+        "buttered_toast", "chickenfriedsteak", "friedbrains", "friedchicken", "grilled_cheese",
+        "pork_tenderloin", "sausage_roll", "sausageinbun", "sos",
+    )),
+    (["grains", "proteins", "vegetables"], (
+        "beef_wellington", "mashed_potato_gravy", "salisbury_steak",
+    )),
+    (["grains", "proteins", "vegetables", "sugars"], (
+        "pulled_pork_sandwich",
+    )),
+    (["proteins"], (
+        "beef_jerky", "beef_rib", "beef_scraps", "brain", "butter", "cheese", "cooked_beef_rib",
+        "cooked_beef_scraps", "cooked_brain", "cooked_cubed_beef", "cooked_cubed_lamb", "cooked_cubed_pork",
+        "cooked_ground_beef", "cooked_ground_lamb", "cooked_ground_pork", "cooked_heart", "cooked_kidney",
+        "cooked_lamb_rib", "cooked_lamb_ribs", "cooked_lamb_roast", "cooked_lamb_scraps", "cooked_liver",
+        "cooked_lung", "cooked_oxtail", "cooked_pork_rib", "cooked_pork_ribs", "cooked_pork_roast",
+        "cooked_pork_scraps", "cooked_ribs", "cooked_roast", "cooked_stew_beef", "cooked_stew_lamb",
+        "cooked_stew_pork", "cooked_stomach", "cooked_tongue", "cooked_tripe", "cubed_beef", "cubed_lamb",
+        "cubed_pork", "ground_beef", "ground_lamb", "ground_pork", "heart", "jelly_black", "jelly_blue",
+        "jelly_brown", "jelly_cyan", "jelly_green", "jelly_grey", "jelly_light_blue", "jelly_light_grey",
+        "jelly_lime", "jelly_magenta", "jelly_orange", "jelly_pink", "jelly_purple", "jelly_red",
+        "jelly_white", "jelly_yellow", "kidney", "lamb_jerky", "lamb_rib", "lamb_ribs", "lamb_roast",
+        "lamb_scraps", "liver", "lung", "oxtail", "pork_jerky", "pork_rib", "pork_ribs", "pork_roast",
+        "pork_scraps", "ribs", "roast", "sausage", "sausagecooked", "stew_beef", "stew_lamb", "stew_pork",
+        "stomach", "tongue", "tripe",
+    )),
+    (["proteins", "vegetables"], (
+        "broth", "haggis", "lamb_stew", "liver_onions", "meat_pie_slice", "oxtail_soup", "pork_stew",
+        "stirfry", "stuffedheart",
+    )),
+    (["proteins", "vegetables", "sugars"], (
+        "bbq_ribs", "hash",
+    )),
+    (["vegetables"], (
+        "frenchfries",
+    )),
+    (["vegetables", "sugars"], (
+        "ketchup",
+    )),
+):
+    for itemName in itemNames:
+        butcherCraftFoodGroups["butchercraft_nullgr:" + itemName] = list(groupIds)
+foodGroups.update(butcherCraftFoodGroups)
+
+# 巴西乐事数据逐项核对标准配方和烹饪锅配方；同一成品存在多种配方时采用原料类别并集。
+brazilianDelightFoodGroups = {}
+for groupIds, itemNames in (
+    (["fruits"], (
+        "acai_berries", "coconut_drink", "coconut_milk", "coconut_slice", "coffee_berries", "guarana_fruit",
+        "guarana_powder", "lemon", "lemon_slice",
+    )),
+    (["fruits", "grains", "proteins", "sugars"], (
+        "plate_of_canjica",
+    )),
+    (["fruits", "grains", "proteins", "vegetables"], (
+        "salpicao",
+    )),
+    (["fruits", "proteins", "sugars"], (
+        "acai_cream", "beijinho", "brigadeiro_ball", "chocolate_love_apple", "coconut_cream",
+        "coconut_sweet", "powdered_peanut_candy", "quindim", "sweet_love_apple",
+    )),
+    (["fruits", "proteins", "vegetables"], (
+        "plate_of_fried_fish_with_acai", "plate_of_fish_moqueca",
+    )),
+    (["fruits", "sugars"], (
+        "acai_tea_with_guarana", "caipirinha", "guarana_juice", "guarana_soda", "lemonade",
+    )),
+    (["fruits", "vegetables", "sugars"], (
+        "collard_lemonade",
+    )),
+    (["grains"], (
+        "angu", "brazilian_rice", "cooked_corn", "corn", "corn_flour", "corn_on_a_stick",
+        "grilled_corn_on_a_stick", "kernels", "pastel_dough", "white_kernels",
+    )),
+    (["grains", "proteins"], (
+        "brazilian_breakfast", "brazilian_dinner", "bread_with_butter", "buttered_corn", "corn_meal",
+        "couscous",
+    )),
+    (["grains", "proteins", "sugars"], (
+        "corn_porridge", "sweet_rice",
+    )),
+    (["grains", "proteins", "vegetables"], (
+        "broa", "cassava_fritters", "coxinha", "raw_cassava_fritters", "raw_coxinha",
+    )),
+    (["grains", "proteins", "vegetables", "sugars"], (
+        "carrot_cake_slice", "carrot_cake_with_chocolate_slice", "chicken_pot_pie_slice",
+    )),
+    (["grains", "vegetables"], (
+        "garlic_bread", "pastel", "raw_pastel",
+    )),
+    (["proteins"], (
+        "bean_pod", "black_beans", "butter", "carioca_beans", "cooked_shrimp",
+        "grilled_cheese_on_a_stick", "heavy_cream_bucket", "minas_cheese_on_a_stick", "minas_cheese_slice",
+        "shrimp",
+    )),
+    (["proteins", "sugars"], (
+        "brigadeiro_cream", "cajuzinho", "condensed_milk", "milk_caramel", "peanut_brittle",
+        "pudding_slice",
+    )),
+    (["proteins", "vegetables"], (
+        "cheese_bread", "cheese_bread_dough", "collard_greens_farofa", "cooked_black_beans",
+        "cooked_carioca_beans", "fried_cassava_with_butter", "plate_of_feijoada", "plate_of_green_soup",
+        "plate_of_stroganoff", "tropeiro_beans",
+    )),
+    (["vegetables"], (
+        "cassava_flour", "cassava_root", "chimarrao", "coffee_beans", "collard_greens", "collard_greens_salad",
+        "dried_yerba_mate", "garlic_bulb", "garlic_clove", "roasted_garlic", "tucupi",
+        "yerba_mate_leaves",
+    )),
+    (["sugars"], (
+        "garapa",
+    )),
+):
+    for itemName in itemNames:
+        brazilianDelightFoodGroups["brazilian_delight_nullgr:" + itemName] = list(groupIds)
+foodGroups.update(brazilianDelightFoodGroups)
+
 effectDescriptions = {}
 for effectId in effectOrder:
     effectDescriptions[effectId] = dietEffects[effectId]["description"]
