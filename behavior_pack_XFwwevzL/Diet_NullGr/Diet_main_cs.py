@@ -27,8 +27,16 @@ class DietClientSystem(ClientSystem):
         self.settingCallbacks = {}
         for settingDef in config.settingDefs:
             self.settingCallbacks[settingDef['key']] = self.CreateDietSettingCallback(settingDef)
+        # 客户端系统建立时立即注册可修改的键位映射，首次默认使用 Y 键。
+        playerViewComp = compFactory.CreatePlayerView(levelId)
+        playerViewComp.RegisterCustomKeyMapping(
+            config.openDietScreenKeyName,
+            clientApi.GetMinecraftEnum().KeyBoardType.KEY_Y,
+            config.openDietScreenKeyCategory
+        )
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
         self.ListenForEvent(engineNamespace, engineSystemName, "HudButtonChangedClientEvent", self, self.HudButtonChangedClientEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "OnCustomKeyPressInGame", self, self.OnCustomKeyPressInGame)
         self.ListenForEvent(engineNamespace, engineSystemName, "ScreenSizeChangedClientEvent", self, self.ScreenSizeChangedClientEvent)
         self.ListenForEvent(com.modName, com.ssname, "DietSyncData", self, self.DietSyncData)
         self.ListenForEvent(com.modName, com.ssname, "OpenDietScreen", self, self.OpenDietScreen)
@@ -100,6 +108,18 @@ class DietClientSystem(ClientSystem):
         afterY = args['afterY']
         if self.buttonUiNode:
             self.buttonUiNode.CorrectCurrentButtonPos()
+
+    def OnCustomKeyPressInGame(self, args):
+        name = args['name']
+        key = args['key']
+        category = args['category']
+        isDown = args['isDown']
+        screenName = args['screenName']
+        # 不锁死事件回传的键码，玩家在设置中重新绑定后仍通过同一映射打开界面。
+        if name != config.openDietScreenKeyName or category != config.openDietScreenKeyCategory or isDown != '1':
+            return
+        # 与 HUD 按钮共用打开链；数据未同步时 OpenDietScreen 会先请求数据，再在同步事件中入栈。
+        self.OpenDietScreen({})
 
     # RegisterSettingInst 必须在 UiInitFinished 后调用，设置控件则等服务端状态回来后再注册默认值。
     def RegisterDietSettingInst(self):
