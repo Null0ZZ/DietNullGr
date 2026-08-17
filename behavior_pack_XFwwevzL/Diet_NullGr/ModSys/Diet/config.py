@@ -378,13 +378,13 @@ dietTagGroups = {
 }
 
 foodGroups = {
-    "minecraft:apple": ["fruits"],
+    "minecraft:apple": ["fruits", "sugars"],
     "minecraft:chorus_fruit": ["fruits"],
     "minecraft:enchanted_golden_apple": ["fruits", "sugars"],
     "minecraft:glow_berries": ["fruits"],
     "minecraft:golden_apple": ["fruits", "sugars"],
     "minecraft:melon": ["fruits"],
-    "minecraft:melon_slice": ["fruits"],
+    "minecraft:melon_slice": ["fruits", "sugars"],
     "minecraft:sweet_berries": ["fruits", "sugars"],
 
     "minecraft:bread": ["grains"],
@@ -494,7 +494,7 @@ farmerDelightFoodGroups = {
     "farmer_delight_nullgr:fruit_salad": ["fruits", "proteins", "vegetables", "sugars"],
     "farmer_delight_nullgr:gleaming_salad": ["fruits", "vegetables", "sugars"],
     "farmer_delight_nullgr:glow_berry_custard": ["fruits", "proteins", "sugars"],
-    "farmer_delight_nullgr:grilled_salmon": ["fruits", "proteins", "vegetables"],
+    "farmer_delight_nullgr:grilled_salmon": ["fruits", "proteins", "vegetables", "sugars"],
     "farmer_delight_nullgr:ham": ["proteins"],
     "farmer_delight_nullgr:hamburger": ["grains", "proteins", "vegetables"],
     "farmer_delight_nullgr:honey_cookie": ["grains", "sugars"],
@@ -503,7 +503,7 @@ farmerDelightFoodGroups = {
     "farmer_delight_nullgr:kelp_roll": ["grains", "vegetables"],
     "farmer_delight_nullgr:kelp_roll_slice": ["grains", "vegetables"],
     "farmer_delight_nullgr:melon_juice": ["fruits", "sugars"],
-    "farmer_delight_nullgr:melon_popsicle": ["fruits"],
+    "farmer_delight_nullgr:melon_popsicle": ["fruits", "sugars"],
     "farmer_delight_nullgr:milk_bottle": ["proteins"],
     "farmer_delight_nullgr:minced_beef": ["proteins"],
     "farmer_delight_nullgr:mixed_salad": ["vegetables", "sugars"],
@@ -544,78 +544,78 @@ foodGroups.update(farmerDelightFoodGroups)
 # FruitFarmerDelight 逐项按工作台、烹饪锅、榨汁机、切片和酿造来源审查；名称不替代实际配方。
 # 数据来源：FruitFarmerDelight 仓库 9939171ed62199c106eb1d0aba248e72d44b0fff。
 fruitFarmerDelightFoodGroups = {
-    "fruitfarmersdelight_nullgr:a_mangosteen": ["fruits"],
-    "fruitfarmersdelight_nullgr:a_segment_of_orange": ["fruits"],
-    "fruitfarmersdelight_nullgr:baked_pear": ["fruits"],
-    "fruitfarmersdelight_nullgr:banana": ["fruits"],
+    "fruitfarmersdelight_nullgr:a_mangosteen": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:a_segment_of_orange": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:baked_pear": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:banana": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:banana_beef": ["fruits", "proteins", "vegetables"],
-    "fruitfarmersdelight_nullgr:banana_egg_roll": ["fruits", "grains", "proteins"],
-    "fruitfarmersdelight_nullgr:blueberry": ["fruits"],
+    "fruitfarmersdelight_nullgr:banana_egg_roll": ["fruits", "grains", "proteins", "sugars"],
+    "fruitfarmersdelight_nullgr:blueberry": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:blueberry_yam": ["fruits", "proteins", "vegetables", "sugars"],
     "fruitfarmersdelight_nullgr:braised_pineapple_meat": ["fruits", "proteins", "vegetables", "sugars"],
     "fruitfarmersdelight_nullgr:cake_passion_slice": ["fruits", "grains", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:cherry": ["fruits"],
+    "fruitfarmersdelight_nullgr:cherry": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:cherry_custard": ["fruits", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:dried_persimmon": ["fruits"],
-    "fruitfarmersdelight_nullgr:durian_meat": ["fruits"],
+    "fruitfarmersdelight_nullgr:dried_persimmon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:durian_meat": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:durian_pizza_slice": ["fruits", "grains", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:fruit_juice_pean": ["fruits"],
-    "fruitfarmersdelight_nullgr:grape": ["fruits"],
+    "fruitfarmersdelight_nullgr:fruit_juice_pean": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:grape": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:grape_custard": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:grape_tiramisu": ["fruits", "grains", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:half_a_kiwi": ["fruits"],
-    "fruitfarmersdelight_nullgr:half_a_mango": ["fruits"],
-    "fruitfarmersdelight_nullgr:half_a_papaya": ["fruits"],
-    "fruitfarmersdelight_nullgr:half_a_passion_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:half_a_pitaya": ["fruits"],
+    "fruitfarmersdelight_nullgr:half_a_kiwi": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:half_a_mango": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:half_a_papaya": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:half_a_passion_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:half_a_pitaya": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:hami_melon_fire_sb_bowl": ["fruits", "grains", "vegetables"],
-    "fruitfarmersdelight_nullgr:hami_melon_piece": ["fruits"],
+    "fruitfarmersdelight_nullgr:hami_melon_piece": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:haw_sheets": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:hawaiian_pizza_slice": ["fruits", "grains", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:hawthorn": ["fruits"],
+    "fruitfarmersdelight_nullgr:hawthorn": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:hawthorn_skewers": ["fruits", "sugars"],
-    "fruitfarmersdelight_nullgr:honey_peach": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_blueberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_grape": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_mulberry": ["fruits"],
+    "fruitfarmersdelight_nullgr:honey_peach": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_blueberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_grape": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_mulberry": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:jellydrops_blueberry": ["fruits", "proteins"],
     "fruitfarmersdelight_nullgr:jellydrops_grape": ["fruits", "proteins"],
-    "fruitfarmersdelight_nullgr:kiwi_fruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:kiwi_fruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:lemon": ["fruits"],
     "fruitfarmersdelight_nullgr:lemon_chicken_chop": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:lemon_slice": ["fruits"],
     "fruitfarmersdelight_nullgr:litchi_chicken": ["fruits", "proteins", "vegetables", "sugars"],
-    "fruitfarmersdelight_nullgr:liulian_stewed_chicken": ["fruits", "proteins"],
-    "fruitfarmersdelight_nullgr:longan": ["fruits"],
-    "fruitfarmersdelight_nullgr:loquat": ["fruits"],
+    "fruitfarmersdelight_nullgr:liulian_stewed_chicken": ["fruits", "proteins", "sugars"],
+    "fruitfarmersdelight_nullgr:longan": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:loquat": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:luxurious_fruit_salad": ["fruits", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:lychee": ["fruits"],
-    "fruitfarmersdelight_nullgr:mango": ["fruits"],
+    "fruitfarmersdelight_nullgr:lychee": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:mango": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:mango_cake": ["fruits", "grains", "sugars"],
     "fruitfarmersdelight_nullgr:mango_custard": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:mango_milk": ["fruits", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:mangosteen": ["fruits"],
+    "fruitfarmersdelight_nullgr:mangosteen": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:matcha_strawberry": ["fruits", "grains", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:milkshake_grape": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:milkshake_kiwifruit": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:milkshake_passion_fruit": ["fruits", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:mulberry": ["fruits"],
+    "fruitfarmersdelight_nullgr:mulberry": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:papaya_milk": ["fruits", "proteins", "sugars"],
-    "fruitfarmersdelight_nullgr:passion_fruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:passion_fruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:passion_fruit_chicken": ["fruits", "proteins", "vegetables"],
     "fruitfarmersdelight_nullgr:passion_fruit_pasta": ["fruits", "grains", "sugars"],
-    "fruitfarmersdelight_nullgr:passion_fruit_trout": ["fruits", "proteins"],
-    "fruitfarmersdelight_nullgr:pawpaw": ["fruits"],
-    "fruitfarmersdelight_nullgr:pear": ["fruits"],
-    "fruitfarmersdelight_nullgr:persimmon": ["fruits"],
+    "fruitfarmersdelight_nullgr:passion_fruit_trout": ["fruits", "proteins", "sugars"],
+    "fruitfarmersdelight_nullgr:pawpaw": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:pear": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:persimmon": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:pineapple_drumstick_fort": ["fruits", "grains", "proteins", "vegetables"],
     "fruitfarmersdelight_nullgr:pineapple_rice": ["fruits", "grains", "proteins", "vegetables"],
-    "fruitfarmersdelight_nullgr:pineapple_slice": ["fruits"],
-    "fruitfarmersdelight_nullgr:pineapple_strand": ["fruits"],
-    "fruitfarmersdelight_nullgr:pitaya_dragon_fruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:pineapple_slice": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:pineapple_strand": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:pitaya_dragon_fruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:raspberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:roasted_durian": ["fruits"],
-    "fruitfarmersdelight_nullgr:shaddock_slice": ["fruits"],
+    "fruitfarmersdelight_nullgr:roasted_durian": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:shaddock_slice": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:steamed_eggs_with_oranges": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:stewed_beef_with_hawthorn": ["fruits", "proteins", "vegetables"],
     "fruitfarmersdelight_nullgr:stewed_beef_with_red_wine": ["fruits", "grains", "proteins", "vegetables"],
@@ -625,7 +625,7 @@ fruitFarmerDelightFoodGroups = {
     "fruitfarmersdelight_nullgr:strawberry_boo": ["fruits", "proteins", "vegetables"],
     "fruitfarmersdelight_nullgr:strawberry_custard": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:strawberry_egg_tart": ["fruits", "grains", "proteins"],
-    "fruitfarmersdelight_nullgr:tangerine": ["fruits"],
+    "fruitfarmersdelight_nullgr:tangerine": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:tangerine_custard": ["fruits", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:three_colour_custard": ["fruits", "proteins", "sugars"],
 
@@ -675,108 +675,108 @@ fruitFarmerDelightFoodGroups = {
     "fruitfarmersdelight_nullgr:cake_tangerine_slice": ["fruits", "grains", "proteins", "sugars"],
     "fruitfarmersdelight_nullgr:cheesecake_hawthorn_slice": ["fruits", "grains", "proteins", "sugars"],
 
-    "fruitfarmersdelight_nullgr:forzen_sucker_banana": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_blueberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_cherry": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_durian": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_grape": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_hami_melon": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_hawthorn": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_kiwifruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_banana": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_blueberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_cherry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_durian": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_grape": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_hami_melon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_hawthorn": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_kiwifruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:forzen_sucker_lemon": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_longan": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_loquat": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_lychee": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_mango": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_mangosteen": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_mulberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_papaya": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_passion_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_peach": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_pear": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_persimmon": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_pineapple": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_pitaya_dragon_fruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_longan": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_loquat": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_lychee": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_mango": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_mangosteen": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_mulberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_papaya": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_passion_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_peach": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_pear": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_persimmon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_pineapple": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_pitaya_dragon_fruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:forzen_sucker_raspberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_shaddock": ["fruits"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_shaddock": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:forzen_sucker_strawberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:forzen_sucker_tangerine": ["fruits"],
+    "fruitfarmersdelight_nullgr:forzen_sucker_tangerine": ["fruits", "sugars"],
 
     "fruitfarmersdelight_nullgr:fruit_juice_banana": ["fruits", "sugars"],
-    "fruitfarmersdelight_nullgr:fruit_juice_blueberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_cherry": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_grape": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_hami_melon": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_hawthorn": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_kiwifruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:fruit_juice_blueberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_cherry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_grape": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_hami_melon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_hawthorn": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_kiwifruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:fruit_juice_lemon": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_longan": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_loquat": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_lychee": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_mango": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_mangosteen": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_mulberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_papaya": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_passion_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_peach": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_persimmon": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_pineapple": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_pitaya_dragon_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_raspberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_shaddock": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_strawberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:fruit_juice_tangerine": ["fruits"],
+    "fruitfarmersdelight_nullgr:fruit_juice_longan": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_loquat": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_lychee": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_mango": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_mangosteen": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_mulberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_papaya": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_passion_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_peach": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_persimmon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_pineapple": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_pitaya_dragon_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_raspberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_shaddock": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_strawberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:fruit_juice_tangerine": ["fruits", "sugars"],
 
-    "fruitfarmersdelight_nullgr:icecream_banana": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_cherry": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_durian": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_hami_melon": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_hawthorn": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_kiwifruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:icecream_banana": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_cherry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_durian": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_hami_melon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_hawthorn": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_kiwifruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:icecream_lemon": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_longan": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_loquat": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_lychee": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_mango": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_mangosteen": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_papaya": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_passion_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_peach": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_pear": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_persimmon": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_pineapple": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_pitaya_dragonfruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:icecream_longan": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_loquat": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_lychee": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_mango": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_mangosteen": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_papaya": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_passion_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_peach": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_pear": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_persimmon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_pineapple": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:icecream_pitaya_dragonfruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:icecream_raspberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_shaddock": ["fruits"],
+    "fruitfarmersdelight_nullgr:icecream_shaddock": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:icecream_strawberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:icecream_tangerine": ["fruits"],
+    "fruitfarmersdelight_nullgr:icecream_tangerine": ["fruits", "sugars"],
 
-    "fruitfarmersdelight_nullgr:jam_banana": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_blueberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_cherry": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_durian": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_grape": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_hami_melon": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_hawthorn": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_kiwifruit": ["fruits"],
+    "fruitfarmersdelight_nullgr:jam_banana": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_blueberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_cherry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_durian": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_grape": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_hami_melon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_hawthorn": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_kiwifruit": ["fruits", "sugars"],
     "fruitfarmersdelight_nullgr:jam_lemon": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_longan": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_loquat": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_lychee": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_mango": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_mangosteen": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_mulberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_papaya": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_passion_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_peach": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_pear": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_persimmon": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_pineapple": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_pitaya_dragon_fruit": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_raspberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_shaddock": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_strawberry": ["fruits"],
-    "fruitfarmersdelight_nullgr:jam_tangerine": ["fruits"],
+    "fruitfarmersdelight_nullgr:jam_longan": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_loquat": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_lychee": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_mango": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_mangosteen": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_mulberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_papaya": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_passion_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_peach": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_pear": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_persimmon": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_pineapple": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_pitaya_dragon_fruit": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_raspberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_shaddock": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_strawberry": ["fruits", "sugars"],
+    "fruitfarmersdelight_nullgr:jam_tangerine": ["fruits", "sugars"],
 
     "fruitfarmersdelight_nullgr:jellydrops_cherry": ["fruits", "proteins"],
     "fruitfarmersdelight_nullgr:jellydrops_durian": ["fruits", "proteins"],
@@ -913,10 +913,10 @@ foodGroups.update(fruitFarmerDelightFoodGroups)
 farmerDelightDlcFoodGroups = {}
 for namespacePrefix, groupIds, itemNames in (
     ("argentina_delight_nullgr:", ["fruits", "vegetables"], (
-        "mate_apple_item", "mate_glow_berry_item", "mate_lime_item", "mate_melon_item",
+        "mate_glow_berry_item", "mate_lime_item",
     )),
     ("argentina_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
-        "mate_berry_item",
+        "mate_apple_item", "mate_berry_item", "mate_melon_item",
     )),
     ("argentina_delight_nullgr:", ["grains"], (
         "tostada",
@@ -945,13 +945,13 @@ for namespacePrefix, groupIds, itemNames in (
     ("argentina_delight_nullgr:", ["vegetables", "sugars"], (
         "mate_sugar_item",
     )),
-    ("bakingdelight_nullgr:", ["fruits"], (
+    ("bakingdelight_nullgr:", ["fruits", "sugars"], (
         "apple_petal", "cherry", "cherry_ice_lolly",
     )),
     ("bakingdelight_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
         "cherry_cake", "cherry_mousse", "golden_apple_mousse",
     )),
-    ("bakingdelight_nullgr:", ["fruits", "proteins"], (
+    ("bakingdelight_nullgr:", ["fruits", "proteins", "sugars"], (
         "apple_cream", "cherry_cream", "cherry_egg", "steamed_cherry_egg",
     )),
     ("bakingdelight_nullgr:", ["fruits", "proteins", "sugars"], (
@@ -1061,11 +1061,14 @@ for namespacePrefix, groupIds, itemNames in (
     ("butcher_delight_nullgr:", ["proteins", "vegetables"], (
         "cooked_head_bowl",
     )),
-    ("butchercraft_nullgr:", ["fruits", "proteins"], (
+    ("butchercraft_nullgr:", ["fruits", "proteins", "sugars"], (
         "berry_fish_scale",
     )),
     ("butchercraft_nullgr:", ["fruits", "proteins", "vegetables"], (
-        "baked_bass_with_sauce", "perch_berry_bacca_onion", "roee_salad",
+        "perch_berry_bacca_onion",
+    )),
+    ("butchercraft_nullgr:", ["fruits", "proteins", "vegetables", "sugars"], (
+        "baked_bass_with_sauce", "roee_salad",
     )),
     ("butchercraft_nullgr:", ["grains", "proteins"], (
         "cod_liver_mousse", "cod_liver_sushi", "fish_zita",
@@ -1163,10 +1166,7 @@ for namespacePrefix, groupIds, itemNames in (
         "charcoal_grilled_crab_claws", "charcoal_grilled_crab_legs", "crab_meat_casserole",
     )),
     ("collectors_delight_nullgr:", ["fruits"], (
-        "dried_pink_dragon_fruit", "gilded_lucuma", "lime", "lime_ice_cream", "lime_popsicle", "lime_slice",
-        "lucuma", "pink_dragon_fruit", "pink_dragon_fruit_ice_cream", "pomegranate", "pomegranate_bean_salad",
-        "pomegranate_ice_cream", "pomegranate_slice", "pomegranate_smoothie", "shimmering_apple",
-        "stygian_pomegranate",
+        "lime", "lime_ice_cream", "lime_popsicle", "lime_slice", "pomegranate_bean_salad",
     )),
     ("collectors_delight_nullgr:", ["fruits", "grains"], (
         "lime_cookie",
@@ -1203,14 +1203,15 @@ for namespacePrefix, groupIds, itemNames in (
         "pink_dragon_fruit_milkshake", "pomegranate_custard", "pomegranate_milkshake", "salmon_wrapped_prawn",
     )),
     ("collectors_delight_nullgr:", ["fruits", "vegetables"], (
-        "chocolate_arils", "crimson_carrot_roast", "deluxe_salad", "lime_green_tea", "lucuma_gazpacho",
-        "lucuma_gazpacho_cup", "pomegranate_black_tea",
+        "crimson_carrot_roast", "lime_green_tea", "lucuma_gazpacho", "lucuma_gazpacho_cup",
     )),
     ("collectors_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
-        "mint_limeade",
+        "chocolate_arils", "deluxe_salad", "mint_limeade", "pomegranate_black_tea",
     )),
     ("collectors_delight_nullgr:", ["fruits", "sugars"], (
-        "berry_limeade", "candied_lime", "limeade", "pink_limeade", "strong_limeade",
+        "berry_limeade", "candied_lime", "dried_pink_dragon_fruit", "gilded_lucuma", "limeade", "lucuma",
+        "pink_dragon_fruit", "pink_dragon_fruit_ice_cream", "pink_limeade", "pomegranate", "pomegranate_ice_cream",
+        "pomegranate_slice", "pomegranate_smoothie", "shimmering_apple", "strong_limeade", "stygian_pomegranate",
     )),
     ("collectors_delight_nullgr:", ["grains", "proteins"], (
         "clam_roll", "prawn_roll",
@@ -1310,7 +1311,10 @@ for namespacePrefix, groupIds, itemNames in (
         "cut_pickle", "pickle",
     )),
     ("delightful_nullgr:", ["fruits"], (
-        "cantaloupe_popsicle", "cantaloupe_slice", "salmonberries",
+        "salmonberries",
+    )),
+    ("delightful_nullgr:", ["fruits", "sugars"], (
+        "cantaloupe_popsicle", "cantaloupe_slice",
     )),
     ("delightful_nullgr:", ["fruits", "grains"], (
         "cantaloupe_bread",
@@ -1367,10 +1371,10 @@ for namespacePrefix, groupIds, itemNames in (
     ("delightful_nullgr:", ["sugars"], (
         "cooked_marshmallow_stick", "marshmallow_stick",
     )),
-    ("dragon_boat_festival_nullgr:", ["fruits"], (
+    ("dragon_boat_festival_nullgr:", ["fruits", "sugars"], (
         "jujube",
     )),
-    ("dragon_boat_festival_nullgr:", ["fruits", "grains"], (
+    ("dragon_boat_festival_nullgr:", ["fruits", "grains", "sugars"], (
         "raw_zongzi_jujube", "zongzi_jujube",
     )),
     ("dragon_boat_festival_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
@@ -1515,7 +1519,10 @@ for namespacePrefix, groupIds, itemNames in (
         "sugar_cookie", "sweet_berry_jelly_sandwich",
     )),
     ("expanded_delight_nullgr:", ["fruits", "proteins"], (
-        "glow_berry_jelly", "sweet_berry_jelly",
+        "glow_berry_jelly",
+    )),
+    ("expanded_delight_nullgr:", ["fruits", "proteins", "sugars"], (
+        "sweet_berry_jelly",
     )),
     ("expanded_delight_nullgr:", ["fruits", "proteins", "vegetables"], (
         "cranberry_chicken", "peanut_salad",
@@ -1558,8 +1565,8 @@ for namespacePrefix, groupIds, itemNames in (
         "asparagus_soup",
     )),
     ("extravagantdelight_nullgr:", ["fruits"], (
-        "boiled_quince", "boiled_quince_pulp", "green_mango", "green_mango_slice", "lush_mango", "lush_mango_slice",
-        "mango_popsicle", "quince", "sloe_berries", "starfruit", "starfruit_popsicle", "starfruit_slice",
+        "boiled_quince", "boiled_quince_pulp", "green_mango", "green_mango_slice", "quince", "sloe_berries",
+        "starfruit", "starfruit_slice",
     )),
     ("extravagantdelight_nullgr:", ["fruits", "grains", "proteins"], (
         "mango_chicken_sandwich",
@@ -1595,9 +1602,10 @@ for namespacePrefix, groupIds, itemNames in (
     )),
     ("extravagantdelight_nullgr:", ["fruits", "sugars"], (
         "apple_candy", "glow_berry_lollipop", "mango_candy", "mango_jam", "mango_juice", "mango_lollipop",
-        "mango_wine", "melon_candy", "quince_candy", "quince_jelly", "quince_juice", "quince_lollipop",
+        "lush_mango", "lush_mango_slice", "mango_popsicle", "mango_wine", "melon_candy", "quince_candy", "quince_jelly",
+        "quince_juice", "quince_lollipop",
         "quince_wine", "sloe_berry_jelly", "sloe_berry_juice", "sloe_berry_lollipop", "sloe_berry_wine",
-        "starfruit_candy", "starfruit_jam", "starfruit_juice", "starfruit_lollipop", "starfruit_wine",
+        "starfruit_candy", "starfruit_jam", "starfruit_juice", "starfruit_lollipop", "starfruit_popsicle", "starfruit_wine",
         "strawberry_lollipop", "sweet_berry_lollipop",
     )),
     ("extravagantdelight_nullgr:", ["grains"], (
@@ -1676,7 +1684,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("farmer_respite_nullgr:", ["vegetables", "sugars"], (
         "black_tea_honey", "coffe_honey", "green_tea_honey", "yellow_tea_honey",
     )),
-    ("fastfood_delight_nullgr:", ["fruits", "proteins"], (
+    ("fastfood_delight_nullgr:", ["fruits", "proteins", "sugars"], (
         "apple_sauce",
     )),
     ("fastfood_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
@@ -1707,7 +1715,10 @@ for namespacePrefix, groupIds, itemNames in (
         "festive_chicken",
     )),
     ("festive_delight_nullgr:", ["fruits", "sugars"], (
-        "christmas_tea", "sugar_cane",
+        "christmas_tea",
+    )),
+    ("festive_delight_nullgr:", ["sugars"], (
+        "sugar_cane",
     )),
     ("festive_delight_nullgr:", ["grains", "proteins", "vegetables"], (
         "longevity_noodle", "spring_rolls",
@@ -1721,25 +1732,31 @@ for namespacePrefix, groupIds, itemNames in (
         "salmon_verrines",
     )),
     ("foragersinsight_nullgr:", ["fruits"], (
-        "apple_slice", "rose_hip",
+        "rose_hip",
     )),
     ("foragersinsight_nullgr:", ["fruits", "grains"], (
         "rose_cookie",
     )),
-    ("foragersinsight_nullgr:", ["fruits", "grains", "proteins", "vegetables"], (
+    ("foragersinsight_nullgr:", ["fruits", "grains", "proteins", "vegetables", "sugars"], (
         "jammy_breakfast_sandwich",
     )),
     ("foragersinsight_nullgr:", ["fruits", "grains", "vegetables"], (
-        "rose_roasted_roots", "seed_butter_jamwich",
+        "rose_roasted_roots",
     )),
-    ("foragersinsight_nullgr:", ["fruits", "proteins"], (
+    ("foragersinsight_nullgr:", ["fruits", "grains", "vegetables", "sugars"], (
+        "seed_butter_jamwich",
+    )),
+    ("foragersinsight_nullgr:", ["fruits", "proteins", "sugars"], (
         "foragers_granola",
     )),
     ("foragersinsight_nullgr:", ["fruits", "vegetables"], (
-        "glowing_carrot_juice", "meadow_medley", "rose_cordial", "rose_granita",
+        "glowing_carrot_juice", "meadow_medley", "rose_cordial",
+    )),
+    ("foragersinsight_nullgr:", ["fruits", "vegetables", "sugars"], (
+        "rose_granita",
     )),
     ("foragersinsight_nullgr:", ["fruits", "sugars"], (
-        "caramel_apple_slice",
+        "apple_slice", "caramel_apple_slice",
     )),
     ("foragersinsight_nullgr:", ["grains", "proteins"], (
         "acorn_cookie", "acorn_dough", "acorn_noodles",
@@ -1778,7 +1795,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("frightsdelight_nullgr:", ["fruits", "grains"], (
         "cookie_soul_berry",
     )),
-    ("frightsdelight_nullgr:", ["fruits", "proteins"], (
+    ("frightsdelight_nullgr:", ["fruits", "proteins", "sugars"], (
         "apple_slime",
     )),
     ("frightsdelight_nullgr:", ["fruits", "proteins", "vegetables"], (
@@ -1842,7 +1859,7 @@ for namespacePrefix, groupIds, itemNames in (
         "cactus_cola", "cactus_juice", "cactus_stick",
     )),
     ("hearthandharvest_nullgr:", ["fruits"], (
-        "baked_apple", "blueberries", "cherry", "green_grapes", "raisins", "raspberry", "red_grapes",
+        "raspberry",
     )),
     ("hearthandharvest_nullgr:", ["fruits", "grains", "sugars"], (
         "blueberry_muffin", "blueberry_pie_slice", "grape_pie_slice", "raspberry_pie_slice",
@@ -1851,9 +1868,10 @@ for namespacePrefix, groupIds, itemNames in (
         "trail_mix",
     )),
     ("hearthandharvest_nullgr:", ["fruits", "sugars"], (
-        "apple_jam", "blueberry_jam", "blueberry_juice", "blueberry_wine", "caramel_apple", "cherry_juice",
-        "cherry_wine", "glow_berry_jam", "grape_jam", "green_grape_juice", "green_grape_wine", "melon_jam",
-        "raspberry_jam", "raspberry_juice", "raspberry_wine", "red_grape_juice", "red_grape_wine", "sweet_berry_jam",
+        "apple_jam", "baked_apple", "blueberries", "blueberry_jam", "blueberry_juice", "blueberry_wine", "caramel_apple",
+        "cherry", "cherry_juice", "cherry_wine", "glow_berry_jam", "grape_jam", "green_grape_juice", "green_grape_wine",
+        "green_grapes", "melon_jam", "raisins", "raspberry_jam", "raspberry_juice", "raspberry_wine", "red_grape_juice",
+        "red_grape_wine", "red_grapes", "sweet_berry_jam",
     )),
     ("hearthandharvest_nullgr:", ["grains", "proteins"], (
         "batter", "macaroni_and_cheese",
@@ -1915,8 +1933,7 @@ for namespacePrefix, groupIds, itemNames in (
         "red_soup",
     )),
     ("lavsdelight_nullgr:", ["fruits"], (
-        "baked_peach", "blueberries", "lemon", "lemon_juice", "lemon_slice", "peach", "peach_puree", "peach_slice",
-        "sweet_berry_juice",
+        "lemon", "lemon_juice", "lemon_slice",
     )),
     ("lavsdelight_nullgr:", ["fruits", "grains", "proteins", "vegetables", "sugars"], (
         "lavender_dumpling",
@@ -1927,17 +1944,18 @@ for namespacePrefix, groupIds, itemNames in (
     ("lavsdelight_nullgr:", ["fruits", "grains", "sugars"], (
         "blueberry_tart_slice", "peach_tart",
     )),
-    ("lavsdelight_nullgr:", ["fruits", "proteins"], (
+    ("lavsdelight_nullgr:", ["fruits", "proteins", "sugars"], (
         "cheese_n_berries",
     )),
-    ("lavsdelight_nullgr:", ["fruits", "vegetables"], (
+    ("lavsdelight_nullgr:", ["fruits", "vegetables", "sugars"], (
         "apple_cabbage_stew",
     )),
     ("lavsdelight_nullgr:", ["fruits", "vegetables", "sugars"], (
         "carbonated_water", "melon_tanghulu", "mint_tea",
     )),
     ("lavsdelight_nullgr:", ["fruits", "sugars"], (
-        "cola", "lemon_tea", "lemonade", "peach_candy", "peach_syrup",
+        "baked_peach", "blueberries", "cola", "lemon_tea", "lemonade", "peach", "peach_candy", "peach_puree",
+        "peach_slice", "peach_syrup", "sweet_berry_juice",
     )),
     ("lavsdelight_nullgr:", ["grains", "proteins", "vegetables", "sugars"], (
         "poppy_seed_muffin",
@@ -1970,7 +1988,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("letsdobakey_nullgr:", ["fruits", "grains", "sugars"], (
         "apple_cupcake", "strawberry_glazed_cookie", "sweetberry_glazed_cookie",
     )),
-    ("letsdobakey_nullgr:", ["fruits", "proteins"], (
+    ("letsdobakey_nullgr:", ["fruits", "proteins", "sugars"], (
         "pudding_slice",
     )),
     ("letsdobakey_nullgr:", ["fruits", "sugars"], (
@@ -2059,34 +2077,33 @@ for namespacePrefix, groupIds, itemNames in (
         "cooked_spun_sugar", "spun_sugar",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "grains", "proteins"], (
+        "ice_cream_cone_glowing_berries", "ice_cream_cone_lemon", "ice_cream_cone_purple_fruit",
+        "ice_cream_cone_raspberry", "ice_cream_cone_raspberry2", "ice_cream_cone_strawberry",
+    )),
+    ("milk_cream_delight_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
         "ice_cream_cone_banana", "ice_cream_cone_berry_bacca", "ice_cream_cone_blueberry", "ice_cream_cone_cherry",
-        "ice_cream_cone_durian", "ice_cream_cone_glowing_berries", "ice_cream_cone_grape",
-        "ice_cream_cone_hami_melon", "ice_cream_cone_hawthorn", "ice_cream_cone_kiwifruit", "ice_cream_cone_lemon",
-        "ice_cream_cone_longan", "ice_cream_cone_loquat", "ice_cream_cone_lychee", "ice_cream_cone_mango",
-        "ice_cream_cone_mangosteen", "ice_cream_cone_mulberry", "ice_cream_cone_papaya",
+        "ice_cream_cone_durian", "ice_cream_cone_grape", "ice_cream_cone_hami_melon", "ice_cream_cone_hawthorn",
+        "ice_cream_cone_kiwifruit", "ice_cream_cone_longan", "ice_cream_cone_loquat", "ice_cream_cone_lychee",
+        "ice_cream_cone_mango", "ice_cream_cone_mangosteen", "ice_cream_cone_mulberry", "ice_cream_cone_papaya",
         "ice_cream_cone_passion_fruit", "ice_cream_cone_peach", "ice_cream_cone_pear", "ice_cream_cone_persimmon",
-        "ice_cream_cone_pineapple", "ice_cream_cone_pitaya_dragon_fruit", "ice_cream_cone_purple_fruit",
-        "ice_cream_cone_raspberry", "ice_cream_cone_raspberry2", "ice_cream_cone_shaddock",
-        "ice_cream_cone_strawberry", "ice_cream_cone_tangerine",
+        "ice_cream_cone_pineapple", "ice_cream_cone_pitaya_dragon_fruit", "ice_cream_cone_shaddock",
+        "ice_cream_cone_tangerine",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "proteins"], (
-        "coconut_milk_jelly", "peach_jelly", "raw_coconut_durian",
+        "coconut_milk_jelly",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "proteins", "vegetables"], (
-        "coconut_jelly_coconut_green", "matcha_mango_milk", "moonlight_own_goal", "purple_grape_cheese",
-        "raw_coconut_latte",
+        "coconut_jelly_coconut_green", "moonlight_own_goal", "raw_coconut_latte",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "proteins", "vegetables", "sugars"], (
-        "cheese_strawberry",
+        "cheese_strawberry", "matcha_mango_milk", "purple_grape_cheese",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "proteins", "sugars"], (
-        "domineering_cheese_strawberry",
-    )),
-    ("milk_cream_delight_nullgr:", ["fruits", "vegetables"], (
-        "mango_pomelo_sago", "orange_american", "peach_own_goal",
+        "domineering_cheese_strawberry", "peach_jelly", "raw_coconut_durian",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
-        "bumper_passion_fruit", "cherry_berry", "domineering_cherry", "forest_rose", "lemon_black_tea", "taro_grape",
+        "bumper_passion_fruit", "cherry_berry", "domineering_cherry", "forest_rose", "lemon_black_tea", "mango_pomelo_sago",
+        "orange_american", "peach_own_goal", "taro_grape",
     )),
     ("milk_cream_delight_nullgr:", ["fruits", "sugars"], (
         "cheese_peach", "lemonade",
@@ -2136,8 +2153,7 @@ for namespacePrefix, groupIds, itemNames in (
         "beetroot_soup_cup", "hot_cocoa_cup", "pumpkin_soup_cup",
     )),
     ("muffins_thaidelight_nullgr:", ["fruits"], (
-        "durian_pulp", "fried_durian", "lime", "lime_slice", "papaya", "papaya_slice", "raw_papaya",
-        "raw_papaya_slice",
+        "lime", "lime_slice", "raw_papaya", "raw_papaya_slice",
     )),
     ("muffins_thaidelight_nullgr:", ["fruits", "grains", "vegetables", "sugars"], (
         "stir_fried_noodle",
@@ -2149,7 +2165,7 @@ for namespacePrefix, groupIds, itemNames in (
         "durian_cake_slice", "somtam",
     )),
     ("muffins_thaidelight_nullgr:", ["fruits", "sugars"], (
-        "lime_juice", "papaya_juice",
+        "durian_pulp", "fried_durian", "lime_juice", "papaya", "papaya_juice", "papaya_slice",
     )),
     ("muffins_thaidelight_nullgr:", ["grains", "proteins", "vegetables"], (
         "crab_fried_rice",
@@ -2313,10 +2329,10 @@ for namespacePrefix, groupIds, itemNames in (
     ("oceanic_delight_nullgr:", ["vegetables", "sugars"], (
         "sea_grape_juice",
     )),
-    ("ramadandelight_nullgr:", ["fruits"], (
+    ("ramadandelight_nullgr:", ["fruits", "sugars"], (
         "date",
     )),
-    ("ramadandelight_nullgr:", ["fruits", "grains"], (
+    ("ramadandelight_nullgr:", ["fruits", "grains", "sugars"], (
         "date_stuffed_cookie",
     )),
     ("ramadandelight_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
@@ -2424,7 +2440,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("silents_delight_nullgr:", ["vegetables", "sugars"], (
         "sculk_shrieker_shake",
     )),
-    ("slavic_delight_nullgr:", ["fruits", "grains"], (
+    ("slavic_delight_nullgr:", ["fruits", "grains", "sugars"], (
         "pancakes_with_berries",
     )),
     ("slavic_delight_nullgr:", ["grains"], (
@@ -2470,7 +2486,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("spanish_delight_nullgr:", ["vegetables"], (
         "brava_potatoes", "green_pepper", "red_pepper", "sliced_onion", "sliced_potato",
     )),
-    ("stack_burger_nullgr:", ["fruits"], (
+    ("stack_burger_nullgr:", ["fruits", "sugars"], (
         "apple_slices",
     )),
     ("stack_burger_nullgr:", ["fruits", "sugars"], (
@@ -2585,7 +2601,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("valentine_delight_nullgr:", ["sugars"], (
         "colorful_cotton_candy1", "colorful_cotton_candy2", "colorful_cotton_candy3", "cotton_candy",
     )),
-    ("vanilladelight_nullgr:", ["fruits"], (
+    ("vanilladelight_nullgr:", ["fruits", "sugars"], (
         "apple_salad", "apple_slice", "berries_salad", "cooked_apple", "golden_apple_slice",
     )),
     ("vanilladelight_nullgr:", ["fruits", "grains", "sugars"], (
@@ -2618,7 +2634,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("vanilladelight_nullgr:", ["sugars"], (
         "caramel_bottle",
     )),
-    ("vegan_delight_nullgr:", ["fruits"], (
+    ("vegan_delight_nullgr:", ["fruits", "sugars"], (
         "applesauce",
     )),
     ("vegan_delight_nullgr:", ["grains", "proteins", "vegetables"], (
@@ -2667,9 +2683,9 @@ for namespacePrefix, groupIds, itemNames in (
         "fermented_garlic_honey",
     )),
     ("vietnam_delight_nullgr:", ["fruits"], (
-        "banana", "banana_cake", "bell_fruit", "golden_plum", "green_kumquat", "kumquat", "plum", "rotten_plum",
+        "bell_fruit", "green_kumquat", "kumquat", "rotten_plum",
     )),
-    ("vietnam_delight_nullgr:", ["fruits", "grains"], (
+    ("vietnam_delight_nullgr:", ["fruits", "grains", "sugars"], (
         "banana_powder", "fried_banana",
     )),
     ("vietnam_delight_nullgr:", ["fruits", "grains", "sugars"], (
@@ -2684,11 +2700,11 @@ for namespacePrefix, groupIds, itemNames in (
     ("vietnam_delight_nullgr:", ["fruits", "proteins", "sugars"], (
         "plum_jelly",
     )),
-    ("vietnam_delight_nullgr:", ["fruits", "vegetables"], (
+    ("vietnam_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
         "plum_tea",
     )),
     ("vietnam_delight_nullgr:", ["fruits", "sugars"], (
-        "plum_jam",
+        "banana", "banana_cake", "golden_plum", "plum", "plum_jam",
     )),
     ("vietnam_delight_nullgr:", ["grains"], (
         "cooked_sticky_rice", "sticky_rice",
@@ -2713,9 +2729,9 @@ for namespacePrefix, groupIds, itemNames in (
         "molasses",
     )),
     ("vintage_delight_nullgr:", ["fruits"], (
-        "gearo_berry", "gearo_raisin",
+        "gearo_berry",
     )),
-    ("vintage_delight_nullgr:", ["fruits", "grains", "proteins", "vegetables"], (
+    ("vintage_delight_nullgr:", ["fruits", "grains", "proteins", "vegetables", "sugars"], (
         "pb_j",
     )),
     ("vintage_delight_nullgr:", ["fruits", "grains", "proteins", "vegetables", "sugars"], (
@@ -2724,7 +2740,7 @@ for namespacePrefix, groupIds, itemNames in (
     ("vintage_delight_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
         "deluxe_granola_bar", "peanut_butter_and_jelly_sandwich",
     )),
-    ("vintage_delight_nullgr:", ["fruits", "grains", "vegetables"], (
+    ("vintage_delight_nullgr:", ["fruits", "grains", "vegetables", "sugars"], (
         "overnight_oats",
     )),
     ("vintage_delight_nullgr:", ["fruits", "grains", "sugars"], (
@@ -2734,7 +2750,7 @@ for namespacePrefix, groupIds, itemNames in (
         "cucumber_salad",
     )),
     ("vintage_delight_nullgr:", ["fruits", "sugars"], (
-        "apple_sauce_bottle", "apple_sauce_jar", "gearo_berry_jam_bottle", "gearo_berry_jam_jar",
+        "apple_sauce_bottle", "apple_sauce_jar", "gearo_berry_jam_bottle", "gearo_berry_jam_jar", "gearo_raisin",
         "glow_berry_jam_bottle", "glow_berry_jam_jar",
     )),
     ("vintage_delight_nullgr:", ["grains"], (
@@ -2820,13 +2836,13 @@ foodGroups.update(farmerDelightDlcFoodGroups)
 # 屠宰工艺数据逐项核对物品定义、烹饪锅配方和进食合成链，避免仅按名称推断复合食品原料。
 butcherCraftFoodGroups = {}
 for groupIds, itemNames in (
-    (["fruits", "grains", "proteins", "vegetables", "sugars"], (
+    (["fruits", "grains", "proteins", "vegetables"], (
         "rack_lamb",
     )),
     (["fruits", "proteins", "sugars"], (
         "friedfish",
     )),
-    (["fruits", "proteins", "vegetables", "sugars"], (
+    (["fruits", "proteins", "vegetables"], (
         "pot_roast",
     )),
     (["grains"], (
