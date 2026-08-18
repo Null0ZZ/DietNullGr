@@ -217,12 +217,12 @@ class DietServerSystem(ServerSystem):
     def CommandEvent(self, args):
         entityId = args['entityId']
         command = args['command']
-        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
-        if diseaseSys.handleCommand(entityId, command):
-            args['cancel'] = True
-            return
         if entityId not in self.playerDietData:
             self.playerDietData[entityId] = Diet.loadPlayerData(entityId, compFactory)
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        if diseaseSys.handleCommand(entityId, command, self.playerDietData[entityId]):
+            args['cancel'] = True
+            return
         commandResult = Diet.handleCommand(command, self.playerDietData[entityId])
         if not commandResult['handled']:
             return

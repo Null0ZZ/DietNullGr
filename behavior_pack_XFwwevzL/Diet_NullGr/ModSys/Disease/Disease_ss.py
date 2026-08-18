@@ -5,6 +5,7 @@ import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as config
 import Diet_NullGr.ModSys.Disease.Disease as Disease
 import Diet_NullGr.ModSys.Diet.config as dietConfig
+import Diet_NullGr.ModSys.Diet.Diet as Diet
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
@@ -469,8 +470,8 @@ class ServerSys(ServerSystem):
     def isSugarRushPaused(self, playerId):
         return 'hyperglycemia' in self._getPlayerData(playerId)['active']
 
-    # `/diet disease` 是与现有 Diet 管理命令同级的测试/服主管理入口，便于实机验证各疾病表现。
-    def handleCommand(self, playerId, command):
+    # `/diet disease <id>` 只塑造营养条件，确诊仍服从有效进食、代谢、保护期与槽位规则。
+    def handleCommand(self, playerId, command, dietData):
         text = command[1:] if command.startswith('/') else command
         parts = text.split()
         if len(parts) < 2 or parts[0] != 'diet' or parts[1] != 'disease':
@@ -517,22 +518,31 @@ class ServerSys(ServerSystem):
                 tipMessageConfig.priorityImportant
             )
             return True
-        cured = []
-        if diseaseId in config.bloodSugarConflict:
-            conflictId = config.bloodSugarConflict[diseaseId]
-            if conflictId in data['active']:
-                Disease.cureDisease(data, conflictId, False)
-                cured.append(conflictId)
-        data['protectionSeconds'][diseaseId] = 0
-        if not Disease.diagnoseDisease(data, diseaseId):
+        snapshot = self._buildNutritionSnapshot(playerId, dietData)
+        if not Disease.isDiseaseAvailable(diseaseId, snapshot):
             self._queueTipMessage(
                 playerId,
                 tipMessageConfig.diseaseCommandKey,
-                "§c疾病槽位已满或该疾病已经存在。",
+                "§c均衡饮食或该疾病所需的营养、口渴追踪未开启。",
                 tipMessageConfig.priorityImportant
             )
             return True
-        self._finishDiseaseChanges(playerId, data, [diseaseId], cured)
+        nutritionProfile = config.debugCommandNutritionProfiles[diseaseId]
+        for groupId in dietConfig.groupOrder:
+            dietData['values'][groupId] = nutritionProfile[groupId]
+        thirstSys = serverApi.GetSystem(com.modName, thirstConfig.ssname)
+        thirstSys.setThirstValue(playerId, nutritionProfile['thirst'] * config.thirstMaxValue)
+        dietSys = serverApi.GetSystem(com.modName, com.ssname)
+        Diet.savePlayerData(playerId, dietData, compFactory)
+        Diet.syncToClient(dietSys, playerId, dietData)
+        self._queueTipMessage(
+            playerId,
+            tipMessageConfig.diseaseCommandKey,
+            "§e已将营养条件调整为{}的触发状态。继续消耗饥饿值后，系统会按有效进食次数、保护期和槽位规则自然判定。".format(
+                config.diseases[diseaseId]['name']
+            ),
+            tipMessageConfig.priorityImportant
+        )
         return True
 
     # 多个事件共享同一份玩家疾病缓存，统一入口保证首次访问也会恢复 ModAttr。
