@@ -8,21 +8,21 @@
       0
     ],
     "name": "resourcepackqewqRv3qNullGrRP",
-    "uuid": "ff83897c-c675-4427-9d5a-840c1000279f",
+    "uuid": "5e0aa644-9afb-4906-b8f9-b5f7d86bf51a",
     "version": [
       6,
       8,
-      18
+      20
     ]
   },
   "modules": [
     {
       "type": "resources",
-      "uuid": "cc43eadf-ad0e-48f6-b4fb-4c3232127f22",
+      "uuid": "fbe2ba59-8dbd-43b5-ac9b-b58cf1ab499b",
       "version": [
         6,
         8,
-        18
+        20
       ],
       "description": "resourcepackqewqRv3qNullGrRP"
     }
