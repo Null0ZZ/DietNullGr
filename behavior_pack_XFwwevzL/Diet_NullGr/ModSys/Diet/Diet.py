@@ -80,7 +80,10 @@ def loadPlayerData(playerId, compFactory):
         'deathPenaltyLoss': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_loss', config.deathPenaltyLoss)),
         'deathPenaltyMin': clampDietValue(compModAttr.GetAttr(config.attrPrefix + 'death_penalty_min', config.deathPenaltyMin)),
         'active': compModAttr.GetAttr(config.attrPrefix + 'active', True),
-        'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', '')
+        'eaten': compModAttr.GetAttr(config.attrPrefix + 'eaten', ''),
+        'lastFoodName': compModAttr.GetAttr(config.attrPrefix + 'last_food_name', ''),
+        'lastFoodAuxValue': compModAttr.GetAttr(config.attrPrefix + 'last_food_aux_value', 0),
+        'consecutiveFoodCount': compModAttr.GetAttr(config.attrPrefix + 'consecutive_food_count', 0)
     }
 
 
@@ -103,6 +106,9 @@ def savePlayerData(playerId, data, compFactory):
     compModAttr.SetAttr(config.attrPrefix + 'death_penalty_min', data['deathPenaltyMin'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'active', data['active'], needRestore=True)
     compModAttr.SetAttr(config.attrPrefix + 'eaten', data['eaten'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'last_food_name', data['lastFoodName'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'last_food_aux_value', data['lastFoodAuxValue'], needRestore=True)
+    compModAttr.SetAttr(config.attrPrefix + 'consecutive_food_count', data['consecutiveFoodCount'], needRestore=True)
 
 
 # 把内部数据转换为客户端 UI 直接可消费的结构，减少客户端重复读取配置。
@@ -258,8 +264,20 @@ def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
             trackedFoodGroupIds.append(groupId)
     if not trackedFoodGroupIds:
         return {}
+    # 只有真正产生 Diet 营养的食物才进入连续记录；未分类食物和关闭追踪的食物不会推进或打断阶梯。
+    if data['lastFoodName'] == itemName and data['lastFoodAuxValue'] == itemAuxValue:
+        data['consecutiveFoodCount'] += 1
+    else:
+        data['lastFoodName'] = itemName
+        data['lastFoodAuxValue'] = itemAuxValue
+        data['consecutiveFoodCount'] = 1
+    multiplierIndex = data['consecutiveFoodCount'] - 1
+    if multiplierIndex >= len(config.consecutiveFoodGainMultipliers):
+        multiplierIndex = len(config.consecutiveFoodGainMultipliers) - 1
+    gainMultiplier = config.consecutiveFoodGainMultipliers[multiplierIndex]
     gainValues = calculateGain(hunger, nutrition, trackedFoodGroupIds)
     for groupId in trackedFoodGroupIds:
+        gainValues[groupId] *= gainMultiplier
         data['values'][groupId] = clampDietValue(data['values'][groupId] + gainValues[groupId])
     addEatenFood(data, itemName)
     return gainValues
@@ -759,7 +777,11 @@ def handleCommand(command, data):
         return result
     action = parts[1]
     if action == "reset":
+        # 主动重置需要同时结束当前连续进食事务，但保留已经吃过的食物历史。
         data['values'] = createInitialValues()
+        data['lastFoodName'] = ''
+        data['lastFoodAuxValue'] = 0
+        data['consecutiveFoodCount'] = 0
         result['changed'] = True
         result['message'] = "均衡饮食数据已重置。目标：{}".format(config.settingTargetText)
         return result

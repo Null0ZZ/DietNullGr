@@ -59,6 +59,8 @@ effectRefreshTick = 1200
 creativeModeAffected = False
 gainPenaltyPerGroup = 15.0
 decayPenaltyPerGroup = 15.0
+# 同一有效食物前三次保持完整营养，之后按阶梯衰减并在第六次起保持 25%。
+consecutiveFoodGainMultipliers = [1.0, 1.0, 1.0, 0.75, 0.5, 0.25]
 targetDietValue = 0.8
 lowPenaltyEnabled = True
 nutritionPenaltyValue = 0.15
