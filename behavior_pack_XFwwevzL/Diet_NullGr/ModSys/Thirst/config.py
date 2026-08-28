@@ -40,8 +40,6 @@ actorUseDrinkEvent = "ActorUseItemServerEvent"
 woodenCupItemName = "diet_nullgr:wooden_cup"
 woodenWaterCupItemName = "diet_nullgr:wooden_cup_water"
 waterBlockNames = ("minecraft:water", "minecraft:flowing_water")
-waterFillReach = 5.0
-waterFillStep = 0.1
 hydrationOnlyItemNames = {woodenWaterCupItemName}
 
 drinkItemValues = {
