@@ -9,7 +9,8 @@
     "lensstain",
     "oldtv",
     "scanmap",
-    "dietHypoglycemiaVision"
+    "dietHypoglycemiaVision",
+    "dietRicketsFractureImpact"
   ],
   "process_array": [
     {
@@ -444,6 +445,42 @@
             "height": 1
           },
           "material": "dietHypoglycemiaVisionMat"
+        }
+      ]
+    },
+    {
+      "name": "dietRicketsFractureImpact",
+      "enable": false,
+      "paras": [
+        {
+          "name": "progress",
+          "value": 0,
+          "range": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "aspect_ratio",
+          "value": 1.7777778,
+          "range": [
+            0.5,
+            3
+          ]
+        }
+      ],
+      "pass_array": [
+        {
+          "render_target": {
+            "width": 1,
+            "height": 1
+          },
+          "material": "dietRicketsFractureImpactCompositeMat",
+          "bindTexture": [
+            {
+              "texture": "textures/postprocess/diet_rickets_fracture"
+            }
+          ]
         }
       ]
     }

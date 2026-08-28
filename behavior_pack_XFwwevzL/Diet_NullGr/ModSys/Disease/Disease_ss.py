@@ -246,6 +246,7 @@ class ServerSys(ServerSystem):
             # 下蹲治愈先完成效果和数据收敛，再只给患者播放音效，并逐个向所有在线玩家显示同一条 tip。
             self._finishDiseaseChanges(playerId, data, [], ['constipation'])
             self.NotifyToClient(playerId, config.symptomEvent, {
+                'symptomId': config.constipationReliefSymptom,
                 'sound': config.constipationReliefSound,
                 'volume': config.constipationReliefSoundVolume,
                 'pitch': config.constipationReliefSoundPitch
@@ -327,6 +328,7 @@ class ServerSys(ServerSystem):
         self.jumpDamageCooldowns[playerId] = config.ricketsJumpDamageCooldownTick
         self._hurtWithoutKilling(playerId)
         self.NotifyToClient(playerId, config.symptomEvent, {
+            'symptomId': config.ricketsFractureSymptom,
             'sound': config.ricketsFractureSound,
             'volume': config.ricketsFractureSoundVolume,
             'pitch': config.ricketsFractureSoundPitch
@@ -419,6 +421,7 @@ class ServerSys(ServerSystem):
                 tipMessageConfig.priorityWarning
             )
             self.NotifyToClient(playerId, config.symptomEvent, {
+                'symptomId': config.mouthUlcerPainSymptom,
                 'sound': 'game.player.hurt',
                 'volume': 1.0,
                 'pitch': 1.0

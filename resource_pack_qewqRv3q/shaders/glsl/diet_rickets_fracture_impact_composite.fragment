@@ -1,0 +1,69 @@
+// __multiversion__
+// 佝偻病跳跃骨折用短促白闪、拉近和方块骨骼特写模拟动画式受击定格。
+
+precision highp float;
+
+#include "fragmentVersionCentroidUV.h"
+#include "util.h"
+
+LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
+LAYOUT_BINDING(2) uniform sampler2D TEXTURE_2;
+
+// progress 与屏幕宽高比依次由 post_process.json 注入。
+uniform vec4 EXTRA_VECTOR1;
+
+void main()
+{
+    float progress = clamp(EXTRA_VECTOR1.x, 0.0, 1.0);
+    float aspectRatio = clamp(EXTRA_VECTOR1.y, 0.5, 3.0);
+    float flashEnd = 0.142857;
+    float holdEnd = 0.428571;
+    float impactRise = smoothstep(0.0, flashEnd, progress);
+    float recovery = 1.0 - smoothstep(holdEnd, 1.0, progress);
+    float impactAmount = impactRise * recovery;
+
+    // 两 Tick 快速拉近后保持冲击构图，最后八 Tick 平滑恢复；微抖只改变取样位置，不锁世界帧。
+    float zoomScale = 1.0 + 0.10 * impactAmount;
+    vec2 shakeOffset = vec2(
+        sin(progress * 109.0),
+        cos(progress * 83.0)
+    ) * 0.0025 * impactAmount;
+    vec2 zoomUv = vec2(0.5) + (uv - vec2(0.5)) / zoomScale + shakeOffset;
+    vec2 radialDirection = zoomUv - vec2(0.5);
+    float radialBlur = 0.12 * impactAmount;
+
+    // 中心径向模糊固定使用五次场景采样，并复用边缘样本制造轻微红蓝色散。
+    vec3 sourceColor = texture(TEXTURE_0, zoomUv).rgb;
+    vec3 radialColor1 = texture(TEXTURE_0, zoomUv - radialDirection * radialBlur * 0.35).rgb;
+    vec3 radialColor2 = texture(TEXTURE_0, zoomUv - radialDirection * radialBlur * 0.70).rgb;
+    vec3 radialColor3 = texture(TEXTURE_0, zoomUv - radialDirection * radialBlur * 1.05).rgb;
+    vec3 radialColor4 = texture(TEXTURE_0, zoomUv - radialDirection * radialBlur * 1.40).rgb;
+    vec3 sceneColor = sourceColor * 0.34 + radialColor1 * 0.22 + radialColor2 * 0.18 +
+        radialColor3 * 0.14 + radialColor4 * 0.12;
+    vec3 dispersedColor = vec3(radialColor1.r, sceneColor.g, radialColor4.b);
+    sceneColor = mix(sceneColor, dispersedColor, 0.18 * impactAmount);
+
+    float grayscale = dot(sceneColor, vec3(0.299, 0.587, 0.114));
+    sceneColor = mix(sceneColor, vec3(grayscale), 0.72 * impactAmount);
+    sceneColor = (sceneColor - vec3(0.5)) * (1.0 + 0.38 * impactAmount) + vec3(0.5);
+
+    vec2 vignetteUv = uv * 2.0 - vec2(1.0);
+    float vignette = smoothstep(0.34, 1.16, length(vignetteUv)) * impactAmount;
+    sceneColor = mix(sceneColor, vec3(0.055, 0.0, 0.0), vignette * 0.82);
+    float whiteFlash = 1.0 - smoothstep(0.0, flashEnd, progress);
+    sceneColor = mix(sceneColor, vec3(1.0), whiteFlash * 0.90);
+
+    // 方形骨骼贴图按实际屏幕宽高比反向校正，视觉高度约为屏幕三分之二且不会在宽屏被拉伸。
+    float boneHeight = mix(0.58, 0.68, impactRise);
+    vec2 boneUv = vec2(
+        (uv.x - 0.5) * aspectRatio / boneHeight + 0.5,
+        (uv.y - 0.51) / boneHeight + 0.5
+    );
+    float insideBone = step(0.0, boneUv.x) * step(boneUv.x, 1.0) *
+        step(0.0, boneUv.y) * step(boneUv.y, 1.0);
+    vec4 boneColor = texture(TEXTURE_2, vec2(boneUv.x, 1.0 - boneUv.y));
+    float boneOpacity = boneColor.a * insideBone * recovery;
+    vec3 finalColor = mix(sceneColor, boneColor.rgb, boneOpacity);
+
+    gl_FragColor = vec4(finalColor, 1.0);
+}

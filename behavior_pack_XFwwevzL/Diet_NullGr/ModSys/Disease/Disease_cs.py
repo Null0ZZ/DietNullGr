@@ -8,6 +8,7 @@ import Diet_NullGr.ModSys.Disease.config as config
 ClientSystem = clientApi.GetClientSystemCls()
 compFactory = clientApi.GetEngineCompFactory()
 levelId = clientApi.GetLevelId()
+compGame = compFactory.CreateGame(levelId)
 engineNamespace = clientApi.GetEngineNamespace()
 engineSystemName = clientApi.GetEngineSystemName()
 
@@ -30,6 +31,9 @@ class ClientSys(ClientSystem):
         self.hypoglycemiaVisionStrength = 0.0
         self.hypoglycemiaVisionTargetStrength = 0.0
         self.diseaseOwnsHypoglycemiaVision = False
+        self.ricketsFractureVisionElapsedTick = -1
+        self.ricketsFractureAspectRatio = 1.0
+        self.diseaseOwnsRicketsFractureVision = False
         self.postProcessComp = compFactory.CreatePostProcess(levelId)
         self.ListenForEvent(engineNamespace, engineSystemName, "UiInitFinished", self, self.UiInitFinished)
         self.ListenForEvent(engineNamespace, engineSystemName, "AddPlayerCreatedClientEvent", self, self.AddPlayerCreatedClientEvent)
@@ -162,6 +166,37 @@ class ClientSys(ClientSystem):
             )
             self.postProcessComp.SetEnableByName(config.hypoglycemiaVisionPostProcess, False)
             self.diseaseOwnsHypoglycemiaVision = False
+        if self.ricketsFractureVisionElapsedTick >= 0:
+            # 骨折事件先在回调中写入零进度；之后逐 Tick 推进同一段 14 Tick 演出，结束时只关闭自己的 pass。
+            self.ricketsFractureVisionElapsedTick += 1
+            fractureProgress = min(
+                1.0,
+                self.ricketsFractureVisionElapsedTick / float(config.ricketsFractureVisionDurationTick)
+            )
+            self.postProcessComp.SetParameter(
+                config.ricketsFracturePostProcess,
+                config.ricketsFractureProgressParameter,
+                fractureProgress
+            )
+            if self.ricketsFractureVisionElapsedTick >= config.ricketsFractureVisionDurationTick:
+                self.postProcessComp.SetEnableByName(config.ricketsFracturePostProcess, False)
+                self.ricketsFractureVisionElapsedTick = -1
+                self.diseaseOwnsRicketsFractureVision = False
+            elif (not self.diseaseOwnsRicketsFractureVision or
+                  not self.postProcessComp.CheckEnabledByName(config.ricketsFracturePostProcess)):
+                # 短演出期间若资源重载关闭了 pass，下一 Tick 继续当前进度，避免连带重启低血糖效果。
+                self.postProcessComp.SetEnableByName(config.ricketsFracturePostProcess, True)
+                self.postProcessComp.SetParameter(
+                    config.ricketsFracturePostProcess,
+                    config.ricketsFractureProgressParameter,
+                    fractureProgress
+                )
+                self.postProcessComp.SetParameter(
+                    config.ricketsFracturePostProcess,
+                    config.ricketsFractureAspectRatioParameter,
+                    self.ricketsFractureAspectRatio
+                )
+                self.diseaseOwnsRicketsFractureVision = True
 
     def DiseaseSyncData(self, args):
         active = args['active']
@@ -192,6 +227,16 @@ class ClientSys(ClientSystem):
             )
         else:
             self.hypoglycemiaVisionTargetStrength = 0.0
+        if 'rickets' not in self.activeDiseaseIds and self.diseaseOwnsRicketsFractureVision:
+            # 痊愈或疾病总开关关闭时立即收掉一次性骨折演出，不触碰仍由低血糖持有的后处理。
+            self.postProcessComp.SetParameter(
+                config.ricketsFracturePostProcess,
+                config.ricketsFractureProgressParameter,
+                1.0
+            )
+            self.postProcessComp.SetEnableByName(config.ricketsFracturePostProcess, False)
+            self.ricketsFractureVisionElapsedTick = -1
+            self.diseaseOwnsRicketsFractureVision = False
         mainClientSys = clientApi.GetSystem(com.modName, com.csname)
         uiNode = clientApi.GetUI(com.modName, dietConfig.uiKey)
         # 关闭或热重载后主系统可能仍保留陈旧 uiNode，只有 UI 管理器返回当前实例时才刷新。
@@ -215,9 +260,41 @@ class ClientSys(ClientSystem):
             }
 
     def DiseaseSymptom(self, args):
+        symptomId = args['symptomId']
         sound = args['sound']
         volume = args['volume']
         pitch = args['pitch']
+        if symptomId == config.ricketsFractureSymptom:
+            screenWidth, screenHeight = compGame.GetScreenSize()
+            aspectRatio = min(3.0, max(0.5, float(screenWidth) / float(screenHeight)))
+            # 先重置进度和宽高比再开启 pass，确保首次触发和冷却后的重复触发都从白闪首帧开始。
+            self.ricketsFractureVisionElapsedTick = 0
+            self.ricketsFractureAspectRatio = aspectRatio
+            self.postProcessComp.SetParameter(
+                config.ricketsFracturePostProcess,
+                config.ricketsFractureProgressParameter,
+                0.0
+            )
+            self.postProcessComp.SetParameter(
+                config.ricketsFracturePostProcess,
+                config.ricketsFractureAspectRatioParameter,
+                aspectRatio
+            )
+            if (not self.diseaseOwnsRicketsFractureVision or
+                    not self.postProcessComp.CheckEnabledByName(config.ricketsFracturePostProcess)):
+                self.postProcessComp.SetEnableByName(config.ricketsFracturePostProcess, True)
+                # 网易 3.9 首次激活 pass 会恢复 JSON 默认参数，开启后重写才能保住本机屏幕比例和零进度首帧。
+                self.postProcessComp.SetParameter(
+                    config.ricketsFracturePostProcess,
+                    config.ricketsFractureProgressParameter,
+                    0.0
+                )
+                self.postProcessComp.SetParameter(
+                    config.ricketsFracturePostProcess,
+                    config.ricketsFractureAspectRatioParameter,
+                    aspectRatio
+                )
+            self.diseaseOwnsRicketsFractureVision = True
         playerId = clientApi.GetLocalPlayerId()
         customAudioComp = compFactory.CreateCustomAudio(levelId)
         customAudioComp.PlayCustomMusic(sound, (0, 0, 0), volume, pitch, False, playerId)
@@ -235,3 +312,12 @@ class ClientSys(ClientSystem):
             )
             self.postProcessComp.SetEnableByName(config.hypoglycemiaVisionPostProcess, False)
             self.diseaseOwnsHypoglycemiaVision = False
+        if self.diseaseOwnsRicketsFractureVision:
+            self.postProcessComp.SetParameter(
+                config.ricketsFracturePostProcess,
+                config.ricketsFractureProgressParameter,
+                1.0
+            )
+            self.postProcessComp.SetEnableByName(config.ricketsFracturePostProcess, False)
+            self.ricketsFractureVisionElapsedTick = -1
+            self.diseaseOwnsRicketsFractureVision = False

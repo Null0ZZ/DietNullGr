@@ -21,5 +21,33 @@
       "DisableDepthTest"
     ],
     "msaaSupport": "Both"
+  },
+  "dietRicketsFractureImpactCompositeMat": {
+    "vertexShader": "shaders/diet_fullscreen.vertex",
+    "fragmentShader": "shaders/diet_rickets_fracture_impact_composite.fragment",
+    "vertexFields": [
+      {
+        "field": "Position"
+      },
+      {
+        "field": "UV0"
+      }
+    ],
+    "samplerStates": [
+      {
+        "samplerIndex": 0,
+        "textureWrap": "Clamp",
+        "textureFilter": "Bilinear"
+      },
+      {
+        "samplerIndex": 2,
+        "textureWrap": "Clamp",
+        "textureFilter": "Bilinear"
+      }
+    ],
+    "states": [
+      "DisableDepthTest"
+    ],
+    "msaaSupport": "Both"
   }
 }
