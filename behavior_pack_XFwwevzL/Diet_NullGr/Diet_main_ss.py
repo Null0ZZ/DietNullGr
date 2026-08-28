@@ -101,6 +101,10 @@ class DietServerSystem(ServerSystem):
         itemDict = args['itemDict']
         hunger = args['hunger']
         nutrition = args['nutrition']
+        itemName = itemDict['newItemName']
+        # 装水木杯借用 food 组件提供完整饮用时序，补水由 Thirst 系统结算，不进入营养和疾病进食链路。
+        if itemName in thirstConfig.hydrationOnlyItemNames:
+            return
         gameType = compGame.GetPlayerGameType(playerId)
         if (gameType == gameTypeEnum.Spectator or
                 (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
@@ -110,7 +114,6 @@ class DietServerSystem(ServerSystem):
         data = self.playerDietData[playerId]
         gainValues = {}
         if data['active']:
-            itemName = itemDict['newItemName']
             itemAuxValue = itemDict['newAuxValue']
             compItem = compFactory.CreateItem(serverApi.GetLevelId())
             gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)

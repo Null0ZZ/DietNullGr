@@ -1,0 +1,11 @@
+{
+    "format_version": "1.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "diet_nullgr:wooden_cup"
+        },
+        "components": {
+            "minecraft:icon": "diet_nullgr_wooden_cup"
+        }
+    }
+}

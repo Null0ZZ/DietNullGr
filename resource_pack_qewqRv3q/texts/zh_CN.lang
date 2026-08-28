@@ -5,3 +5,5 @@ diet_nullgr:rickets=佝偻病
 diet_nullgr:fever=发烧
 diet_nullgr:mouth_ulcer=口腔溃疡
 diet_nullgr:scurvy=坏血病
+item.diet_nullgr:wooden_cup.name=木杯
+item.diet_nullgr:wooden_cup_water.name=装水的木杯

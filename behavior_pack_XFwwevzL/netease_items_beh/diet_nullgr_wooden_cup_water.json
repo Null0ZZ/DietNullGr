@@ -1,0 +1,21 @@
+{
+    "format_version": "1.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "diet_nullgr:wooden_cup_water",
+            "category": "Items",
+            "register_to_create_menu": true
+        },
+        "components": {
+            "minecraft:use_duration": 32.0,
+            "minecraft:max_stack_size": 16,
+            "minecraft:hand_equipped": false,
+            "minecraft:food": {
+                "nutrition": 0,
+                "saturation_modifier": "low",
+                "can_always_eat": true,
+                "using_converts_to": "diet_nullgr:wooden_cup"
+            }
+        }
+    }
+}

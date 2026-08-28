@@ -1,0 +1,12 @@
+{
+    "resource_pack_name": "vanilla",
+    "texture_name": "atlas.items",
+    "texture_data": {
+        "diet_nullgr_wooden_cup": {
+            "textures": "textures/items/wooden_cup"
+        },
+        "diet_nullgr_wooden_cup_water": {
+            "textures": "textures/items/wooden_cup_water"
+        }
+    }
+}

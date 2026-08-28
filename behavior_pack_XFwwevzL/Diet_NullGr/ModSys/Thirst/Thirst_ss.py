@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import math
 import mod.server.extraServerApi as serverApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as diseaseConfig
@@ -31,6 +32,7 @@ class ServerSys(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ActorUseItemServerEvent", self, self.ActorUseItemServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerEatFoodServerEvent", self, self.PlayerEatFoodServerEvent)
+        self.ListenForEvent(engineNamespace, engineSystemName, "ServerItemTryUseEvent", self, self.ServerItemTryUseEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "OnPlayerActionServerEvent", self, self.OnPlayerActionServerEvent)
@@ -91,6 +93,52 @@ class ServerSys(ServerSystem):
         # DelServerPlayerEvent 触发前实体已被引擎移除，运行时修饰符随实体销毁；这里只回收在线状态并保存口渴数据。
         Thirst.savePlayerData(playerId, data, compFactory)
         del self.playerThirstData[playerId]
+
+    def ServerItemTryUseEvent(self, args):
+        playerId = args['playerId']
+        itemDict = args['itemDict']
+        cancel = args['cancel']
+        if itemDict['newItemName'] != config.woodenCupItemName:
+            return
+
+        playerPos = compFactory.CreatePos(playerId).GetPos()
+        playerRot = compFactory.CreateRot(playerId).GetRot()
+        rayDirection = serverApi.GetDirFromRot(playerRot)
+        dimensionId = compFactory.CreateDimension(playerId).GetEntityDimensionId()
+        blockInfoComp = compFactory.CreateBlockInfo(serverApi.GetLevelId())
+        waterFound = False
+        rayStepCount = int(config.waterFillReach / config.waterFillStep)
+        for stepIndex in range(rayStepCount + 1):
+            distance = stepIndex * config.waterFillStep
+            blockPos = (
+                int(math.floor(playerPos[0] + rayDirection[0] * distance)),
+                int(math.floor(playerPos[1] + rayDirection[1] * distance)),
+                int(math.floor(playerPos[2] + rayDirection[2] * distance))
+            )
+            blockName = blockInfoComp.GetBlockNew(blockPos, dimensionId)['name']
+            if blockName == 'minecraft:air':
+                continue
+            waterFound = blockName in config.waterBlockNames
+            break
+        if not waterFound:
+            return
+
+        itemComp = compFactory.CreateItem(playerId)
+        selectedSlot = itemComp.GetSelectSlotId()
+        waterCupItemDict = {
+            'newItemName': config.woodenWaterCupItemName,
+            'newAuxValue': 0,
+            'count': 1
+        }
+        if itemDict['count'] == 1:
+            itemComp.SpawnItemToPlayerInv(waterCupItemDict, playerId, selectedSlot)
+            return
+
+        # 堆叠空杯必须先扣除一个再放入成品；背包无法接收时恢复原数量，保证装水事务不吞杯。
+        if not itemComp.SetInvItemNum(selectedSlot, itemDict['count'] - 1):
+            return
+        if not itemComp.SpawnItemToPlayerInv(waterCupItemDict, playerId):
+            itemComp.SetInvItemNum(selectedSlot, itemDict['count'])
 
     def ActorUseItemServerEvent(self, args):
         playerId = args['playerId']
