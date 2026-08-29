@@ -43,6 +43,18 @@ void main()
     vec3 dispersedColor = vec3(radialColor1.r, sceneColor.g, radialColor4.b);
     sceneColor = mix(sceneColor, dispersedColor, 0.18 * impactAmount);
 
+    // 骨骼先以半透明方式融入场景，再与场景一起接受灰度、暗角和白闪，避免形成悬浮在画面上的贴纸感。
+    float boneHeight = mix(0.58, 0.68, impactRise);
+    vec2 boneUv = vec2(
+        (uv.x - 0.5) * aspectRatio / boneHeight + 0.5,
+        (uv.y - 0.51) / boneHeight + 0.5
+    );
+    float insideBone = step(0.0, boneUv.x) * step(boneUv.x, 1.0) *
+        step(0.0, boneUv.y) * step(boneUv.y, 1.0);
+    vec4 boneColor = texture(TEXTURE_2, vec2(boneUv.x, 1.0 - boneUv.y));
+    float boneOpacity = boneColor.a * insideBone * recovery * 0.48;
+    sceneColor = mix(sceneColor, boneColor.rgb, boneOpacity);
+
     float grayscale = dot(sceneColor, vec3(0.299, 0.587, 0.114));
     sceneColor = mix(sceneColor, vec3(grayscale), 0.72 * impactAmount);
     sceneColor = (sceneColor - vec3(0.5)) * (1.0 + 0.38 * impactAmount) + vec3(0.5);
@@ -53,17 +65,5 @@ void main()
     float whiteFlash = 1.0 - smoothstep(0.0, flashEnd, progress);
     sceneColor = mix(sceneColor, vec3(1.0), whiteFlash * 0.90);
 
-    // 方形骨骼贴图按实际屏幕宽高比反向校正，视觉高度约为屏幕三分之二且不会在宽屏被拉伸。
-    float boneHeight = mix(0.58, 0.68, impactRise);
-    vec2 boneUv = vec2(
-        (uv.x - 0.5) * aspectRatio / boneHeight + 0.5,
-        (uv.y - 0.51) / boneHeight + 0.5
-    );
-    float insideBone = step(0.0, boneUv.x) * step(boneUv.x, 1.0) *
-        step(0.0, boneUv.y) * step(boneUv.y, 1.0);
-    vec4 boneColor = texture(TEXTURE_2, vec2(boneUv.x, 1.0 - boneUv.y));
-    float boneOpacity = boneColor.a * insideBone * recovery;
-    vec3 finalColor = mix(sceneColor, boneColor.rgb, boneOpacity);
-
-    gl_FragColor = vec4(finalColor, 1.0);
+    gl_FragColor = vec4(sceneColor, 1.0);
 }
