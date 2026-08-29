@@ -223,7 +223,7 @@ class DietServerSystem(ServerSystem):
         if entityId not in self.playerDietData:
             self.playerDietData[entityId] = Diet.loadPlayerData(entityId, compFactory)
         diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
-        if diseaseSys.handleCommand(entityId, command, self.playerDietData[entityId]):
+        if diseaseSys.handleCommand(entityId, command):
             args['cancel'] = True
             return
         commandResult = Diet.handleCommand(command, self.playerDietData[entityId])
