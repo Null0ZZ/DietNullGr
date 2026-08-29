@@ -27,7 +27,7 @@ settingEventUpdate = "DietSettingUpdate"
 settingEventSync = "DietSettingSync"
 settingKeys = (settingEnabledKey,)
 defaultEnabled = True
-debugCommandEnabled = False
+debugCommandEnabled = True
 
 settingDef = {
     "key": settingEnabledKey,
