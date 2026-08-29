@@ -29,20 +29,20 @@ void main()
     float bandIndex = floor(uv.y * waveFrequency);
     float bandSeed = bandIndex * 1.91;
 
-    // 提醒窗口只改变各条波纹的疏密、曲率和相位，绝不向采样坐标叠加整屏偏移。
-    float reminderTime = mod(motionTime, 1.5);
-    float reminderRise = smoothstep(0.0, 0.08, reminderTime);
-    float reminderFall = 1.0 - smoothstep(0.32, 0.50, reminderTime);
-    float reminderEnvelope = reminderRise * reminderFall;
+    // 每轮先让波纹连续颤动一阵，再进入缓和期；包络只改变波纹本身，不叠加整屏偏移。
+    float strainEpisodeTime = mod(motionTime, 5.2);
+    float strainEpisodeRise = smoothstep(0.0, 0.35, strainEpisodeTime);
+    float strainEpisodeFall = 1.0 - smoothstep(2.60, 3.20, strainEpisodeTime);
+    float strainEpisodeEnvelope = strainEpisodeRise * strainEpisodeFall;
     float frequencyTremor = (
         sin(motionTime * 10.50 + bandSeed * 2.30) * 0.10 +
         sin(motionTime * 14.70 - bandSeed) * 0.04
-    ) * reminderEnvelope;
+    ) * strainEpisodeEnvelope;
     float phaseTremor = (
         sin(motionTime * 8.80 + bandSeed * 1.70) +
         sin(motionTime * 13.20 - bandSeed * 2.10) * 0.35
-    ) * 0.22 * reminderEnvelope;
-    float amplitudeTremor = 0.78 + reminderEnvelope * (
+    ) * 0.22 * strainEpisodeEnvelope;
+    float amplitudeTremor = 0.78 + strainEpisodeEnvelope * (
         0.14 + sin(motionTime * 12.60 + bandSeed) * 0.08
     );
 
