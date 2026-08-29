@@ -1,4 +1,27 @@
 {
+  "dietConstipationStrainMat": {
+    "vertexShader": "shaders/diet_fullscreen.vertex",
+    "fragmentShader": "shaders/diet_constipation_strain.fragment",
+    "vertexFields": [
+      {
+        "field": "Position"
+      },
+      {
+        "field": "UV0"
+      }
+    ],
+    "samplerStates": [
+      {
+        "samplerIndex": 0,
+        "textureWrap": "Clamp",
+        "textureFilter": "Bilinear"
+      }
+    ],
+    "states": [
+      "DisableDepthTest"
+    ],
+    "msaaSupport": "Both"
+  },
   "dietHypoglycemiaVisionMat": {
     "vertexShader": "shaders/diet_fullscreen.vertex",
     "fragmentShader": "shaders/diet_hypoglycemia_vision.fragment",

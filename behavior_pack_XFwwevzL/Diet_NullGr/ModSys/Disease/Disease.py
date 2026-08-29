@@ -423,7 +423,8 @@ def buildClientData(data):
         'active': activeRows,
         'activeCount': len(activeRows),
         'maxActiveCount': config.maxActiveCount,
-        'validEatCount': data['validEatCount']
+        'validEatCount': data['validEatCount'],
+        'constipationSquatCount': data['constipationSquatCount']
     }
 
 

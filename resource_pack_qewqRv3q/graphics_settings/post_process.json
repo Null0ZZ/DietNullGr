@@ -9,6 +9,7 @@
     "lensstain",
     "oldtv",
     "scanmap",
+    "dietConstipationStrain",
     "dietHypoglycemiaVision",
     "dietRicketsFractureImpact"
   ],
@@ -398,6 +399,53 @@
           },
           "material": "scan_map",
           "depth_enable": true
+        }
+      ]
+    },
+    {
+      "name": "dietConstipationStrain",
+      "enable": false,
+      "paras": [
+        {
+          "name": "strength",
+          "value": 0,
+          "range": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "wave_amplitude",
+          "value": 0.016,
+          "range": [
+            0,
+            0.03
+          ]
+        },
+        {
+          "name": "wave_frequency",
+          "value": 4,
+          "range": [
+            1,
+            8
+          ]
+        },
+        {
+          "name": "motion_speed",
+          "value": 1.6,
+          "range": [
+            0,
+            4
+          ]
+        }
+      ],
+      "pass_array": [
+        {
+          "render_target": {
+            "width": 1,
+            "height": 1
+          },
+          "material": "dietConstipationStrainMat"
         }
       ]
     },

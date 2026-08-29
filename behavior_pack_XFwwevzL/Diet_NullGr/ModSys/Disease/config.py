@@ -70,6 +70,12 @@ feverMaximumHeadScale = 2.5
 visualScaleFadeTick = 20
 hyperglycemiaThirstMultiplier = 1.25
 feverThirstMultiplier = 1.5
+constipationVisionPostProcess = "dietConstipationStrain"
+constipationVisionStrengthParameter = "strength"
+constipationVisionInitialStrength = 0.25
+constipationVisionMaxStrength = 1.0
+constipationVisionGrowSeconds = 120.0
+constipationVisionFadeTick = 20
 hypoglycemiaVisionPostProcess = "dietHypoglycemiaVision"
 hypoglycemiaVisionStrengthParameter = "strength"
 hypoglycemiaVisionInitialStrength = 0.1
@@ -186,7 +192,7 @@ diseases = {
         "tips": "缺水少纤维；补水、补两类食物或下蹲",
         "cause": "水分不足，且水果、谷物和蔬菜摄入偏少。",
         "relief": "将口渴值恢复到 50% 以上并补充其中至少两类食物，或完成 12 次有效下蹲。",
-        "symptom": "进食后反胃，身体逐渐变大，可通过连续下蹲缓解。",
+        "symptom": "进食后反胃，身体逐渐变大，视野持续产生横向波纹与憋闷抖动，可通过连续下蹲缓解。",
         "customEffect": "diet_nullgr:constipation",
         "icon": "textures/ui/diet_nullgr/disease/constipation_effect",
         "priority": 6,

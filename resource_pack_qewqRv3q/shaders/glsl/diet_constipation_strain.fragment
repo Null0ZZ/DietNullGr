@@ -1,0 +1,48 @@
+// __multiversion__
+// 便秘使用持续横向波纹、弹性跳动和快速微抖表现难以忍耐的憋闷感。
+
+precision highp float;
+
+#include "fragmentVersionCentroidUV.h"
+#include "uniformPerFrameConstants.h"
+
+LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
+
+// 强度、波纹幅度、纵向波纹数量和运动速度依次由 post_process.json 注入。
+uniform vec4 EXTRA_VECTOR1;
+
+void main()
+{
+    float strength = clamp(EXTRA_VECTOR1.x, 0.0, 1.0);
+    float waveAmplitude = EXTRA_VECTOR1.y;
+    float waveFrequency = EXTRA_VECTOR1.z;
+    float motionSpeed = EXTRA_VECTOR1.w;
+    float motionTime = TIME * motionSpeed;
+
+    // 尖锐弹跳约每 1.5 秒出现一次，波谷仍保留 68% 横波幅度，使症状始终连续可见。
+    float bounceWave = 0.5 + 0.5 * sin(motionTime * 2.60);
+    float bouncePulse = pow(bounceWave, 6.0);
+    float strainAmount = 0.68 + 0.32 * bouncePulse;
+
+    // 主波沿屏幕高度形成四条完整横波，二次谐波打破规则水波感并保持波浪嘴式错位。
+    float wavePhase = uv.y * 6.2831853 * waveFrequency + motionTime +
+        sin(motionTime * 0.43) * 0.45;
+    float horizontalWave = (
+        sin(wavePhase) + sin(wavePhase * 2.0 - motionTime * 1.35) * 0.25
+    ) * waveAmplitude * strength * strainAmount;
+
+    // 两个非整倍频微抖只在水平方向叠加；纵向使用尖峰后缓慢回弹，形成整体画面跳一下的感觉。
+    float tremorAmount = (0.55 + 0.45 * bouncePulse) * strength;
+    float horizontalTremor = (
+        sin(motionTime * 9.70) + sin(motionTime * 15.30) * 0.45
+    ) * 0.0024 * tremorAmount;
+    float verticalJump = (bouncePulse - 0.225) * 0.00775 * strength;
+
+    // 满强度预留 2.8% 采样边缘，覆盖横波和微抖的最大位移，避免 Clamp 拉出明显边缘色带。
+    float edgeInset = 0.028 * strength;
+    vec2 sampleUv = (uv - vec2(0.5)) * (1.0 - edgeInset * 2.0) + vec2(0.5);
+    sampleUv += vec2(horizontalWave + horizontalTremor, verticalJump);
+    sampleUv = clamp(sampleUv, vec2(0.0), vec2(1.0));
+
+    gl_FragColor = texture(TEXTURE_0, sampleUv);
+}

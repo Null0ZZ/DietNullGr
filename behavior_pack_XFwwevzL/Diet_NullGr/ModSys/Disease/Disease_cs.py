@@ -20,7 +20,8 @@ class ClientSys(ClientSystem):
             'active': [],
             'activeCount': 0,
             'maxActiveCount': config.maxActiveCount,
-            'validEatCount': 0
+            'validEatCount': 0,
+            'constipationSquatCount': 0
         }
         self.activeDiseaseIds = {}
         self.playerVisualData = {}
@@ -28,6 +29,9 @@ class ClientSys(ClientSystem):
         self.injectedPlayers = {}
         self.tickCounter = 0
         self.lastSuccessfulJumpTick = -config.hypoglycemiaJumpIntervalTick
+        self.constipationVisionStrength = 0.0
+        self.constipationVisionTargetStrength = 0.0
+        self.diseaseOwnsConstipationVision = False
         self.hypoglycemiaVisionStrength = 0.0
         self.hypoglycemiaVisionTargetStrength = 0.0
         self.diseaseOwnsHypoglycemiaVision = False
@@ -132,6 +136,39 @@ class ClientSys(ClientSystem):
                 queryVariableComp = compFactory.CreateQueryVariable(playerId)
                 queryVariableComp.Set(config.bodyScaleQuery, float(renderedData['bodyScale']))
                 queryVariableComp.Set(config.headScaleQuery, float(renderedData['headScale']))
+        if self.constipationVisionStrength < self.constipationVisionTargetStrength:
+            self.constipationVisionStrength = min(
+                self.constipationVisionTargetStrength,
+                self.constipationVisionStrength +
+                config.constipationVisionMaxStrength / float(config.constipationVisionFadeTick)
+            )
+        elif self.constipationVisionStrength > self.constipationVisionTargetStrength:
+            self.constipationVisionStrength = max(
+                self.constipationVisionTargetStrength,
+                self.constipationVisionStrength -
+                config.constipationVisionMaxStrength / float(config.constipationVisionFadeTick)
+            )
+        if self.constipationVisionStrength > 0.0:
+            # 便秘和低血糖各自持有独立 pass；持续患病时先写强度再恢复被资源重载关闭的横波效果。
+            self.postProcessComp.SetParameter(
+                config.constipationVisionPostProcess,
+                config.constipationVisionStrengthParameter,
+                self.constipationVisionStrength
+            )
+            if (not self.diseaseOwnsConstipationVision or
+                    not self.postProcessComp.CheckEnabledByName(config.constipationVisionPostProcess)):
+                self.postProcessComp.SetEnableByName(config.constipationVisionPostProcess, True)
+                self.diseaseOwnsConstipationVision = True
+        elif (self.diseaseOwnsConstipationVision and
+              self.constipationVisionTargetStrength <= 0.0):
+            # 痊愈或疾病暂停后先完成淡出再关闭 pass，避免横向扭曲突然跳回原画。
+            self.postProcessComp.SetParameter(
+                config.constipationVisionPostProcess,
+                config.constipationVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.constipationVisionPostProcess, False)
+            self.diseaseOwnsConstipationVision = False
         if self.hypoglycemiaVisionStrength < self.hypoglycemiaVisionTargetStrength:
             self.hypoglycemiaVisionStrength = min(
                 self.hypoglycemiaVisionTargetStrength,
@@ -203,19 +240,33 @@ class ClientSys(ClientSystem):
         activeCount = args['activeCount']
         maxActiveCount = args['maxActiveCount']
         validEatCount = args['validEatCount']
+        constipationSquatCount = args['constipationSquatCount']
         self.diseaseData = {
             'active': active,
             'activeCount': activeCount,
             'maxActiveCount': maxActiveCount,
-            'validEatCount': validEatCount
+            'validEatCount': validEatCount,
+            'constipationSquatCount': constipationSquatCount
         }
         self.activeDiseaseIds = {}
+        constipationSeconds = -1
         hypoglycemiaSeconds = -1
         for diseaseData in active:
             diseaseId = diseaseData['id']
             self.activeDiseaseIds[diseaseId] = True
-            if diseaseId == 'hypoglycemia':
+            if diseaseId == 'constipation':
+                constipationSeconds = diseaseData['activeSeconds']
+            elif diseaseId == 'hypoglycemia':
                 hypoglycemiaSeconds = diseaseData['activeSeconds']
+        if constipationSeconds >= 0:
+            growRatio = min(1.0, constipationSeconds / config.constipationVisionGrowSeconds)
+            reliefRatio = 1.0 - constipationSquatCount / float(config.constipationSquatRequired)
+            self.constipationVisionTargetStrength = (
+                config.constipationVisionInitialStrength + growRatio *
+                (config.constipationVisionMaxStrength - config.constipationVisionInitialStrength)
+            ) * reliefRatio
+        else:
+            self.constipationVisionTargetStrength = 0.0
         if hypoglycemiaSeconds >= config.hypoglycemiaLateSeconds:
             growRatio = min(
                 1.0,
@@ -304,6 +355,14 @@ class ClientSys(ClientSystem):
             queryVariableComp = compFactory.CreateQueryVariable(playerId)
             queryVariableComp.Set(config.bodyScaleQuery, 1.0)
             queryVariableComp.Set(config.headScaleQuery, 1.0)
+        if self.diseaseOwnsConstipationVision:
+            self.postProcessComp.SetParameter(
+                config.constipationVisionPostProcess,
+                config.constipationVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.constipationVisionPostProcess, False)
+            self.diseaseOwnsConstipationVision = False
         if self.diseaseOwnsHypoglycemiaVision:
             self.postProcessComp.SetParameter(
                 config.hypoglycemiaVisionPostProcess,
