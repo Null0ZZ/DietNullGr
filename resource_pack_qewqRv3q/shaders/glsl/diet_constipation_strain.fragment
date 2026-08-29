@@ -34,25 +34,20 @@ void main()
     float strainEpisodeRise = smoothstep(0.0, 0.35, strainEpisodeTime);
     float strainEpisodeFall = 1.0 - smoothstep(2.60, 3.20, strainEpisodeTime);
     float strainEpisodeEnvelope = strainEpisodeRise * strainEpisodeFall;
-    float frequencyTremor = (
-        sin(motionTime * 10.50 + bandSeed * 2.30) * 0.10 +
-        sin(motionTime * 14.70 - bandSeed) * 0.04
-    ) * strainEpisodeEnvelope;
-    float phaseTremor = (
-        sin(motionTime * 8.80 + bandSeed * 1.70) +
-        sin(motionTime * 13.20 - bandSeed * 2.10) * 0.35
-    ) * 0.22 * strainEpisodeEnvelope;
-    float amplitudeTremor = 0.78 + strainEpisodeEnvelope * (
-        0.14 + sin(motionTime * 12.60 + bandSeed) * 0.08
+    // 同一个颤动信号直接调制所有波纹的频率和振幅，使整阵波纹同步收紧、放松和起伏。
+    float tremorSignal = sin(motionTime * 8.0) * strainEpisodeEnvelope;
+    float modulatedWaveFrequency = 3.0 * (1.0 + tremorSignal * 0.16);
+    float modulatedWaveAmplitude = waveAmplitude * (
+        0.78 + strainEpisodeEnvelope * 0.10 + tremorSignal * 0.18
     );
 
-    // 每道波纹横跨屏幕宽度；各自的快速形变只改变波纹本体，不改变画面基准位置。
-    float wavePhase = uv.x * 6.2831853 * (3.0 + frequencyTremor) +
-        motionTime * 0.60 + bandSeed + phaseTremor;
+    // 每道波纹横跨屏幕宽度；颤动只参与波纹公式，不改变画面基准位置。
+    float wavePhase = uv.x * 6.2831853 * modulatedWaveFrequency +
+        motionTime * 0.60 + bandSeed;
     float waveShape = sin(wavePhase) +
         sin(wavePhase * 2.0 - motionTime * 0.75 + bandSeed * 0.70) * 0.20;
-    float verticalDistortion = waveShape * waveAmplitude * strength *
-        bandMask * amplitudeTremor;
+    float verticalDistortion = waveShape * modulatedWaveAmplitude * strength *
+        bandMask;
 
     vec2 sampleUv = uv;
     sampleUv.y = clamp(uv.y + verticalDistortion, 0.0, 1.0);
