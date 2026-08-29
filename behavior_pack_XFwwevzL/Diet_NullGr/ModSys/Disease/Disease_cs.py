@@ -32,6 +32,9 @@ class ClientSys(ClientSystem):
         self.constipationVisionStrength = 0.0
         self.constipationVisionTargetStrength = 0.0
         self.diseaseOwnsConstipationVision = False
+        self.feverVisionStrength = 0.0
+        self.feverVisionTargetStrength = 0.0
+        self.diseaseOwnsFeverVision = False
         self.hypoglycemiaVisionStrength = 0.0
         self.hypoglycemiaVisionTargetStrength = 0.0
         self.diseaseOwnsHypoglycemiaVision = False
@@ -149,7 +152,7 @@ class ClientSys(ClientSystem):
                 config.constipationVisionMaxStrength / float(config.constipationVisionFadeTick)
             )
         if self.constipationVisionStrength > 0.0:
-            # 便秘和低血糖各自持有独立 pass；持续患病时先写强度再恢复被资源重载关闭的横波效果。
+            # 便秘、发烧和低血糖各自持有独立 pass；持续患病时先写强度再恢复被资源重载关闭的横波效果。
             self.postProcessComp.SetParameter(
                 config.constipationVisionPostProcess,
                 config.constipationVisionStrengthParameter,
@@ -169,6 +172,40 @@ class ClientSys(ClientSystem):
             )
             self.postProcessComp.SetEnableByName(config.constipationVisionPostProcess, False)
             self.diseaseOwnsConstipationVision = False
+        if self.feverVisionStrength < self.feverVisionTargetStrength:
+            self.feverVisionStrength = min(
+                self.feverVisionTargetStrength,
+                self.feverVisionStrength +
+                config.feverVisionMaxStrength / float(config.feverVisionFadeTick)
+            )
+        elif self.feverVisionStrength > self.feverVisionTargetStrength:
+            self.feverVisionStrength = max(
+                self.feverVisionTargetStrength,
+                self.feverVisionStrength -
+                config.feverVisionMaxStrength / float(config.feverVisionFadeTick)
+            )
+        if self.feverVisionStrength > 0.0:
+            # 呼吸只在着色器中改变橙红色深度；客户端强度只负责确诊和痊愈的平滑接入、退出。
+            self.postProcessComp.SetParameter(
+                config.feverVisionPostProcess,
+                config.feverVisionStrengthParameter,
+                self.feverVisionStrength
+            )
+            if (not self.diseaseOwnsFeverVision or
+                    not self.postProcessComp.CheckEnabledByName(config.feverVisionPostProcess)):
+                # 资源重载会关闭自定义 pass，发烧仍存在时必须在下一 Tick 恢复，但不能重启其他疾病效果。
+                self.postProcessComp.SetEnableByName(config.feverVisionPostProcess, True)
+                self.diseaseOwnsFeverVision = True
+        elif (self.diseaseOwnsFeverVision and
+              self.feverVisionTargetStrength <= 0.0):
+            # 痊愈后先用 20 Tick 完成整体淡出，再关闭 pass，呼吸过程本身始终保留渐晕。
+            self.postProcessComp.SetParameter(
+                config.feverVisionPostProcess,
+                config.feverVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.feverVisionPostProcess, False)
+            self.diseaseOwnsFeverVision = False
         if self.hypoglycemiaVisionStrength < self.hypoglycemiaVisionTargetStrength:
             self.hypoglycemiaVisionStrength = min(
                 self.hypoglycemiaVisionTargetStrength,
@@ -267,6 +304,10 @@ class ClientSys(ClientSystem):
             ) * reliefRatio
         else:
             self.constipationVisionTargetStrength = 0.0
+        if 'fever' in self.activeDiseaseIds:
+            self.feverVisionTargetStrength = config.feverVisionMaxStrength
+        else:
+            self.feverVisionTargetStrength = 0.0
         if hypoglycemiaSeconds >= config.hypoglycemiaLateSeconds:
             growRatio = min(
                 1.0,
@@ -363,6 +404,14 @@ class ClientSys(ClientSystem):
             )
             self.postProcessComp.SetEnableByName(config.constipationVisionPostProcess, False)
             self.diseaseOwnsConstipationVision = False
+        if self.diseaseOwnsFeverVision:
+            self.postProcessComp.SetParameter(
+                config.feverVisionPostProcess,
+                config.feverVisionStrengthParameter,
+                0.0
+            )
+            self.postProcessComp.SetEnableByName(config.feverVisionPostProcess, False)
+            self.diseaseOwnsFeverVision = False
         if self.diseaseOwnsHypoglycemiaVision:
             self.postProcessComp.SetParameter(
                 config.hypoglycemiaVisionPostProcess,

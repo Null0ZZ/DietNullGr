@@ -10,6 +10,7 @@
     "oldtv",
     "scanmap",
     "dietConstipationStrain",
+    "dietFeverHeat",
     "dietHypoglycemiaVision",
     "dietRicketsFractureImpact"
   ],
@@ -446,6 +447,53 @@
             "height": 1
           },
           "material": "dietConstipationStrainMat"
+        }
+      ]
+    },
+    {
+      "name": "dietFeverHeat",
+      "enable": false,
+      "paras": [
+        {
+          "name": "strength",
+          "value": 0,
+          "range": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "vignette_intensity",
+          "value": 0.68,
+          "range": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "center_warmth",
+          "value": 0.06,
+          "range": [
+            0,
+            0.2
+          ]
+        },
+        {
+          "name": "breath_period",
+          "value": 4.5,
+          "range": [
+            2,
+            8
+          ]
+        }
+      ],
+      "pass_array": [
+        {
+          "render_target": {
+            "width": 1,
+            "height": 1
+          },
+          "material": "dietFeverHeatMat"
         }
       ]
     },

@@ -76,6 +76,10 @@ constipationVisionInitialStrength = 0.25
 constipationVisionMaxStrength = 1.0
 constipationVisionGrowSeconds = 120.0
 constipationVisionFadeTick = 20
+feverVisionPostProcess = "dietFeverHeat"
+feverVisionStrengthParameter = "strength"
+feverVisionMaxStrength = 1.0
+feverVisionFadeTick = 20
 hypoglycemiaVisionPostProcess = "dietHypoglycemiaVision"
 hypoglycemiaVisionStrengthParameter = "strength"
 hypoglycemiaVisionInitialStrength = 0.1
@@ -228,7 +232,7 @@ diseases = {
         "tips": "严重缺水缺营养；补水并均衡进食",
         "cause": "严重缺水，并且多类非糖营养同时处于危急水平。",
         "relief": "将口渴值恢复到 50% 以上，并使至少三类非糖营养达到 30%。",
-        "symptom": "虚弱、间歇反胃、口渴消耗提高，头部随持续时间逐渐变大。",
+        "symptom": "虚弱、间歇反胃、口渴消耗提高，头部逐渐变大，视野边缘呈橙红至深红的呼吸渐晕。",
         "customEffect": "diet_nullgr:fever",
         "icon": "textures/ui/diet_nullgr/disease/fever_effect",
         "priority": 1,
