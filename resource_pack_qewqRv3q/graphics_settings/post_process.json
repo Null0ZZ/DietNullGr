@@ -416,7 +416,7 @@
         },
         {
           "name": "wave_amplitude",
-          "value": 0.01,
+          "value": 0.012,
           "range": [
             0,
             0.03
