@@ -416,7 +416,7 @@
         },
         {
           "name": "wave_amplitude",
-          "value": 0.016,
+          "value": 0.01,
           "range": [
             0,
             0.03
@@ -432,7 +432,7 @@
         },
         {
           "name": "motion_speed",
-          "value": 1.6,
+          "value": 1,
           "range": [
             0,
             4

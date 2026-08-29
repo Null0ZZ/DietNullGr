@@ -1,5 +1,5 @@
 // __multiversion__
-// 便秘使用持续横向波纹、弹性跳动和快速微抖表现难以忍耐的憋闷感。
+// 便秘使用持续水平波纹和短促提醒脉冲表现难以忍耐的憋闷感。
 
 precision highp float;
 
@@ -19,29 +19,26 @@ void main()
     float motionSpeed = EXTRA_VECTOR1.w;
     float motionTime = TIME * motionSpeed;
 
-    // 尖锐弹跳约每 1.5 秒出现一次，波谷仍保留 68% 横波幅度，使症状始终连续可见。
-    float bounceWave = 0.5 + 0.5 * sin(motionTime * 2.60);
-    float bouncePulse = pow(bounceWave, 6.0);
-    float strainAmount = 0.68 + 0.32 * bouncePulse;
+    // 每 1.5 秒用同一波纹场完成一次轻抬和短回弹，提醒结束后平滑回到持续波动。
+    float reminderTime = mod(motionTime, 1.5);
+    float reminderRise = smoothstep(0.0, 0.08, reminderTime);
+    float reminderFall = 1.0 - smoothstep(0.32, 0.50, reminderTime);
+    float reminderEnvelope = reminderRise * reminderFall;
+    float reminderBounce = sin(reminderTime * 12.5663706) * reminderEnvelope;
+    float strainAmount = 0.84 + 0.16 * reminderEnvelope;
 
-    // 主波沿屏幕高度形成四条完整横波，二次谐波打破规则水波感并保持波浪嘴式错位。
-    float wavePhase = uv.y * 6.2831853 * waveFrequency + motionTime +
-        sin(motionTime * 0.43) * 0.45;
-    float horizontalWave = (
-        sin(wavePhase) + sin(wavePhase * 2.0 - motionTime * 1.35) * 0.25
+    // 四个波形横跨屏幕宽度并只推动纵向采样，使画面中的水平边缘呈现波浪线。
+    float wavePhase = uv.x * 6.2831853 * waveFrequency + motionTime * 0.70 +
+        reminderBounce * 0.18 * strength;
+    float verticalWave = (
+        sin(wavePhase) + sin(wavePhase * 2.0 - motionTime * 0.85) * 0.20
     ) * waveAmplitude * strength * strainAmount;
 
-    // 两个非整倍频微抖只在水平方向叠加；纵向使用尖峰后缓慢回弹，形成整体画面跳一下的感觉。
-    float tremorAmount = (0.55 + 0.45 * bouncePulse) * strength;
-    float horizontalTremor = (
-        sin(motionTime * 9.70) + sin(motionTime * 15.30) * 0.45
-    ) * 0.0024 * tremorAmount;
-    float verticalJump = (bouncePulse - 0.225) * 0.00775 * strength;
-
-    // 满强度预留 2.8% 采样边缘，覆盖横波和微抖的最大位移，避免 Clamp 拉出明显边缘色带。
-    float edgeInset = 0.028 * strength;
-    vec2 sampleUv = (uv - vec2(0.5)) * (1.0 - edgeInset * 2.0) + vec2(0.5);
-    sampleUv += vec2(horizontalWave + horizontalTremor, verticalJump);
+    // 满强度仅纵向内缩 1.5%，覆盖 1.2% 的最大波纹位移并避免边缘拉丝。
+    float verticalInset = 0.015 * strength;
+    vec2 sampleUv = uv;
+    sampleUv.y = (sampleUv.y - 0.5) * (1.0 - verticalInset * 2.0) + 0.5;
+    sampleUv.y += verticalWave;
     sampleUv = clamp(sampleUv, vec2(0.0), vec2(1.0));
 
     gl_FragColor = texture(TEXTURE_0, sampleUv);
