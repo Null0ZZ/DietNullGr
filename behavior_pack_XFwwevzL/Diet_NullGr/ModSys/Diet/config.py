@@ -912,7 +912,8 @@ fruitFarmerDelightFoodGroups = {
 foodGroups.update(fruitFarmerDelightFoodGroups)
 
 # FarmerDelightDlc_All 的 85 个行为包已逐项审查；功能性物品、纯调料与重复定义不写入运行配置。
-# 数据来源：FarmerDelightDlc_All 仓库 3f1ab82efa9f0cf93a78abeed9339790fb6bb74e，共 2205 个全局唯一条目。
+# 初始数据来源：FarmerDelightDlc_All 仓库 3f1ab82efa9f0cf93a78abeed9339790fb6bb74e，共 2205 个全局唯一条目。
+# 重复物品整合后继续补充标准 ID；旧 ID 仍保留在原分类中，以兼容已有存档。
 # 按命名空间和营养组压缩书写，加载时还原为与现有配置一致的 itemId -> list 映射。
 farmerDelightDlcFoodGroups = {}
 for namespacePrefix, groupIds, itemNames in (
@@ -1687,6 +1688,40 @@ for namespacePrefix, groupIds, itemNames in (
     )),
     ("farmer_respite_nullgr:", ["vegetables", "sugars"], (
         "black_tea_honey", "coffe_honey", "green_tea_honey", "yellow_tea_honey",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["fruits", "sugars"], (
+        "apple_slice", "glow_berry_jam_bottle", "glow_berry_jam_jar", "sweet_berry_jam_bottle",
+        "sweet_berry_jam_jar", "sweet_berry_juice",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["grains"], (
+        "corn_cob", "corn_kernel", "grilled_corn", "popcorn",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["grains", "proteins"], (
+        "batter",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["grains", "proteins", "vegetables"], (
+        "chinese_crepe",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["grains", "proteins", "vegetables", "sugars"], (
+        "rose_cake",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["proteins"], (
+        "boiled_egg", "cooked_chicken_leg", "cooked_glow_squid_tentacles", "cooked_squid_tentacles",
+        "fish_sauce_bottle", "jerky", "raw_chicken_breast", "raw_chicken_leg", "raw_glow_squid_tentacles",
+        "raw_shulker_meat", "raw_shulker_meat_slice", "raw_squid_tentacles", "sunflower_kernel",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["proteins", "sugars"], (
+        "peanut_butter",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["sugars"], (
+        "caramel_bottle", "chocolate_sauce", "marshmallow_stick", "roasted_marshmallow_stick",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["vegetables"], (
+        "baked_sweet_potato", "mashed_potatoes", "potato_chip", "raw_potato_slice", "roasted_sunflower_seeds",
+        "sweet_potato",
+    )),
+    ("farmerdelight_dlc_nullgr:", ["vegetables", "sugars"], (
+        "pickle_slice",
     )),
     ("fastfood_delight_nullgr:", ["fruits", "proteins", "sugars"], (
         "apple_sauce",

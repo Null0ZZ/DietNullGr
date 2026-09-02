@@ -769,6 +769,8 @@ foodDrinkDefaultValues = {
     "brazilian_delight_nullgr:sweet_love_apple": 1.0,
     "brazilian_delight_nullgr:sweet_rice": 3.0,
     "brazilian_delight_nullgr:tucupi": 4.0,
+    # 重复物品整合后的标准饮品 ID；旧 ID 仍保留用于旧档兼容。
+    "farmerdelight_dlc_nullgr:sweet_berry_juice": 5.0,
 }
 
 for itemName, drinkDefaultValue in foodDrinkDefaultValues.items():

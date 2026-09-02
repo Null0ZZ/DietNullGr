@@ -11,8 +11,8 @@
     "uuid": "5e0aa644-9afb-4906-b8f9-b5f7d86bf51a",
     "version": [
       6,
-      8,
-      30
+      9,
+      2
     ]
   },
   "modules": [
@@ -21,8 +21,8 @@
       "uuid": "fbe2ba59-8dbd-43b5-ac9b-b58cf1ab499b",
       "version": [
         6,
-        8,
-        30
+        9,
+        2
       ],
       "description": "resourcepackqewqRv3qNullGrRP"
     }
