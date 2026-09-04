@@ -1,5 +1,5 @@
 // __multiversion__
-// 发烧使用持续橙红渐晕，并通过颜色由橙红压深至深红表现呼吸式发热。
+// 发烧使用持续橙红渐晕，并让颜色与遮罩半径同步呼吸表现发热压迫感。
 
 precision highp float;
 
@@ -18,7 +18,7 @@ void main()
     float centerWarmth = EXTRA_VECTOR1.z;
     float breathPeriod = EXTRA_VECTOR1.w;
 
-    // 每轮前 42% 较快压深、后 58% 较慢回落；遮罩与覆盖强度不参与呼吸，避免渐晕消失。
+    // 每轮前 42% 较快压深并向中心收紧，后 58% 较慢回落并向外舒张。
     float breathPhase = mod(TIME, breathPeriod) / breathPeriod;
     float deepening = smoothstep(0.0, 0.42, breathPhase);
     float relaxing = 1.0 - smoothstep(0.42, 1.0, breathPhase);
@@ -30,13 +30,12 @@ void main()
 
     vec3 sourceColor = texture(TEXTURE_0, uv).rgb;
     vec2 centeredUv = uv * 2.0 - vec2(1.0);
-    float vignetteMask = smoothstep(
-        0.38,
-        1.05,
-        length(centeredUv * vec2(1.0, 1.10))
-    );
+    float radialDistance = length(centeredUv * vec2(1.0, 1.10));
+    float vignetteInnerRadius = mix(0.50, 0.30, breathingAmount);
+    float vignetteOuterRadius = mix(1.14, 0.96, breathingAmount);
+    float vignetteMask = smoothstep(vignetteInnerRadius, vignetteOuterRadius, radialDistance);
 
-    // 中心只增加少量暖色通道而不压暗；边缘在整个呼吸周期始终保持同一覆盖范围和强度。
+    // 中心只增加少量暖色通道而不压暗；覆盖强度不参与呼吸，舒张阶段的屏幕边缘仍保持渐晕。
     float centerMask = 1.0 - vignetteMask;
     vec3 warmedColor = clamp(
         sourceColor + vec3(centerWarmth, centerWarmth * 0.18, 0.0) * strength * centerMask,

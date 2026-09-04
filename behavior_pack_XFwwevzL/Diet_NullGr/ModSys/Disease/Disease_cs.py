@@ -185,7 +185,7 @@ class ClientSys(ClientSystem):
                 config.feverVisionMaxStrength / float(config.feverVisionFadeTick)
             )
         if self.feverVisionStrength > 0.0:
-            # 呼吸只在着色器中改变橙红色深度；客户端强度只负责确诊和痊愈的平滑接入、退出。
+            # 颜色深度和渐晕半径只在着色器中同步呼吸；客户端强度只负责确诊和痊愈的平滑接入、退出。
             self.postProcessComp.SetParameter(
                 config.feverVisionPostProcess,
                 config.feverVisionStrengthParameter,
