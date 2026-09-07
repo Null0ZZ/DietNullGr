@@ -282,4 +282,34 @@ diseases = {
         "requiresThirst": False
     }
 }
-# 调试指令直接调用确诊事务，不在配置层维护独立的营养触发档案。
+# 指令使用的营养快照必须同时满足发病条件且不满足恢复条件；调整后立即确诊，恢复仍沿用正常规则。
+debugCommandNutritionProfiles = {
+    "hypoglycemia": {
+        "fruits": 0.10, "grains": 0.10, "proteins": 0.50,
+        "vegetables": 0.50, "sugars": 0.10, "thirst": 1.00
+    },
+    "hyperglycemia": {
+        "fruits": 0.50, "grains": 0.50, "proteins": 0.50,
+        "vegetables": 0.50, "sugars": 1.00, "thirst": 1.00
+    },
+    "constipation": {
+        "fruits": 0.20, "grains": 0.50, "proteins": 0.50,
+        "vegetables": 0.20, "sugars": 0.50, "thirst": 0.30
+    },
+    "rickets": {
+        "fruits": 0.50, "grains": 0.50, "proteins": 0.10,
+        "vegetables": 0.50, "sugars": 0.50, "thirst": 1.00
+    },
+    "fever": {
+        "fruits": 0.10, "grains": 0.10, "proteins": 0.10,
+        "vegetables": 0.50, "sugars": 0.50, "thirst": 0.20
+    },
+    "mouth_ulcer": {
+        "fruits": 0.20, "grains": 0.10, "proteins": 0.10,
+        "vegetables": 0.50, "sugars": 0.75, "thirst": 1.00
+    },
+    "scurvy": {
+        "fruits": 0.10, "grains": 0.50, "proteins": 0.50,
+        "vegetables": 0.10, "sugars": 0.50, "thirst": 1.00
+    }
+}
