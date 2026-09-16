@@ -26,6 +26,8 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "ClientLoadAddonsFinishServerEvent", self, self.ClientLoadAddonsFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerEatFoodServerEvent", self, self.PlayerEatFoodServerEvent)
+        # 放置煎饼成功吃下一份后由 Rustic 主系统通知，与手持食品复用同一营养、疾病和保存事务。
+        self.ListenForEvent("RusticDelight", "RusticDelight_nullgr_ServerSys", "RusticDelightFoodConsumed", self, self.PlayerEatFoodServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerHungerChangeServerEvent", self, self.PlayerHungerChangeServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerDieEvent", self, self.PlayerDieEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "PlayerRespawnFinishServerEvent", self, self.PlayerRespawnFinishServerEvent)
@@ -95,6 +97,37 @@ class DietServerSystem(ServerSystem):
             del self.playerDietData[playerId]
         if playerId in self.deadPlayers:
             del self.deadPlayers[playerId]
+
+    # 咖啡的随机清除需要识别当前营养和疾病占用的原版效果，不能把失衡状态当普通药水治好。
+    def GetFoodCureProtectedEffects(self, playerId):
+        if playerId not in self.playerDietData:
+            return []
+        gameType = compGame.GetPlayerGameType(playerId)
+        if (gameType == gameTypeEnum.Spectator or
+                (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
+            return []
+        data = self.playerDietData[playerId]
+        diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
+        diseaseActive = diseaseSys.hasActiveDisease(playerId)
+        protected = []
+        if data['active']:
+            results = Diet.getMatchedDietResults(data, diseaseActive, diseaseSys.isSugarRushPaused(playerId))
+            for result in results:
+                effectConfig = config.dietPenalties[result['id']] if result['kind'] == 'penalty' else config.dietEffects[result['id']]
+                protected.extend(effect['name'] for effect in effectConfig['statusEffects'])
+        diseases = diseaseSys.playerDiseaseData[playerId]
+        if diseases['enabled']:
+            active = diseases['active']
+            protected.extend(diseaseConfig.diseases[name]['customEffect'] for name in active)
+            if 'hyperglycemia' in active:
+                protected.append('slowness')
+            if 'fever' in active or 'scurvy' in active:
+                protected.append('weakness')
+            if 'scurvy' in active:
+                protected.append('mining_fatigue')
+            if any(name in active for name in ('constipation', 'hypoglycemia', 'hyperglycemia', 'fever')):
+                protected.append('nausea')
+        return protected
 
     def PlayerEatFoodServerEvent(self, args):
         playerId = args['playerId']

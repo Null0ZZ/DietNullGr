@@ -181,6 +181,9 @@ foodDrinkDefaultValues = {
     "rusticdelight_nullgr:honey_coffee": 4.0,
     "rusticdelight_nullgr:milk_coffee": 4.0,
     "rusticdelight_nullgr:syrup_coffee": 4.0,
+    "rusticdelight_nullgr:pumpkin_coffee": 4.0,
+    "rusticdelight_nullgr:cherry_blossom_coffee": 4.0,
+    "rusticdelight_nullgr:calamari_soup": 4.0,
     # 数据来源：behavior_pack_ZddxNft7
     "delightful_nullgr:azalea_tea": 5.0,
     "delightful_nullgr:berry_matcha_latte": 5.0,

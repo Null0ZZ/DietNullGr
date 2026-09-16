@@ -2405,8 +2405,32 @@ for namespacePrefix, groupIds, itemNames in (
     ("ramadandelight_nullgr:", ["vegetables"], (
         "parsley", "tabbouleh",
     )),
-    ("rusticdelight_nullgr:", ["fruits", "grains", "proteins", "sugars"], (
-        "honey_pancake",
+    # Java 1.7.1 固定主要原料；花朵和咖啡调味不额外计为蔬菜，可选肉馅不使所有酿椒获得蛋白质。
+    ("rusticdelight_nullgr:", ["grains"], (
+        "fried_dough", "cherry_blossom_cookie", "coffee_cookie", "cherry_blossom_roll",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins"], (
+        "calamari_roll", "cherry_blossom_pancake", "coffee_pancake", "fried_fish",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins", "vegetables"], (
+        "fried_calamari", "fried_chicken", "fried_dumplings", "vegetable_pancake",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins", "vegetables", "sugars"], (
+        "pumpkin_pancake",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins", "sugars"], (
+        "chocolate_pancake", "honey_pancake", "pancake", "syrup_cheesecake_slice",
+        "cherry_blossom_cheesecake_slic", "coffee_cheesecake_slice",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "vegetables"], (
+        "bell_pepper_pasta", "bell_pepper_roll_red", "bell_pepper_roll_green", "bell_pepper_roll_yellow",
+        "bell_pepper_roll_orange", "bell_pepper_roll_white", "bell_pepper_roll_pink", "bell_pepper_roll_blue",
+        "bell_pepper_roll_purple", "bell_pepper_roll_black", "stuffed_bell_pepper_red", "stuffed_bell_pepper_green",
+        "stuffed_bell_pepper_yellow", "stuffed_bell_pepper_orange", "stuffed_bell_pepper_white", "stuffed_bell_pepper_pink",
+        "stuffed_bell_pepper_blue", "stuffed_bell_pepper_purple", "stuffed_bell_pepper_black",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "sugars"], (
+        "syrup_cookie", "syrup_sandwich",
     )),
     ("rusticdelight_nullgr:", ["fruits", "grains", "sugars"], (
         "fruit_beignet",
@@ -2414,48 +2438,50 @@ for namespacePrefix, groupIds, itemNames in (
     ("rusticdelight_nullgr:", ["fruits", "vegetables", "sugars"], (
         "sweet_salad",
     )),
-    ("rusticdelight_nullgr:", ["grains"], (
-        "fried_dough", "fried_dumplings",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "proteins"], (
-        "batter", "calamari_roll",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "proteins", "vegetables"], (
-        "cherry_blossom_cheesecake_slic", "cherry_blossom_cookie", "cherry_blossom_pancake", "fried_calamari",
-        "fried_chicken", "fried_mushrooms", "spring_rolls", "stuffed_bell_pepper_green", "stuffed_bell_pepper_red",
-        "stuffed_bell_pepper_yellow", "vegetable_pancake",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "proteins", "vegetables", "sugars"], (
-        "pumpkin_pancake",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "proteins", "sugars"], (
-        "chocolate_pancake", "coffee_cookie", "pancake", "syrup_cheesecake_slice", "syrup_cookie",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "vegetables"], (
-        "bell_pepper_pasta", "bell_pepper_roll_green", "bell_pepper_roll_red", "bell_pepper_roll_yellow",
-        "cherry_blossom_roll",
-    )),
-    ("rusticdelight_nullgr:", ["grains", "sugars"], (
-        "syrup_sandwich",
-    )),
     ("rusticdelight_nullgr:", ["proteins"], (
-        "calamari", "calamari_slice", "cooked_calamari", "cooked_calamari_slice", "milk_coffee",
+        "calamari_slice", "cooked_calamari_slice", "milk_coffee", "cherry_blossom_coffee",
     )),
     ("rusticdelight_nullgr:", ["proteins", "vegetables"], (
-        "coffee_braised_beef", "potato_salad",
+        "coffee_braised_beef", "potato_salad", "pumpkin_coffee", "calamari_soup",
     )),
     ("rusticdelight_nullgr:", ["proteins", "sugars"], (
-        "chocolate_coffee", "syrup_coffee",
+        "chocolate_coffee", "honey_coffee", "syrup_coffee",
     )),
     ("rusticdelight_nullgr:", ["vegetables"], (
-        "baked_potato_slices", "bell_pepper_green", "bell_pepper_red", "bell_pepper_slice_green",
-        "bell_pepper_slice_red", "bell_pepper_slice_yellow", "bell_pepper_soup", "bell_pepper_yellow",
-        "coffee_beans", "cook_bell_pepper_slice_green", "cook_bell_pepper_slice_red",
-        "cook_bell_pepper_slice_yellow", "golden_coffee_beans", "potato_slices", "roasted_bell_pepper_green",
-        "roasted_bell_pepper_red", "roasted_bell_pepper_yellow", "roasted_coffee_beans",
+        "bell_pepper_soup", "fried_mushrooms", "roasted_coffee_beans", "golden_coffee_beans",
+        "bell_pepper_red", "bell_pepper_green", "bell_pepper_yellow", "bell_pepper_orange",
+        "bell_pepper_white", "bell_pepper_pink", "bell_pepper_blue", "bell_pepper_purple",
+        "bell_pepper_black", "roasted_bell_pepper_red", "roasted_bell_pepper_green", "roasted_bell_pepper_yellow",
+        "roasted_bell_pepper_orange", "roasted_bell_pepper_white", "roasted_bell_pepper_pink", "roasted_bell_pepper_blue",
+        "roasted_bell_pepper_purple", "roasted_bell_pepper_black", "bell_pepper_slice_red", "bell_pepper_slice_green",
+        "bell_pepper_slice_yellow", "bell_pepper_slice_orange", "bell_pepper_slice_white", "bell_pepper_slice_pink",
+        "bell_pepper_slice_blue", "bell_pepper_slice_purple", "bell_pepper_slice_black", "cook_bell_pepper_slice_red",
+        "cook_bell_pepper_slice_green", "cook_bell_pepper_slice_yellow", "cook_bell_pepper_slice_orange", "cook_bell_pepper_slice_white",
+        "cook_bell_pepper_slice_pink", "cook_bell_pepper_slice_blue", "cook_bell_pepper_slice_purple", "cook_bell_pepper_slice_black",
     )),
     ("rusticdelight_nullgr:", ["sugars"], (
         "syrup",
+    )),
+    ("rusticdelight_nullgr:", [], (
+        "coffee", "dark_coffee", "cooking_oil",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins"], (
+        "batter",
+    )),
+    ("rusticdelight_nullgr:", ["proteins"], (
+        "calamari",
+    )),
+    ("rusticdelight_nullgr:", ["proteins"], (
+        "cooked_calamari",
+    )),
+    ("rusticdelight_nullgr:", ["grains", "proteins", "vegetables"], (
+        "spring_rolls",
+    )),
+    ("rusticdelight_nullgr:", ["vegetables"], (
+        "potato_slices",
+    )),
+    ("rusticdelight_nullgr:", ["vegetables"], (
+        "baked_potato_slices",
     )),
     ("silents_delight_nullgr:", ["fruits", "vegetables", "sugars"], (
         "sculk_sensor_sprinkles",
