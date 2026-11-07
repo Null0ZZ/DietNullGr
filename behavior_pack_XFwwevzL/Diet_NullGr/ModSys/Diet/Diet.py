@@ -217,7 +217,7 @@ def registerDietTag(tagName, foodGroupIds):
 
 
 # 进食时统一合并内置表、外部注册表和物品 JSON tag，三种联动方式共享同一套增量计算。
-def getFoodGroupIds(itemName, itemAuxValue, compItem, sources=None):
+def getFoodGroupIds(itemName, itemAuxValue, compItem, sources=None, itemTags=None):
     selectedGroups = {}
     if itemName in config.foodGroups:
         if sources is not None:
@@ -229,7 +229,8 @@ def getFoodGroupIds(itemName, itemAuxValue, compItem, sources=None):
             sources.append('联动注册')
         for groupId in runtimeFoodGroups[itemName]:
             selectedGroups[groupId] = True
-    itemTags = compItem.GetItemTags(itemName, itemAuxValue)
+    if itemTags is None:
+        itemTags = compItem.GetItemTags(itemName, itemAuxValue)
     matchedTag = False
     for tagName in itemTags:
         if tagName in config.dietTagGroups:
@@ -483,7 +484,7 @@ def formatDietPercent(value):
     return int(clampDietValue(value) * 100.0)
 
 
-# 手动规则的半点步进和连续进食折扣最多产生三位小数，进食提示保留实际增量。
+# 手动进食提示保留至多三位小数，自动进食沿用整数显示。
 def formatDietGainPercent(value, precise=False):
     if precise:
         return '{:.3f}'.format(clampDietValue(value) * 100.0).rstrip('0').rstrip('.')
@@ -518,8 +519,8 @@ def buildNutritionPenaltyWarningText(data, groupId, value):
     return "{}营养值接近低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
 
 
-# 进食反馈只基于本次真实增量和保存前的最新数据生成，避免继续显示物品 id 这种调试文案。
-def buildFoodGainMessages(data, gainValues, preciseGain=False):
+# 手动提示用封顶前后的差值，低值建议仍按本次参与结算的营养组生成。
+def buildFoodGainMessages(data, gainValues, beforeValues=None):
     gainTexts = []
     for groupId in config.groupOrder:
         if groupId not in gainValues:
@@ -527,7 +528,12 @@ def buildFoodGainMessages(data, gainValues, preciseGain=False):
         groupName = config.groups[groupId]['name']
         currentValue = data['values'][groupId]
         currentPercent = formatDietPercent(currentValue)
-        gainPercent = formatDietGainPercent(gainValues[groupId], preciseGain)
+        if beforeValues is not None:
+            gainPercent = formatDietGainPercent(currentValue - beforeValues[groupId], True)
+            if gainPercent == '0':
+                continue
+        else:
+            gainPercent = formatDietGainPercent(gainValues[groupId])
         text = "{}营养值 +{}%，当前 {}%".format(groupName, gainPercent, currentPercent)
         missingValue = data['targetDietValue'] - currentValue
         if missingValue > 0.0:

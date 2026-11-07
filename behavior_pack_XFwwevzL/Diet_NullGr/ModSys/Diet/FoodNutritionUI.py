@@ -48,7 +48,12 @@ class FoodNutritionUI(ScreenNode):
         self.keyword = ''
         self.showConfigured = False
         self.selectedNamespace = ''
-        self.namespaces = []
+        self.namespaces = ()
+        self.catalogFilter = None
+        self.searchResults = []
+        self.namespaceCounts = {}
+        self.namespaceLayout = None
+        self.renderedNamespace = None
         self.page = 0
         self.pageCount = 1
         self.visibleFoods = []
@@ -78,6 +83,9 @@ class FoodNutritionUI(ScreenNode):
             self.controls[path] = self.GetBaseUIControl(windowPath + '/' + path)
         for path in ('back', 'close'):
             self._bindButton(self.controls[path], self.Navigate)
+        allPath = windowPath + '/catalog/all'
+        self.GetBaseUIControl(allPath + '/icon').SetVisible(False)
+        self.GetBaseUIControl(allPath + '/name').asLabel().SetText('全部')
         for name in ('clear', 'pending', 'configured', 'all', 'retry', 'previous', 'next'):
             self._bindButton(self.controls['catalog/' + name], self.CatalogAction)
         for name in ('restore', 'save'):
@@ -100,7 +108,7 @@ class FoodNutritionUI(ScreenNode):
 
         for index in range(12):
             name = 'tile' + str(index)
-            button = self.CreateChildControl('food_nutrition.foodTile', name, self.controls['catalog/tiles'], False)
+            button = self.CreateChildControl('diet_nullgr_food_nutrition.foodTile', name, self.controls['catalog/tiles'], False)
             path = windowPath + '/catalog/tiles/' + name
             self._bindButton(button, self.SelectFood)
             self.tiles.append((button, self.GetBaseUIControl(path + '/icon'), self.GetBaseUIControl(path + '/name')))
@@ -144,8 +152,8 @@ class FoodNutritionUI(ScreenNode):
         right = gridWidth + 16
         self.columns = min(4, max(2, (gridWidth + 4) // 48))
         self.rows = min(3, max(1, (gridHeight + 4) // 33))
-        self.tileWidth = (gridWidth - (self.columns - 1) * 4) // self.columns
-        self.tileHeight = (gridHeight - (self.rows - 1) * 4) // self.rows
+        tileWidth = (gridWidth - (self.columns - 1) * 4) // self.columns
+        tileHeight = (gridHeight - (self.rows - 1) * 4) // self.rows
         self.namespaceWidth = rightWidth - 5
         tabWidth = min(45, (gridWidth - 28) // 2)
         rowTop = 80
@@ -182,6 +190,15 @@ class FoodNutritionUI(ScreenNode):
             row['panel'].SetSize((width - 18, rowHeight - 1), True)
             iconSize = min(16, rowHeight - 2)
             row['icon'].SetSize((iconSize, iconSize))
+        # 格子的背景和图标锚点跟随父控件尺寸，翻页时只换内容。
+        tileIconSize = min(19, tileHeight // 2 - 4)
+        for index, (button, icon, label) in enumerate(self.tiles[:self.columns * self.rows]):
+            column = index % self.columns
+            row = index // self.columns
+            button.SetPosition((column * (tileWidth + 4), row * (tileHeight + 4)))
+            button.SetSize((tileWidth, tileHeight), True)
+            icon.SetSize((tileIconSize, tileIconSize))
+        self.namespaceLayout = None
         if self.catalogReady and self.selectedItem is None:
             self._refreshCatalog()
         else:
@@ -262,8 +279,14 @@ class FoodNutritionUI(ScreenNode):
         if kind == 'write':
             self._finishWrite(args['code'], detail)
         elif self.pendingWrite is not None:
-            desiredUnits = self.pendingWrite[0]
-            code = 'same' if detail is not None and detail['manualUnits'] == desiredUnits else 'timeout'
+            # 超时读回以提交时的旧值和目标值为准，第三种结果是其他管理员的改动。
+            code = 'timeout'
+            if detail is not None:
+                currentUnits = detail['manualUnits']
+                if currentUnits == self.pendingWrite['desiredUnits']:
+                    code = 'same'
+                elif currentUnits != self.pendingWrite['previousUnits']:
+                    code = 'conflict'
             self._finishWrite(code, detail)
         elif detail is not None:
             self._applyStatus(detail)
@@ -309,67 +332,104 @@ class FoodNutritionUI(ScreenNode):
         entry = self.entries[itemName]
         if detail['revision'] < entry['revision']:
             return False
+        if (entry['status'] == 'pending') != (detail['status'] == 'pending'):
+            self.catalogFilter = None
         entry['revision'] = detail['revision']
         entry['status'] = detail['status']
         return True
 
-    # 搜索、切页签和保存回到列表时重新统计命中；单纯翻页只更新左侧物品格。
+    # 全文匹配只依赖页签、关键词和待设置归属，切分类直接使用已排序的命中。
     def _refreshCatalog(self):
         if not self.catalogReady:
             return
-        self.matches, counts = FoodNutrition.filterFoodCatalog(
-            self.itemNames, self.entries, self.showConfigured, self.selectedNamespace, self.keyword
-        )
-        if self.selectedNamespace and self.selectedNamespace not in counts:
-            counts[self.selectedNamespace] = 0
-        self.namespaces = sorted(namespace for namespace in counts if namespace)
-        for name, selected in (('pending', not self.showConfigured), ('configured', self.showConfigured)):
-            path = windowPath + '/catalog/' + name
-            self.GetBaseUIControl(path + '/selected').SetVisible(selected)
-            self.GetBaseUIControl(path + '/caption').asLabel().SetTextColor(selectedColor if selected else inkColor)
+        previousCounts = self.namespaceCounts
+        filterKey = (self.showConfigured, self.keyword)
+        if filterKey != self.catalogFilter:
+            if self.catalogFilter is None or self.catalogFilter[0] != self.showConfigured:
+                for name, selected in (('pending', not self.showConfigured), ('configured', self.showConfigured)):
+                    path = windowPath + '/catalog/' + name
+                    self.GetBaseUIControl(path + '/selected').SetVisible(selected)
+                    self.GetBaseUIControl(path + '/caption').asLabel().SetTextColor(
+                        selectedColor if selected else inkColor
+                    )
+            self.searchResults, self.namespaceCounts = FoodNutrition.filterFoodCatalog(
+                self.itemNames, self.entries, self.showConfigured, self.keyword
+            )
+            # 保存后当前分类可能已空，保留该行直到玩家主动切走。
+            namespaces = set(self.namespaceCounts)
+            namespaces.add(self.selectedNamespace)
+            namespaces.discard('')
+            self.namespaces = tuple(sorted(namespaces))
+            self.catalogFilter = filterKey
+        elif (self.renderedNamespace and self.renderedNamespace != self.selectedNamespace and
+              self.renderedNamespace not in self.namespaceCounts):
+            self.namespaces = tuple(namespace for namespace in self.namespaces if namespace != self.renderedNamespace)
+        self.matches = self.searchResults
+        if self.selectedNamespace:
+            self.matches = [itemName for itemName in self.searchResults
+                            if self.entries[itemName]['namespace'] == self.selectedNamespace]
         matchCount = '{} 种'.format(len(self.matches))
         self.controls['catalog/matchCount'].asLabel().SetText(matchCount)
-        allPath = windowPath + '/catalog/all'
-        self.GetBaseUIControl(allPath + '/selected').SetVisible(not self.selectedNamespace)
-        self.GetBaseUIControl(allPath + '/icon').SetVisible(False)
-        for name, value in (('name', '全部'), ('count', str(counts['']))):
-            label = self.GetBaseUIControl(allPath + '/' + name).asLabel()
-            label.SetText(value)
-            label.SetTextColor(inkColor if self.selectedNamespace else selectedColor)
-        self._renderNamespaces(counts)
+        self._renderNamespaces(previousCounts)
         self._renderPage()
 
-    # 滚动内容的路径随触控模式变化，按当前路径复用行控件，缩短列表时隐藏多余行。
-    def _renderNamespaces(self, counts):
+    # 新行与分类切换共用选中态，保证名称和计数都能在深色底上读取。
+    def _setNamespaceSelected(self, path, selected):
+        self.GetBaseUIControl(path + '/selected').SetVisible(selected)
+        color = selectedColor if selected else inkColor
+        for name in ('name', 'count'):
+            self.GetBaseUIControl(path + '/' + name).asLabel().SetTextColor(color)
+
+    # 滚动容器可能随输入模式切换，只有行结构或布局变化时才重绑右栏。
+    def _renderNamespaces(self, previousCounts):
         scroll = self.controls['catalog/namespaceScroll'].asScrollView()
         contentPath = scroll.GetScrollViewContentPath()
-        content = self.GetBaseUIControl(contentPath)
-        previousCount = self.namespaceRowCounts.get(contentPath, 0)
-        rowHeight = 21 if self.namespaceWidth >= 89 else 31
-        for index, namespace in enumerate(self.namespaces):
-            name = 'namespace' + str(index)
-            path = contentPath + '/' + name
-            if index >= previousCount:
-                row = self.CreateChildControl('food_nutrition.namespaceRow', name, content, False)
-                self._bindButton(row, self.SelectNamespace)
-            else:
-                row = self.GetBaseUIControl(path)
-            row.SetPosition((0, index * rowHeight))
-            # 桌面滚动条占用内容右边的空间，预留宽度让计数保持完整可见。
-            row.SetSize((self.namespaceWidth - 8, rowHeight - 2), True)
-            row.SetVisible(True)
-            selected = self.selectedNamespace == namespace
-            self.GetBaseUIControl(path + '/selected').SetVisible(selected)
-            icon = self.GetBaseUIControl(path + '/icon')
-            icon.SetPropertyBag({'#item_id_aux': self.entries[self.representatives[namespace]]['icon']})
-            for child, value in (('name', namespace), ('count', str(counts[namespace]))):
-                label = self.GetBaseUIControl(path + '/' + child).asLabel()
-                label.SetText(value)
-                label.SetTextColor(selectedColor if selected else inkColor)
-        for index in range(len(self.namespaces), previousCount):
-            self.GetBaseUIControl(contentPath + '/namespace' + str(index)).SetVisible(False)
-        self.namespaceRowCounts[contentPath] = max(previousCount, len(self.namespaces))
-        content.SetSize((self.namespaceWidth, max(1, rowHeight * len(self.namespaces))))
+        layout = (contentPath, self.namespaceWidth, self.namespaces)
+        layoutChanged = layout != self.namespaceLayout
+        counts = self.namespaceCounts
+        allPath = windowPath + '/catalog/all'
+        if counts[''] != previousCounts.get(''):
+            self.GetBaseUIControl(allPath + '/count').asLabel().SetText(str(counts['']))
+        if layoutChanged:
+            content = self.GetBaseUIControl(contentPath)
+            previousCount = self.namespaceRowCounts.get(contentPath, 0)
+            rowHeight = 21 if self.namespaceWidth >= 89 else 31
+            for index, namespace in enumerate(self.namespaces):
+                name = 'namespace' + str(index)
+                path = contentPath + '/' + name
+                if index >= previousCount:
+                    row = self.CreateChildControl('diet_nullgr_food_nutrition.namespaceRow', name, content, False)
+                    self._bindButton(row, self.SelectNamespace)
+                else:
+                    row = self.GetBaseUIControl(path)
+                row.SetPosition((0, index * rowHeight))
+                # 桌面滚动条占用内容右边的空间，预留宽度让计数保持完整可见。
+                row.SetSize((self.namespaceWidth - 8, rowHeight - 2), True)
+                row.SetVisible(True)
+                icon = self.GetBaseUIControl(path + '/icon')
+                icon.SetPropertyBag({'#item_id_aux': self.entries[self.representatives[namespace]]['icon']})
+                self.GetBaseUIControl(path + '/name').asLabel().SetText(namespace)
+                self.GetBaseUIControl(path + '/count').asLabel().SetText(str(counts.get(namespace, 0)))
+                self._setNamespaceSelected(path, self.selectedNamespace == namespace)
+            for index in range(len(self.namespaces), previousCount):
+                self.GetBaseUIControl(contentPath + '/namespace' + str(index)).SetVisible(False)
+            self.namespaceRowCounts[contentPath] = max(previousCount, len(self.namespaces))
+            content.SetSize((self.namespaceWidth, max(1, rowHeight * len(self.namespaces))))
+            self.namespaceLayout = layout
+        elif counts is not previousCounts:
+            for index, namespace in enumerate(self.namespaces):
+                count = counts.get(namespace, 0)
+                if count != previousCounts.get(namespace, 0):
+                    path = contentPath + '/namespace' + str(index) + '/count'
+                    self.GetBaseUIControl(path).asLabel().SetText(str(count))
+        if self.renderedNamespace != self.selectedNamespace:
+            for namespace, selected in ((self.renderedNamespace, False), (self.selectedNamespace, True)):
+                if namespace == '':
+                    self._setNamespaceSelected(allPath, selected)
+                elif not layoutChanged and namespace is not None:
+                    path = contentPath + '/namespace' + str(self.namespaces.index(namespace))
+                    self._setNamespaceSelected(path, selected)
+            self.renderedNamespace = self.selectedNamespace
 
     # 分页只绘制当前切片，返回目录后页数减少时回落到末页。
     def _renderPage(self):
@@ -383,11 +443,6 @@ class FoodNutritionUI(ScreenNode):
             button.SetVisible(shown)
             if shown:
                 entry = self.entries[self.visibleFoods[index]]
-                column = index % self.columns
-                row = index // self.columns
-                button.SetPosition((column * (self.tileWidth + 4), row * (self.tileHeight + 4)))
-                # 背景、图标锚点和名称宽度都依赖格子尺寸，重排时要同时更新子控件。
-                button.SetSize((self.tileWidth, self.tileHeight), True)
                 icon.SetPropertyBag({'#item_id_aux': entry['icon']})
                 label.asLabel().SetText(entry['label'])
         empty = not self.matches
@@ -402,7 +457,7 @@ class FoodNutritionUI(ScreenNode):
             control.SetAlpha(1.0 if enabled else 0.50)
         self.UpdateScreen(True)
 
-    @ViewBinder.binding(ViewBinder.BF_EditChanged, "#food_nutrition.search")
+    @ViewBinder.binding(ViewBinder.BF_EditChanged, "#diet_nullgr_food_nutrition.search")
     def SearchChanged(self, args):
         text = args['Text']
         if text != self.keyword:
@@ -411,11 +466,11 @@ class FoodNutritionUI(ScreenNode):
             self._refreshCatalog()
         return ViewRequest.Nothing
 
-    @ViewBinder.binding(ViewBinder.BF_EditFinished, "#food_nutrition.search")
+    @ViewBinder.binding(ViewBinder.BF_EditFinished, "#diet_nullgr_food_nutrition.search")
     def SearchFinished(self, args):
         return self.SearchChanged(args)
 
-    @ViewBinder.binding(ViewBinder.BF_BindString, "#food_nutrition.search_text")
+    @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_nullgr_food_nutrition.search_text")
     def BindSearchText(self):
         return self.keyword
 
@@ -463,6 +518,7 @@ class FoodNutritionUI(ScreenNode):
         self.controls['detail/itemName'].asLabel().SetText(entry['label'])
         self.controls['detail/itemStatus'].asLabel().SetText('正在读取规则…')
         self.controls['detail/source'].asLabel().SetText('')
+        self.controls['detail/columnTitle'].SetVisible(False)
         self.controls['detail/feedback'].asLabel().SetText('')
         self.controls['detail/save'].SetVisible(False)
         self.controls['detail/restore'].SetVisible(False)
@@ -475,31 +531,31 @@ class FoodNutritionUI(ScreenNode):
     def _showDetail(self, detail, resetDraft):
         self.detail = detail
         manualUnits = detail['manualUnits']
-        referenceUnits = detail['referenceUnits']
-        shownUnits = manualUnits if manualUnits is not None else referenceUnits
-        self.initialUnits = shownUnits if shownUnits is not None else [0] * len(config.groupOrder)
+        self.initialUnits = manualUnits if manualUnits is not None else [0] * len(config.groupOrder)
         status = statusNames[detail['status']]
         if not self.canEdit:
             status += ' · 只读'
-        elif detail['status'] == 'auto' and referenceUnits is not None:
-            status += ' · 实测基础参考'
         self.controls['detail/itemStatus'].asLabel().SetText(status)
         source = ''
         if detail['autoGroups']:
             groups = '、'.join(config.groups[groupId]['name'] for groupId in detail['autoGroups'])
             source = '{} · {}'.format('、'.join(detail['autoSources']), groups)
         self.controls['detail/source'].asLabel().SetText(source)
+        showValues = self.canEdit or manualUnits is not None
+        title = self.controls['detail/columnTitle']
+        title.SetVisible(showValues)
+        title.asLabel().SetText('手动草稿（百分点）' if self.canEdit else '每份手动增量（百分点）')
         self.controls['detail/save'].SetVisible(self.canEdit)
         self.controls['detail/restore'].SetVisible(self.canEdit and manualUnits is not None)
         for index, row in enumerate(self.groupRows):
-            row['panel'].SetVisible(True)
+            row['panel'].SetVisible(showValues)
             for name in ('minus', 'plus', 'value'):
                 row[name].SetVisible(self.canEdit)
-                row[name].SetTouchEnable(True)
-            row['readOnly'].SetVisible(not self.canEdit)
-            readonly = '—' if shownUnits is None else FoodNutrition.formatFoodUnits(shownUnits[index])
-            row['readOnly'].asLabel().SetText(readonly)
-            if resetDraft:
+                row[name].SetTouchEnable(self.canEdit)
+            row['readOnly'].SetVisible(not self.canEdit and manualUnits is not None)
+            if not self.canEdit and manualUnits is not None:
+                row['readOnly'].asLabel().SetText(FoodNutrition.formatFoodUnits(manualUnits[index]))
+            if self.canEdit and resetDraft:
                 row['value'].asTextEditBox().SetEditText(FoodNutrition.formatFoodUnits(self.initialUnits[index]))
         if resetDraft:
             self.restorePending = False
@@ -526,11 +582,8 @@ class FoodNutritionUI(ScreenNode):
             self._saveDraft(None)
         elif name == 'restore':
             self.restorePending = True
-            defaults = self.detail['referenceUnits']
-            if defaults is None:
-                defaults = [0] * len(config.groupOrder)
-            for index, row in enumerate(self.groupRows):
-                row['value'].asTextEditBox().SetEditText(FoodNutrition.formatFoodUnits(defaults[index]))
+            for row in self.groupRows:
+                row['value'].asTextEditBox().SetEditText('0')
             message = '保存后恢复自动计算' if self.detail['autoGroups'] else '保存后回到待设置'
             self.controls['detail/feedback'].asLabel().SetText(message)
         else:
@@ -541,10 +594,11 @@ class FoodNutritionUI(ScreenNode):
             if units is None:
                 self.controls['detail/feedback'].asLabel().SetText('请输入 0–100，步进 0.5')
                 return
-            self.restorePending = False
-            units = max(0, min(config.foodNutritionMaxUnits, units + (1 if name == 'plus' else -1)))
-            editor.SetEditText(FoodNutrition.formatFoodUnits(units))
-            self.controls['detail/feedback'].asLabel().SetText('')
+            nextUnits = max(0, min(config.foodNutritionMaxUnits, units + (1 if name == 'plus' else -1)))
+            if nextUnits != units:
+                self.restorePending = False
+                editor.SetEditText(FoodNutrition.formatFoodUnits(nextUnits))
+                self.controls['detail/feedback'].asLabel().SetText('')
 
     # 保存等待期间冻结控件，回执或读回后再决定留在详情还是继续此前的返回操作。
     def _saveDraft(self, target):
@@ -552,11 +606,11 @@ class FoodNutritionUI(ScreenNode):
         if None in values:
             self.controls['detail/feedback'].asLabel().SetText('请输入 0–100，步进 0.5')
             return
-        defaults = self.detail['referenceUnits']
-        if defaults is None:
-            defaults = [0] * len(config.groupOrder)
-        desired = None if self.restorePending and values == defaults else values
-        self.pendingWrite = (desired, target)
+        # 恢复草稿以暂存时填入的全零为准，冲突回包更新旧规则时仍保留删除意图。
+        self.restorePending = self.restorePending and not any(values)
+        desiredUnits = None if self.restorePending else values
+        previousUnits = self.detail['manualUnits']
+        self.pendingWrite = {'previousUnits': previousUnits, 'desiredUnits': desiredUnits, 'target': target}
         for row in self.groupRows:
             for name in ('value', 'minus', 'plus'):
                 row[name].SetTouchEnable(False)
@@ -564,22 +618,22 @@ class FoodNutritionUI(ScreenNode):
         self.controls['detail/restore'].SetTouchEnable(False)
         self.controls['detail/feedback'].asLabel().SetText('正在保存世界规则…')
         self._sendRequest(config.foodRuleRequest, {
-            'itemName': self.selectedItem, 'previousUnits': self.detail['manualUnits'], 'desiredUnits': desired
+            'itemName': self.selectedItem, 'previousUnits': previousUnits, 'desiredUnits': desiredUnits
         })
 
     # 服务端确认后再变更列表状态；失败和冲突继续显示原草稿供核对。
     def _finishWrite(self, code, detail):
-        desired, target = self.pendingWrite
+        pendingWrite = self.pendingWrite
         self.pendingWrite = None
         saved = code in ('saved', 'same')
         if detail is not None:
             self._applyStatus(detail)
         self._showDetail(detail if detail is not None else self.detail, saved)
         if saved:
-            message = '已恢复默认' if desired is None else '已保存 · 下次进食生效'
+            message = '已恢复默认' if pendingWrite['desiredUnits'] is None else '已保存 · 下次进食生效'
             self.controls['detail/feedback'].asLabel().SetText(message)
-            if target is not None:
-                self._leave(target)
+            if pendingWrite['target'] is not None:
+                self._leave(pendingWrite['target'])
         else:
             message = writeMessages[code]
             if code == 'conflict' and detail is not None:
@@ -591,7 +645,7 @@ class FoodNutritionUI(ScreenNode):
                     message = '规则已变化 · 当前为{}'.format(statusNames[detail['status']])
             self.controls['detail/feedback'].asLabel().SetText(message)
 
-    @ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#food_nutrition.back")
+    @ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#diet_nullgr_food_nutrition.back")
     def BackKey(self, args):
         if self.confirmTarget is not None:
             self.confirmTarget = None

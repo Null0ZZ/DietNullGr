@@ -16,7 +16,7 @@ class FoodNutritionRules(object):
         self.extraDataComp = extraDataComp
         self.itemComp = itemComp
         self.foodIds = None
-        self.observedInputs = {}
+        self.foodTagsById = {}
         self.snapshot = {'version': 1, 'revision': 0, 'rules': {}}
         self.writeEnabled = True
         rawData = extraDataComp.GetExtraData(config.foodNutritionWorldKey)
@@ -33,41 +33,42 @@ class FoodNutritionRules(object):
 
     # 仅首次浏览目录时扫描注册表，每批让出一帧，全部收集后再发布可写的食物集合。
     def scanFoods(self):
-        foodIds = set()
+        foodTagsById = {}
         for index, itemName in enumerate(self.itemComp.GetLoadItems(True)):
             if index and index % config.foodCatalogBatchSize == 0:
                 yield
-            if ':' not in itemName or itemName in thirstConfig.hydrationOnlyItemNames:
-                continue
-            if itemName == 'minecraft:milk_bucket':
-                foodIds.add(itemName)
+            if (':' not in itemName or itemName in thirstConfig.hydrationOnlyItemNames or
+                    itemName in foodTagsById):
                 continue
             itemInfo = self.itemComp.GetItemBasicInfo(itemName, 0)
-            if itemInfo and (itemInfo['itemType'] == 'food' or itemInfo.get('foodNutrition', 0) > 0):
-                foodIds.add(itemName)
-        self.foodIds = foodIds
+            standardFood = itemInfo and (itemInfo['itemType'] == 'food' or itemInfo.get('foodNutrition', 0) > 0)
+            if not standardFood and itemName != 'minecraft:milk_bucket':
+                continue
+            # 原始标签跟随世界的物品注册表，联动提供的分类映射在每次读取时再解析。
+            tags = itemInfo.get('tags') if itemInfo else None
+            if tags is None:
+                tags = self.itemComp.GetItemTags(itemName, 0)
+            foodTagsById[itemName] = [] if tags is None else tags
+        self.foodTagsById = foodTagsById
+        self.foodIds = sorted(foodTagsById)
 
     # 判断清单状态时重新读取自动分类，兼容其他模组在目录建立后注册食物规则。
     def buildCatalog(self):
         entries = []
-        for itemName in sorted(self.foodIds):
+        for itemName in self.foodIds:
             if itemName in self.snapshot['rules']:
                 status = 'manual'
             else:
-                status = 'auto' if Diet.getFoodGroupIds(itemName, 0, self.itemComp) else 'pending'
+                autoGroups = Diet.getFoodGroupIds(itemName, 0, self.itemComp, itemTags=self.foodTagsById[itemName])
+                status = 'auto' if autoGroups else 'pending'
             entries.append([itemName, status])
         return entries
 
-    # 详情与保存回执使用同一个快照，参考值只来自默认变体的真实进食采样。
+    # 详情与保存回执使用同一个快照，旧参考值字段保留空值供旧客户端读取。
     def buildDetail(self, itemName):
         sources = []
-        autoGroups = Diet.getFoodGroupIds(itemName, 0, self.itemComp, sources)
+        autoGroups = Diet.getFoodGroupIds(itemName, 0, self.itemComp, sources, self.foodTagsById[itemName])
         manualUnits = self.snapshot['rules'].get(itemName)
-        referenceUnits = None
-        if autoGroups and itemName in self.observedInputs:
-            hunger, nutrition = self.observedInputs[itemName]
-            gains = Diet.calculateGain(hunger, nutrition, autoGroups)
-            referenceUnits = [int(round(gains.get(groupId, 0) * 200)) for groupId in config.groupOrder]
         return {
             'itemName': itemName,
             'revision': self.snapshot['revision'],
@@ -75,7 +76,7 @@ class FoodNutritionRules(object):
             'manualUnits': manualUnits,
             'autoGroups': autoGroups,
             'autoSources': sources,
-            'referenceUnits': referenceUnits
+            'referenceUnits': None
         }
 
     # 先比对同一物品的旧规则，再保存完整快照；只有落盘成功后进食和目录才看见新规则。
@@ -135,7 +136,7 @@ def formatFoodUnits(units):
 
 
 # 搜索先分档，再维持目录原顺序；分类数量统计全局命中，方便切换命名空间。
-def filterFoodCatalog(itemNames, entries, showConfigured, namespace, text):
+def filterFoodCatalog(itemNames, entries, showConfigured, text):
     keyword = foodSearchText(text)
     counts = {'': 0}
     ranked = [[], [], []]
@@ -164,6 +165,5 @@ def filterFoodCatalog(itemNames, entries, showConfigured, namespace, text):
                 continue
         counts[itemNamespace] += 1
         counts[''] += 1
-        if not namespace or itemNamespace == namespace:
-            ranked[rank].append(itemName)
+        ranked[rank].append(itemName)
     return ranked[0] + ranked[1] + ranked[2], counts

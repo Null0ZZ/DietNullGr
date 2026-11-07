@@ -156,8 +156,7 @@ class DietServerSystem(ServerSystem):
         requestId = args['requestId']
         itemName = args['itemName']
         detail = None
-        if (isinstance(itemName, (str, type(u''))) and self.foodNutrition.foodIds is not None and
-                itemName in self.foodNutrition.foodIds):
+        if isinstance(itemName, (str, type(u''))) and itemName in self.foodNutrition.foodTagsById:
             detail = self.foodNutrition.buildDetail(itemName)
         self.NotifyToClient(playerId, config.foodNutritionResponse, {
             'kind': 'detail', 'requestId': requestId, 'canEdit': canEditFoodNutrition(playerId), 'detail': detail
@@ -175,8 +174,7 @@ class DietServerSystem(ServerSystem):
         canEdit = canEditFoodNutrition(playerId)
         detail = None
         code = 'invalid'
-        if (isinstance(itemName, (str, type(u''))) and self.foodNutrition.foodIds is not None and
-                itemName in self.foodNutrition.foodIds):
+        if isinstance(itemName, (str, type(u''))) and itemName in self.foodNutrition.foodTagsById:
             code = self.foodNutrition.writeRule(itemName, previousUnits, desiredUnits) if canEdit else 'permission'
             detail = self.foodNutrition.buildDetail(itemName)
         # 模型已完成权限后的校验和落盘，回执与变更事件只传播当前生效快照。
@@ -202,15 +200,16 @@ class DietServerSystem(ServerSystem):
         if (gameType == gameTypeEnum.Spectator or
                 (gameType == gameTypeEnum.Creative and not config.creativeModeAffected)):
             return
-        # 目录展示默认变体，只记录同一变体的真实进食参数供自动参考值使用。
-        if itemAuxValue == 0:
-            self.foodNutrition.observedInputs[itemName] = (hunger, nutrition)
         if playerId not in self.playerDietData:
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
         gainValues = {}
-        manualUnits = self.foodNutrition.snapshot['rules'].get(itemName)
+        beforeValues = None
         if data['active']:
+            manualUnits = self.foodNutrition.snapshot['rules'].get(itemName)
+            # 手动提示需要区分计划增量与封顶后实际到账的增量，疾病仍使用原结算结果。
+            if manualUnits is not None:
+                beforeValues = data['values'].copy()
             gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition,
                                            self.foodNutrition.itemComp, manualUnits)
         # 真实进食总要结算患病症状；只有取得营养增益时才增加有效进食次数并推进恢复。
@@ -221,13 +220,18 @@ class DietServerSystem(ServerSystem):
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
         # 进食提示在保存后基于最新数值生成：先告知本次补充，再对其他低值营养给出补充建议。
-        foodGainMessages = Diet.buildFoodGainMessages(data, gainValues, manualUnits is not None)
-        self._queueTipMessage(
-            playerId,
-            tipMessageConfig.dietFoodGainKey,
-            "§a" + foodGainMessages['gainMessage'],
-            tipMessageConfig.priorityNormal
-        )
+        foodGainMessages = Diet.buildFoodGainMessages(data, gainValues, beforeValues)
+        gainMessage = foodGainMessages['gainMessage']
+        if gainMessage:
+            # 原生提示会解析单个百分号，手动增量的单位需要转义后才能显示。
+            if beforeValues is not None:
+                gainMessage = gainMessage.replace('%', '%%')
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.dietFoodGainKey,
+                "§a" + gainMessage,
+                tipMessageConfig.priorityNormal
+            )
         if foodGainMessages['warningMessage']:
             self._queueTipMessage(
                 playerId,

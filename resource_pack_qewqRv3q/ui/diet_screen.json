@@ -1001,7 +1001,7 @@
                             }
                         },
                         {
-                            "food_nutrition@food_nutrition.button": {
+                            "food_nutrition@diet_nullgr_food_nutrition.button": {
                                 "$food_button_text": "食物营养 ›",
                                 "$pressed_button_name": "%diet_screen.food_nutrition",
                                 "anchor_from": "bottom_right",
