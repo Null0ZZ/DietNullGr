@@ -11,8 +11,8 @@
     "uuid": "f567ef1c-700d-49ec-98f1-ed88ac4ca25b",
     "version": [
       6,
-      9,
-      8
+      11,
+      7
     ]
   },
   "modules": [
@@ -21,8 +21,8 @@
       "uuid": "b4a8dea3-ba7c-4a6e-b589-39cb07a4525e",
       "version": [
         6,
-        9,
-        8
+        11,
+        7
       ],
       "description": "behaviorpackXFwwevzLNullGrBP"
     }

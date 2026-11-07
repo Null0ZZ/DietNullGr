@@ -845,15 +845,15 @@
                     "anchor_to": "center",
                     "size": [
                         248,
-                        148.0
+                        168.0
                     ],
                     "controls": [
                         {
                             "background": {
                                 "type": "image",
                                 "size": [
-                                    248,
-                                    "default"
+                                    "100%",
+                                    "100%"
                                 ],
                                 "nineslice_size": [
                                     8,
@@ -996,6 +996,23 @@
                                     },
                                     {
                                         "button_label@netease_editor_template_namespace.button_label": {}
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "food_nutrition@food_nutrition.button": {
+                                "$food_button_text": "食物营养 ›",
+                                "$pressed_button_name": "%diet_screen.food_nutrition",
+                                "anchor_from": "bottom_right",
+                                "anchor_to": "bottom_right",
+                                "offset": [-10, -7],
+                                "size": [70, 18],
+                                "button_mappings": [
+                                    {
+                                        "to_button_id": "#diet_screen.food_nutrition",
+                                        "from_button_id": "button.menu_select",
+                                        "mapping_type": "pressed"
                                     }
                                 ]
                             }
