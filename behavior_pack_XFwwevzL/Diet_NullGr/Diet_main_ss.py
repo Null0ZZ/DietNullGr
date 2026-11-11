@@ -5,15 +5,25 @@ import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as diseaseConfig
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Diet.Diet as Diet
+import Diet_NullGr.ModSys.Diet.FoodNutrition as FoodNutrition
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 import Diet_NullGr.ModSys.TipMessage.config as tipMessageConfig
 
 ServerSystem = serverApi.GetServerSystemCls()
 compFactory = serverApi.GetEngineCompFactory()
-compGame = compFactory.CreateGame(serverApi.GetLevelId())
+levelId = serverApi.GetLevelId()
+compGame = compFactory.CreateGame(levelId)
 gameTypeEnum = serverApi.GetMinecraftEnum().GameType
 engineNamespace = serverApi.GetEngineNamespace()
 engineSystemName = serverApi.GetEngineSystemName()
+
+
+# 目录权限与写入复核使用同一判定，以引擎提供的房主和在线玩家权限为准。
+def canEditFoodNutrition(playerId):
+    if playerId == serverApi.GetHostPlayerId():
+        return True
+    abilities = compFactory.CreatePlayer(playerId).GetPlayerAbilities()
+    return bool(abilities and abilities['op'])
 
 
 class DietServerSystem(ServerSystem):
@@ -22,6 +32,11 @@ class DietServerSystem(ServerSystem):
         self.playerDietData = {}
         self.deadPlayers = {}
         self.tickCounter = 0
+        self.foodNutrition = FoodNutrition.FoodNutritionRules(
+            compFactory.CreateExtraData(levelId), compFactory.CreateItem(levelId)
+        )
+        self.foodCatalogScan = None
+        self.foodCatalogWaiters = {}
         self.ListenForEvent(engineNamespace, engineSystemName, "AddServerPlayerEvent", self, self.AddServerPlayerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "ClientLoadAddonsFinishServerEvent", self, self.ClientLoadAddonsFinishServerEvent)
         self.ListenForEvent(engineNamespace, engineSystemName, "DelServerPlayerEvent", self, self.DelServerPlayerEvent)
@@ -37,6 +52,9 @@ class DietServerSystem(ServerSystem):
         self.ListenForEvent(engineNamespace, engineSystemName, "OnScriptTickServer", self, self.OnScriptTickServer)
         self.ListenForEvent(com.modName, com.csname, "DietClientReady", self, self.DietClientReady)
         self.ListenForEvent(com.modName, com.csname, config.settingEventUpdate, self, self.DietSettingUpdate)
+        self.ListenForEvent(com.modName, com.csname, config.foodCatalogRequest, self, self.FoodCatalogRequest)
+        self.ListenForEvent(com.modName, com.csname, config.foodDetailRequest, self, self.FoodDetailRequest)
+        self.ListenForEvent(com.modName, com.csname, config.foodRuleRequest, self, self.FoodRuleRequest)
         print("[DietNullGr] server ready")
 
     def AddServerPlayerEvent(self, args):
@@ -91,6 +109,7 @@ class DietServerSystem(ServerSystem):
 
     def DelServerPlayerEvent(self, args):
         playerId = args['id']
+        self.foodCatalogWaiters.pop(playerId, None)
         # 退出时同样只依赖玩家 id 写回 ModAttr，Apollo 转服字段不参与本模块状态链路。
         if playerId in self.playerDietData:
             Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)
@@ -129,12 +148,84 @@ class DietServerSystem(ServerSystem):
                 protected.append('nausea')
         return protected
 
+    def FoodCatalogRequest(self, args):
+        playerId = args['__id__']
+        if 'requestId' not in args or type(args['requestId']) is not int:
+            return
+        requestId = args['requestId']
+        if self.foodNutrition.foodIds is not None:
+            self._sendFoodCatalog(playerId, requestId, self.foodNutrition.buildCatalog())
+            return
+        # 首次打开者共享同一次分帧扫描，同一客户端只保留最新请求。
+        self.foodCatalogWaiters[playerId] = requestId
+        if self.foodCatalogScan is None:
+            self.foodCatalogScan = serverApi.StartCoroutine(self.foodNutrition.scanFoods(), self.FoodCatalogReady)
+
+    # 扫描完成后才回包，退出世界的客户端已从等待表移除。
+    def FoodCatalogReady(self):
+        self.foodCatalogScan = None
+        waiters = self.foodCatalogWaiters
+        self.foodCatalogWaiters = {}
+        entries = self.foodNutrition.buildCatalog()
+        for playerId, requestId in waiters.items():
+            self._sendFoodCatalog(playerId, requestId, entries)
+
+    # 同一请求的分片使用一个修订号，避免大量物品一次发送挤满事件包。
+    def _sendFoodCatalog(self, playerId, requestId, entries):
+        chunkSize = config.foodCatalogChunkSize
+        totalChunks = max(1, (len(entries) + chunkSize - 1) // chunkSize)
+        canEdit = canEditFoodNutrition(playerId)
+        revision = self.foodNutrition.snapshot['revision']
+        for index in range(totalChunks):
+            self.NotifyToClient(playerId, config.foodNutritionResponse, {
+                'kind': 'catalog', 'requestId': requestId, 'canEdit': canEdit, 'revision': revision,
+                'index': index, 'total': totalChunks, 'entries': entries[index * chunkSize:(index + 1) * chunkSize]
+            })
+
+    def FoodDetailRequest(self, args):
+        playerId = args['__id__']
+        if 'requestId' not in args or 'itemName' not in args or type(args['requestId']) is not int:
+            return
+        requestId = args['requestId']
+        itemName = args['itemName']
+        detail = None
+        if isinstance(itemName, (str, type(u''))) and itemName in self.foodNutrition.foodTagsById:
+            detail = self.foodNutrition.buildDetail(itemName)
+        self.NotifyToClient(playerId, config.foodNutritionResponse, {
+            'kind': 'detail', 'requestId': requestId, 'canEdit': canEditFoodNutrition(playerId), 'detail': detail
+        })
+
+    def FoodRuleRequest(self, args):
+        playerId = args['__id__']
+        if ('requestId' not in args or type(args['requestId']) is not int or
+                any(key not in args for key in ('itemName', 'previousUnits', 'desiredUnits'))):
+            return
+        requestId = args['requestId']
+        itemName = args['itemName']
+        previousUnits = args['previousUnits']
+        desiredUnits = args['desiredUnits']
+        canEdit = canEditFoodNutrition(playerId)
+        detail = None
+        code = 'invalid'
+        if isinstance(itemName, (str, type(u''))) and itemName in self.foodNutrition.foodTagsById:
+            code = self.foodNutrition.writeRule(itemName, previousUnits, desiredUnits) if canEdit else 'permission'
+            detail = self.foodNutrition.buildDetail(itemName)
+        # 模型已完成权限后的校验和落盘，回执与变更事件只传播当前生效快照。
+        self.NotifyToClient(playerId, config.foodNutritionResponse, {
+            'kind': 'write', 'requestId': requestId, 'canEdit': canEdit, 'code': code, 'detail': detail
+        })
+        if code == 'saved':
+            for otherPlayerId in serverApi.GetPlayerList():
+                if otherPlayerId != playerId:
+                    self.NotifyToClient(otherPlayerId, config.foodNutritionResponse, {'kind': 'changed', 'detail': detail})
+
     def PlayerEatFoodServerEvent(self, args):
         playerId = args['playerId']
         itemDict = args['itemDict']
         hunger = args['hunger']
         nutrition = args['nutrition']
         itemName = itemDict['newItemName']
+        itemAuxValue = itemDict['newAuxValue']
         # 装水木杯借用 food 组件提供完整饮用时序，补水由 Thirst 系统结算，不进入营养和疾病进食链路。
         if itemName in thirstConfig.hydrationOnlyItemNames:
             return
@@ -146,10 +237,14 @@ class DietServerSystem(ServerSystem):
             self.playerDietData[playerId] = Diet.loadPlayerData(playerId, compFactory)
         data = self.playerDietData[playerId]
         gainValues = {}
+        beforeValues = None
         if data['active']:
-            itemAuxValue = itemDict['newAuxValue']
-            compItem = compFactory.CreateItem(serverApi.GetLevelId())
-            gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem)
+            manualUnits = self.foodNutrition.snapshot['rules'].get(itemName)
+            # 手动提示需要区分计划增量与封顶后实际到账的增量，疾病仍使用原结算结果。
+            if manualUnits is not None:
+                beforeValues = data['values'].copy()
+            gainValues = Diet.applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition,
+                                           self.foodNutrition.itemComp, manualUnits)
         # 真实进食总要结算患病症状；只有取得营养增益时才增加有效进食次数并推进恢复。
         diseaseSys = serverApi.GetSystem(com.modName, diseaseConfig.ssname)
         diseaseSys.recordFoodEat(playerId, data, gainValues)
@@ -158,13 +253,18 @@ class DietServerSystem(ServerSystem):
         Diet.savePlayerData(playerId, data, compFactory)
         Diet.syncToClient(self, playerId, data)
         # 进食提示在保存后基于最新数值生成：先告知本次补充，再对其他低值营养给出补充建议。
-        foodGainMessages = Diet.buildFoodGainMessages(data, gainValues)
-        self._queueTipMessage(
-            playerId,
-            tipMessageConfig.dietFoodGainKey,
-            "§a" + foodGainMessages['gainMessage'],
-            tipMessageConfig.priorityNormal
-        )
+        foodGainMessages = Diet.buildFoodGainMessages(data, gainValues, beforeValues)
+        gainMessage = foodGainMessages['gainMessage']
+        if gainMessage:
+            # 原生提示会解析单个百分号，手动增量的单位需要转义后才能显示。
+            if beforeValues is not None:
+                gainMessage = gainMessage.replace('%', '%%')
+            self._queueTipMessage(
+                playerId,
+                tipMessageConfig.dietFoodGainKey,
+                "§a" + gainMessage,
+                tipMessageConfig.priorityNormal
+            )
         if foodGainMessages['warningMessage']:
             self._queueTipMessage(
                 playerId,
@@ -344,5 +444,8 @@ class DietServerSystem(ServerSystem):
         tipMessageSys.enqueueTip(playerId, messageKey, message, priority)
 
     def Destroy(self):
+        if self.foodCatalogScan is not None:
+            serverApi.StopCoroutine(self.foodCatalogScan)
+        self.foodCatalogWaiters.clear()
         for playerId in self.playerDietData:
             Diet.savePlayerData(playerId, self.playerDietData[playerId], compFactory)

@@ -88,6 +88,13 @@ class DietUI(ScreenNode):
         clientApi.PopScreen()
         return ViewRequest.Nothing
 
+    @ViewBinder.binding(ViewBinder.BF_ButtonClickUp, "#diet_screen.food_nutrition")
+    def OpenFoodNutrition(self, args):
+        clientSystem = clientApi.GetSystem(com.modName, com.csname)
+        if clientSystem.foodNutritionNode is None:
+            clientApi.PushScreen(com.modName, config.foodNutritionUiKey, {})
+        return ViewRequest.Nothing
+
     @ViewBinder.binding(ViewBinder.BF_BindString, "#diet_screen.title")
     def bindTitle(self):
         if self.dietData['active']:

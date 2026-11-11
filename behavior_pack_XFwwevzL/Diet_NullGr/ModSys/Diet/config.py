@@ -10,6 +10,16 @@ csPath = "Diet_NullGr.ModSys.Diet.Diet_cs.ClientSys"
 uiKey = "diet_screen"
 uiName = "diet_screen.main"
 uiPath = "Diet_NullGr.ModSys.Diet.DietUI.DietUI"
+foodNutritionUiKey = "food_nutrition"
+foodNutritionUiName = "diet_nullgr_food_nutrition.main"
+foodNutritionUiPath = "Diet_NullGr.ModSys.Diet.FoodNutritionUI.FoodNutritionUI"
+foodCatalogRequest = "DietFoodCatalogRequest"
+foodDetailRequest = "DietFoodDetailRequest"
+foodRuleRequest = "DietFoodRuleRequest"
+foodNutritionResponse = "DietFoodNutritionResponse"
+foodCatalogBatchSize = 64
+foodCatalogChunkSize = 100
+foodNutritionMaxUnits = 200
 buttonUiKey = "diet_button"
 buttonUiName = "diet_button.main"
 buttonUiPath = "Diet_NullGr.ModSys.Diet.DietButtonUI.DietButtonUI"
@@ -54,6 +64,7 @@ clientSysKey = {
 }
 
 attrPrefix = "diet_nullgr_"
+foodNutritionWorldKey = attrPrefix + "food_rules"
 effectRefreshTick = 1200
 # 默认只有生存和冒险模式参与饮食系统；开启后创造模式也参与，旁观模式始终冻结。
 creativeModeAffected = False

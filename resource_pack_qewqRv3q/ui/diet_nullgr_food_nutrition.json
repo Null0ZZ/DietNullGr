@@ -1,0 +1,731 @@
+{
+  "namespace": "diet_nullgr_food_nutrition",
+  "main@common.base_screen": {
+    "$screen_content": "diet_nullgr_food_nutrition.content",
+    "$use_loading_bars": false,
+    "absorbs_input": true,
+    "is_showing_menu": true,
+    "render_game_behind": true,
+    "should_steal_mouse": false,
+    "button_mappings": [
+      {
+        "from_button_id": "button.menu_cancel",
+        "to_button_id": "#diet_nullgr_food_nutrition.back",
+        "mapping_type": "global"
+      },
+      {
+        "from_button_id": "button.menu_inventory_cancel",
+        "to_button_id": "#diet_nullgr_food_nutrition.back",
+        "mapping_type": "global"
+      }
+    ]
+  },
+  "label": {
+    "type": "label",
+    "size": ["100%","default"],
+    "layer": 4,
+    "color": [0.2,0.16,0.13],
+    "text": "",
+    "font_size": "normal",
+    "shadow": false,
+    "text_alignment": "left"
+  },
+  "surface": {
+    "type": "image",
+    "texture": "textures/ui/diet_nullgr/food_panel",
+    "nineslice_size": [3,3,3,3],
+    "size": ["100%","100%"],
+    "layer": 1
+  },
+  "tileSurface": {
+    "type": "image",
+    "texture": "textures/ui/diet_nullgr/food_tile",
+    "nineslice_size": [3,3,3,3],
+    "size": ["100%","100%"],
+    "layer": 1
+  },
+  "selectedSurface": {
+    "type": "image",
+    "texture": "textures/ui/diet_nullgr/food_selected",
+    "nineslice_size": [3,3,3,3],
+    "size": ["100%","100%"],
+    "layer": 3,
+    "visible": false
+  },
+  "item": {
+    "type": "custom",
+    "renderer": "inventory_item_renderer",
+    "layer": 5,
+    "property_bag": {
+      "#item_id_aux": 0
+    }
+  },
+  "button@common.button": {
+    "$control_alpha": 1,
+    "$food_button_text|default": "",
+    "$default_texture": "textures/ui/diet_nullgr/food_button",
+    "$hover_texture": "textures/ui/diet_nullgr/food_hover",
+    "$pressed_texture": "textures/ui/diet_nullgr/food_button",
+    "$pressed_button_name": "%diet_nullgr_food_nutrition.touch",
+    "$label_text": "",
+    "$label_layer": 3,
+    "default_control": "default",
+    "hover_control": "hover",
+    "pressed_control": "pressed",
+    "is_handle_button_move_event": true,
+    "layer": 3,
+    "button_mappings": [],
+    "controls": [
+      {
+        "default@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$default_texture"
+        }
+      },
+      {
+        "hover@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$hover_texture"
+        }
+      },
+      {
+        "pressed@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$pressed_texture"
+        }
+      },
+      {
+        "selected@diet_nullgr_food_nutrition.selectedSurface": {}
+      },
+      {
+        "caption@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "offset": [0,0],
+          "size": ["100%",12],
+          "text": "$food_button_text",
+          "text_alignment": "center"
+        }
+      }
+    ]
+  },
+  "foodTile@diet_nullgr_food_nutrition.button": {
+    "size": [50,38],
+    "$default_texture": "textures/ui/diet_nullgr/food_tile",
+    "controls": [
+      {
+        "default@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$default_texture"
+        }
+      },
+      {
+        "hover@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$hover_texture"
+        }
+      },
+      {
+        "pressed@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$pressed_texture"
+        }
+      },
+      {
+        "icon@diet_nullgr_food_nutrition.item": {
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "offset": [0,3],
+          "size": [15,15]
+        }
+      },
+      {
+        "name@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "bottom_middle",
+          "anchor_to": "bottom_middle",
+          "offset": [0,-1],
+          "size": ["100%-4px","50%"],
+          "text": "",
+          "text_alignment": "center",
+          "font_scale_factor": 0.85
+        }
+      }
+    ]
+  },
+  "namespaceRow@diet_nullgr_food_nutrition.button": {
+    "size": [86,19],
+    "controls": [
+      {
+        "default@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$default_texture"
+        }
+      },
+      {
+        "hover@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$hover_texture"
+        }
+      },
+      {
+        "pressed@diet_nullgr_food_nutrition.buttonState": {
+          "texture": "$pressed_texture"
+        }
+      },
+      {
+        "selected@diet_nullgr_food_nutrition.selectedSurface": {}
+      },
+      {
+        "icon@diet_nullgr_food_nutrition.item": {
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [3,3],
+          "size": [12,12]
+        }
+      },
+      {
+        "name@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [17,1],
+          "size": ["100%-31px","100%-2px"],
+          "text": "",
+          "font_scale_factor": 0.78
+        }
+      },
+      {
+        "count@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "right_middle",
+          "anchor_to": "right_middle",
+          "offset": [-3,0],
+          "size": [17,"100%"],
+          "text": "",
+          "text_alignment": "right",
+          "font_scale_factor": 0.78
+        }
+      }
+    ]
+  },
+  "editDefault": {
+    "type": "image",
+    "texture": "textures/ui/diet_nullgr/food_tile",
+    "nineslice_size": [3,3,3,3],
+    "size": ["100%","100%"]
+  },
+  "editHover": {
+    "type": "image",
+    "texture": "textures/ui/diet_nullgr/food_hover",
+    "nineslice_size": [3,3,3,3],
+    "size": ["100%","100%"]
+  },
+  "input@common.text_edit_box": {
+    "$font_size": "normal",
+    "$place_holder_text": "",
+    "$place_holder_text_color": [0.37,0.32,0.25],
+    "$text_background_default": "diet_nullgr_food_nutrition.editDefault",
+    "$text_background_hover": "diet_nullgr_food_nutrition.editHover",
+    "$text_box_name": "#diet_nullgr_food_nutrition.number",
+    "$text_box_text_color": [0.2,0.16,0.13],
+    "$text_edit_box_content_binding_name": "#diet_nullgr_food_nutrition.number_text",
+    "enabled_newline": false,
+    "layer": 6,
+    "type": "edit_box"
+  },
+  "numberInput@diet_nullgr_food_nutrition.input": {
+    "max_length": 6
+  },
+  "namespaceContent": {
+    "type": "panel",
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "offset": [0,0],
+    "size": ["100%",20]
+  },
+  "content": {
+    "type": "panel",
+    "size": ["100%","100%"],
+    "controls": [
+      {
+        "viewport": {
+          "type": "panel",
+          "size": ["100%","100%"],
+          "controls": [
+            {
+              "window": {
+                "type": "panel",
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "size": [332,222],
+                "controls": [
+                  {
+                    "background@diet_nullgr_food_nutrition.surface": {}
+                  },
+                  {
+                    "title@diet_nullgr_food_nutrition.label": {
+                      "anchor_from": "top_middle",
+                      "anchor_to": "top_middle",
+                      "offset": [0,5],
+                      "size": [98,17],
+                      "text": "食物营养",
+                      "text_alignment": "center"
+                    }
+                  },
+                  {
+                    "back@diet_nullgr_food_nutrition.button": {
+                      "anchor_from": "top_left",
+                      "anchor_to": "top_left",
+                      "offset": [8,5],
+                      "size": [56,16],
+                      "$food_button_text": "‹ 均衡饮食"
+                    }
+                  },
+                  {
+                    "close@diet_nullgr_food_nutrition.button": {
+                      "anchor_from": "top_right",
+                      "anchor_to": "top_right",
+                      "offset": [-8,5],
+                      "size": [16,16],
+                      "$food_button_text": "×"
+                    }
+                  },
+                  {
+                    "catalog": {
+                      "type": "panel",
+                      "anchor_from": "top_left",
+                      "anchor_to": "top_left",
+                      "offset": [0,0],
+                      "size": ["100%","100%"],
+                      "controls": [
+                        {
+                          "search@diet_nullgr_food_nutrition.input": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,27],
+                            "size": [294,18],
+                            "$place_holder_text": "搜索中文食物名",
+                            "$text_box_name": "#diet_nullgr_food_nutrition.search",
+                            "$text_edit_box_content_binding_name": "#diet_nullgr_food_nutrition.search_text",
+                            "max_length": 48
+                          }
+                        },
+                        {
+                          "clear@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [306,27],
+                            "size": [17,18],
+                            "$food_button_text": "×"
+                          }
+                        },
+                        {
+                          "pending@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,50],
+                            "size": [45,17],
+                            "$food_button_text": "待设置"
+                          }
+                        },
+                        {
+                          "configured@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [57,50],
+                            "size": [45,17],
+                            "$food_button_text": "已设置"
+                          }
+                        },
+                        {
+                          "matchCount@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [107,50],
+                            "size": [80,17],
+                            "text": "",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.82
+                          }
+                        },
+                        {
+                          "namespaceTitle@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [233,50],
+                            "size": [90,17],
+                            "text": "命名空间"
+                          }
+                        },
+                        {
+                          "namespaceBackground@diet_nullgr_food_nutrition.tileSurface": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [230,70],
+                            "size": [93,124]
+                          }
+                        },
+                        {
+                          "all@diet_nullgr_food_nutrition.namespaceRow": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [232,72],
+                            "size": [89,19]
+                          }
+                        },
+                        {
+                          "namespaceScroll@common.scrolling_panel": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [232,93],
+                            "size": [89,99],
+                            "$scrolling_content": "diet_nullgr_food_nutrition.namespaceContent",
+                            "$show_background": false,
+                            "layer": 3
+                          }
+                        },
+                        {
+                          "tiles": {
+                            "type": "panel",
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,70],
+                            "size": [216,124],
+                            "controls": []
+                          }
+                        },
+                        {
+                          "notice@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,105],
+                            "size": [216,24],
+                            "text": "正在读取世界食物…",
+                            "text_alignment": "center",
+                            "color": [0.37,0.32,0.25]
+                          }
+                        },
+                        {
+                          "retry@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [86,130],
+                            "size": [58,18],
+                            "$food_button_text": "重试",
+                            "visible": false
+                          }
+                        },
+                        {
+                          "page@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,198],
+                            "size": [92,18],
+                            "text": "",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.85
+                          }
+                        },
+                        {
+                          "previous@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [185,198],
+                            "size": [18,18],
+                            "$food_button_text": "‹"
+                          }
+                        },
+                        {
+                          "next@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [207,198],
+                            "size": [18,18],
+                            "$food_button_text": "›"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "detail": {
+                      "type": "panel",
+                      "anchor_from": "top_left",
+                      "anchor_to": "top_left",
+                      "offset": [0,0],
+                      "size": ["100%","100%"],
+                      "controls": [
+                        {
+                          "itemBackground@diet_nullgr_food_nutrition.tileSurface": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,26],
+                            "size": [314,29]
+                          }
+                        },
+                        {
+                          "itemIcon@diet_nullgr_food_nutrition.item": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [13,30],
+                            "size": [22,22]
+                          }
+                        },
+                        {
+                          "itemName@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [42,27],
+                            "size": [264,14],
+                            "text": ""
+                          }
+                        },
+                        {
+                          "itemStatus@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [42,40],
+                            "size": [264,13],
+                            "text": "",
+                            "color": [0.21,0.34,0.18],
+                            "font_scale_factor": 0.82
+                          }
+                        },
+                        {
+                          "source@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,57],
+                            "size": [314,14],
+                            "text": "",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.8
+                          }
+                        },
+                        {
+                          "columnTitle@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,69],
+                            "size": [314,12],
+                            "text": "手动草稿（百分点）",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.82
+                          }
+                        },
+                        {
+                          "group0@diet_nullgr_food_nutrition.groupRow": {
+                            "offset": [9,83]
+                          }
+                        },
+                        {
+                          "group1@diet_nullgr_food_nutrition.groupRow": {
+                            "offset": [9,103]
+                          }
+                        },
+                        {
+                          "group2@diet_nullgr_food_nutrition.groupRow": {
+                            "offset": [9,123]
+                          }
+                        },
+                        {
+                          "group3@diet_nullgr_food_nutrition.groupRow": {
+                            "offset": [9,143]
+                          }
+                        },
+                        {
+                          "group4@diet_nullgr_food_nutrition.groupRow": {
+                            "offset": [9,163]
+                          }
+                        },
+                        {
+                          "feedback@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,183],
+                            "size": [314,14],
+                            "text": "",
+                            "color": [0.21,0.34,0.18],
+                            "font_scale_factor": 0.84
+                          }
+                        },
+                        {
+                          "scope@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [9,199],
+                            "size": [112,16],
+                            "text": "本世界 · 全员生效",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.82
+                          }
+                        },
+                        {
+                          "restore@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "bottom_right",
+                            "anchor_to": "bottom_right",
+                            "offset": [-67,-6],
+                            "size": [55,18],
+                            "$food_button_text": "恢复默认"
+                          }
+                        },
+                        {
+                          "save@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "bottom_right",
+                            "anchor_to": "bottom_right",
+                            "offset": [-9,-6],
+                            "size": [54,18],
+                            "$food_button_text": "保存"
+                          }
+                        }
+                      ],
+                      "visible": false
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "confirm": {
+                "type": "input_panel",
+                "size": ["100%","100%"],
+                "visible": false,
+                "modal": true,
+                "is_swallow": true,
+                "layer": 30,
+                "controls": [
+                  {
+                    "shade@diet_nullgr_food_nutrition.surface": {
+                      "color": [0,0,0],
+                      "alpha": 0.55
+                    }
+                  },
+                  {
+                    "box": {
+                      "type": "panel",
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "size": ["100%-12px",65],
+                      "max_size": [211,65],
+                      "layer": 31,
+                      "controls": [
+                        {
+                          "background@diet_nullgr_food_nutrition.surface": {}
+                        },
+                        {
+                          "heading@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [8,6],
+                            "size": ["100%-16px",15],
+                            "text": "有未保存的更改"
+                          }
+                        },
+                        {
+                          "hint@diet_nullgr_food_nutrition.label": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [8,22],
+                            "size": ["100%-16px",13],
+                            "text": "离开前要保存这份食物的设置吗？",
+                            "color": [0.37,0.32,0.25],
+                            "font_scale_factor": 0.85
+                          }
+                        },
+                        {
+                          "stay@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_left",
+                            "anchor_to": "top_left",
+                            "offset": [7,41],
+                            "size": ["29%",17],
+                            "$food_button_text": "继续编辑"
+                          }
+                        },
+                        {
+                          "discard@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_middle",
+                            "anchor_to": "top_middle",
+                            "offset": [0,41],
+                            "size": ["29%",17],
+                            "$food_button_text": "放弃修改"
+                          }
+                        },
+                        {
+                          "save@diet_nullgr_food_nutrition.button": {
+                            "anchor_from": "top_right",
+                            "anchor_to": "top_right",
+                            "offset": [-7,41],
+                            "size": ["31%",17],
+                            "$food_button_text": "保存并继续"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "groupRow": {
+    "type": "panel",
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "offset": [9,83],
+    "size": [314,20],
+    "controls": [
+      {
+        "icon@diet_nullgr_food_nutrition.item": {
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [1,1],
+          "size": [16,16]
+        }
+      },
+      {
+        "group@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [22,0],
+          "size": [98,"100%"],
+          "text": ""
+        }
+      },
+      {
+        "minus@diet_nullgr_food_nutrition.button": {
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "offset": [-68,0],
+          "size": [18,"100%"],
+          "$food_button_text": "−"
+        }
+      },
+      {
+        "value@diet_nullgr_food_nutrition.numberInput": {
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "offset": [-22,0],
+          "size": [42,"100%"]
+        }
+      },
+      {
+        "readOnly@diet_nullgr_food_nutrition.label": {
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "offset": [-22,0],
+          "size": [42,"100%"],
+          "text": "",
+          "text_alignment": "center"
+        }
+      },
+      {
+        "plus@diet_nullgr_food_nutrition.button": {
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "offset": [0,0],
+          "size": [18,"100%"],
+          "$food_button_text": "+"
+        }
+      }
+    ]
+  },
+  "buttonState": {
+    "type": "image",
+    "size": ["100%","100%"],
+    "nineslice_size": [3,3,3,3],
+    "layer": 2
+  }
+}

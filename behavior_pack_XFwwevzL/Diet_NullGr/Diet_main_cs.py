@@ -18,6 +18,8 @@ class DietClientSystem(ClientSystem):
         self.dietData = None
         self.uiNode = None
         self.buttonUiNode = None
+        self.foodNutritionNode = None
+        self.foodNutritionRequestId = 0
         self.pendingOpenDietScreen = False
         self.settingInst = None
         self.settingRegistered = False
@@ -44,12 +46,14 @@ class DietClientSystem(ClientSystem):
         self.ListenForEvent(com.modName, thirstConfig.ssname, config.settingEventSync, self, self.DietSettingSync)
         self.ListenForEvent(com.modName, diseaseConfig.ssname, config.settingEventSync, self, self.DietSettingSync)
         self.ListenForEvent(com.modName, com.ssname, config.lowNutritionAlertEvent, self, self.DietLowNutritionAlert)
+        self.ListenForEvent(com.modName, com.ssname, config.foodNutritionResponse, self, self.FoodNutritionResponse)
         print("[DietNullGr] client ready")
 
     def UiInitFinished(self, args):
         self.RegisterDietSettingInst()
         clientApi.RegisterUI(com.modName, config.uiKey, config.uiPath, config.uiName)
         clientApi.RegisterUI(com.modName, config.buttonUiKey, config.buttonUiPath, config.buttonUiName)
+        clientApi.RegisterUI(com.modName, config.foodNutritionUiKey, config.foodNutritionUiPath, config.foodNutritionUiName)
         self.buttonUiNode = clientApi.CreateUI(com.modName, config.buttonUiKey, {'isHud': 1})
         # 客户端 UI 初始化完成后主动向服务端要一次数据，避免先打开界面时看到旧值。
         self.NotifyToServer("DietClientReady", {})
@@ -108,6 +112,12 @@ class DietClientSystem(ClientSystem):
         afterY = args['afterY']
         if self.buttonUiNode:
             self.buttonUiNode.CorrectCurrentButtonPos()
+        if self.foodNutritionNode:
+            self.foodNutritionNode.RefreshLayout()
+
+    def FoodNutritionResponse(self, args):
+        if self.foodNutritionNode:
+            self.foodNutritionNode.ReceiveResponse(args)
 
     def OnCustomKeyPressInGame(self, args):
         name = args['name']

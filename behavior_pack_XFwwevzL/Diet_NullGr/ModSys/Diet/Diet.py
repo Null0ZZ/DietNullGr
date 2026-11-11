@@ -217,19 +217,28 @@ def registerDietTag(tagName, foodGroupIds):
 
 
 # 进食时统一合并内置表、外部注册表和物品 JSON tag，三种联动方式共享同一套增量计算。
-def getFoodGroupIds(itemName, itemAuxValue, compItem):
+def getFoodGroupIds(itemName, itemAuxValue, compItem, sources=None, itemTags=None):
     selectedGroups = {}
     if itemName in config.foodGroups:
+        if sources is not None:
+            sources.append('内置')
         for groupId in config.foodGroups[itemName]:
             selectedGroups[groupId] = True
     if itemName in runtimeFoodGroups:
+        if sources is not None:
+            sources.append('联动注册')
         for groupId in runtimeFoodGroups[itemName]:
             selectedGroups[groupId] = True
-    itemTags = compItem.GetItemTags(itemName, itemAuxValue)
+    if itemTags is None:
+        itemTags = compItem.GetItemTags(itemName, itemAuxValue)
+    matchedTag = False
     for tagName in itemTags:
         if tagName in config.dietTagGroups:
+            matchedTag = True
             for groupId in config.dietTagGroups[tagName]:
                 selectedGroups[groupId] = True
+    if matchedTag and sources is not None:
+        sources.append('物品标签')
     foodGroupIds = []
     for groupId in config.groupOrder:
         if groupId in selectedGroups:
@@ -254,15 +263,16 @@ def calculateGain(hunger, nutrition, foodGroupIds):
 
 
 # 玩家真正吃下食物后调用，未分类食物不改动数据，已分类食物按组叠加到 100% 上限。
-def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
-    foodGroupIds = getFoodGroupIds(itemName, itemAuxValue, compItem)
-    if not foodGroupIds:
-        return {}
-    trackedFoodGroupIds = []
-    for groupId in foodGroupIds:
-        if data['tracking'][groupId]:
-            trackedFoodGroupIds.append(groupId)
-    if not trackedFoodGroupIds:
+def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem, manualUnits=None):
+    if manualUnits is None:
+        trackedFoodGroupIds = [groupId for groupId in getFoodGroupIds(itemName, itemAuxValue, compItem)
+                               if data['tracking'][groupId]]
+        gainValues = calculateGain(hunger, nutrition, trackedFoodGroupIds) if trackedFoodGroupIds else {}
+    else:
+        # 世界规则给出每类基础增量；全零是有效规则，不能回落到自动分类。
+        gainValues = {groupId: units / 200.0 for groupId, units in zip(config.groupOrder, manualUnits)
+                      if units > 0 and data['tracking'][groupId]}
+    if not gainValues:
         return {}
     # 只有真正产生 Diet 营养的食物才进入连续记录；未分类食物和关闭追踪的食物不会推进或打断阶梯。
     if data['lastFoodName'] == itemName and data['lastFoodAuxValue'] == itemAuxValue:
@@ -275,8 +285,7 @@ def applyFoodGain(data, itemName, itemAuxValue, hunger, nutrition, compItem):
     if multiplierIndex >= len(config.consecutiveFoodGainMultipliers):
         multiplierIndex = len(config.consecutiveFoodGainMultipliers) - 1
     gainMultiplier = config.consecutiveFoodGainMultipliers[multiplierIndex]
-    gainValues = calculateGain(hunger, nutrition, trackedFoodGroupIds)
-    for groupId in trackedFoodGroupIds:
+    for groupId in gainValues:
         gainValues[groupId] *= gainMultiplier
         data['values'][groupId] = clampDietValue(data['values'][groupId] + gainValues[groupId])
     addEatenFood(data, itemName)
@@ -475,8 +484,10 @@ def formatDietPercent(value):
     return int(clampDietValue(value) * 100.0)
 
 
-# 进食增量和当前值使用同一套百分比口径，很小但有效的补充至少显示 +1%。
-def formatDietGainPercent(value):
+# 手动进食提示保留至多三位小数，自动进食沿用整数显示。
+def formatDietGainPercent(value, precise=False):
+    if precise:
+        return '{:.3f}'.format(clampDietValue(value) * 100.0).rstrip('0').rstrip('.')
     percent = int(clampDietValue(value) * 100.0)
     if percent <= 0 and value > 0.0:
         return 1
@@ -508,8 +519,8 @@ def buildNutritionPenaltyWarningText(data, groupId, value):
     return "{}营养值接近低值惩罚阈值 {}%，当前 {}%。建议补充：{}".format(groupConfig['name'], thresholdPercent, currentPercent, groupConfig['suggestion'])
 
 
-# 进食反馈只基于本次真实增量和保存前的最新数据生成，避免继续显示物品 id 这种调试文案。
-def buildFoodGainMessages(data, gainValues):
+# 手动提示用封顶前后的差值，低值建议仍按本次参与结算的营养组生成。
+def buildFoodGainMessages(data, gainValues, beforeValues=None):
     gainTexts = []
     for groupId in config.groupOrder:
         if groupId not in gainValues:
@@ -517,7 +528,13 @@ def buildFoodGainMessages(data, gainValues):
         groupName = config.groups[groupId]['name']
         currentValue = data['values'][groupId]
         currentPercent = formatDietPercent(currentValue)
-        text = "{}营养值 +{}%，当前 {}%".format(groupName, formatDietGainPercent(gainValues[groupId]), currentPercent)
+        if beforeValues is not None:
+            gainPercent = formatDietGainPercent(currentValue - beforeValues[groupId], True)
+            if gainPercent == '0':
+                continue
+        else:
+            gainPercent = formatDietGainPercent(gainValues[groupId])
+        text = "{}营养值 +{}%，当前 {}%".format(groupName, gainPercent, currentPercent)
         missingValue = data['targetDietValue'] - currentValue
         if missingValue > 0.0:
             missingPercent = formatDietPercent(data['targetDietValue']) - currentPercent

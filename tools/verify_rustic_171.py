@@ -11,7 +11,8 @@ repo = Path(__file__).resolve().parents[1]
 rustic = repo.parent / 'd8753542db664be7a6ae72cf84cfeccc'
 behavior = repo / 'behavior_pack_XFwwevzL'
 sys.path.insert(0, str(behavior))
-base = '3e99a10297203293d2a2b09c05c39149f443f8cc'
+# 以合并前的远端主线为基线，避免把主线的营养和疾病更新归到乡村乐事联动。
+base = 'e66402b0563096cbba77b8cd5b2078cdb098e41a'
 dietPath = 'behavior_pack_XFwwevzL/Diet_NullGr/ModSys/Diet/config.py'
 thirstPath = 'behavior_pack_XFwwevzL/Diet_NullGr/ModSys/Thirst/config.py'
 
