@@ -8,7 +8,7 @@ precision highp float;
 
 LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
 
-// strength、柔化偏移、重影偏移和摆动速度依次由 post_process.json 注入。
+// 强度、柔化偏移、重影偏移和摆动速度依次由疾病模块动态注册的参数注入。
 uniform vec4 EXTRA_VECTOR1;
 
 // 每次呼吸用约 1.6 秒收黑、1.6 秒放松，三次呼吸逐步逼近完全濒晕。

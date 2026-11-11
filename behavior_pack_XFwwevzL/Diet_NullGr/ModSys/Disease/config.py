@@ -90,6 +90,76 @@ ricketsFracturePostProcess = "dietRicketsFractureImpact"
 ricketsFractureProgressParameter = "progress"
 ricketsFractureAspectRatioParameter = "aspect_ratio"
 ricketsFractureVisionDurationTick = 14
+
+visionFadeSettings = {
+    constipationVisionPostProcess: (
+        constipationVisionStrengthParameter, constipationVisionMaxStrength / float(constipationVisionFadeTick)
+    ),
+    feverVisionPostProcess: (feverVisionStrengthParameter, feverVisionMaxStrength / float(feverVisionFadeTick)),
+    hypoglycemiaVisionPostProcess: (
+        hypoglycemiaVisionStrengthParameter, hypoglycemiaVisionMaxStrength / float(hypoglycemiaVisionFadeTick)
+    )
+}
+
+# 按原渲染顺序排列疾病效果。参数顺序对应各着色器 EXTRA_VECTOR1 的分量。
+visionPostProcessDefinitions = (
+    {
+        "name": constipationVisionPostProcess,
+        "enable": False,
+        "paras": [
+            {"name": constipationVisionStrengthParameter, "value": 0.0, "range": [0.0, 1.0]},
+            {"name": "wave_amplitude", "value": 0.012, "range": [0.0, 0.03]},
+            {"name": "wave_frequency", "value": 4.0, "range": [1.0, 8.0]},
+            {"name": "motion_speed", "value": 1.0, "range": [0.0, 4.0]}
+        ],
+        "pass_array": [
+            {"render_target": {"width": 1.0, "height": 1.0}, "material": "dietConstipationStrainMat"}
+        ]
+    },
+    {
+        "name": feverVisionPostProcess,
+        "enable": False,
+        "paras": [
+            {"name": feverVisionStrengthParameter, "value": 0.0, "range": [0.0, 1.0]},
+            {"name": "vignette_intensity", "value": 0.68, "range": [0.0, 1.0]},
+            {"name": "center_warmth", "value": 0.06, "range": [0.0, 0.2]},
+            {"name": "breath_period", "value": 4.5, "range": [2.0, 8.0]}
+        ],
+        "pass_array": [
+            {"render_target": {"width": 1.0, "height": 1.0}, "material": "dietFeverHeatMat"}
+        ]
+    },
+    {
+        "name": hypoglycemiaVisionPostProcess,
+        "enable": False,
+        "paras": [
+            {"name": hypoglycemiaVisionStrengthParameter, "value": 0.0, "range": [0.0, 1.0]},
+            {"name": "blur_offset", "value": 0.008, "range": [0.0, 0.015]},
+            {"name": "ghost_offset", "value": 0.018, "range": [0.0, 0.03]},
+            {"name": "sway_speed", "value": 2.4, "range": [0.0, 6.0]}
+        ],
+        "pass_array": [
+            {"render_target": {"width": 1.0, "height": 1.0}, "material": "dietHypoglycemiaVisionMat"}
+        ]
+    },
+    {
+        "name": ricketsFracturePostProcess,
+        "enable": False,
+        "paras": [
+            {"name": ricketsFractureProgressParameter, "value": 0.0, "range": [0.0, 1.0]},
+            {"name": ricketsFractureAspectRatioParameter, "value": 1.7777778, "range": [0.5, 3.0]}
+        ],
+        "pass_array": [
+            {
+                "render_target": {"width": 1.0, "height": 1.0},
+                "material": "dietRicketsFractureImpactCompositeMat",
+                "bindTexture": [{"texture": "textures/postprocess/diet_rickets_fracture"}]
+            }
+        ]
+    }
+)
+visionPostProcessOrder = tuple(definition["name"] for definition in visionPostProcessDefinitions)
+
 hypoglycemiaSprintLimitSource = "hypoglycemia"
 hypoglycemiaQuickProtectionSeconds = 60
 bloodSugarConversionProtectionSeconds = 120

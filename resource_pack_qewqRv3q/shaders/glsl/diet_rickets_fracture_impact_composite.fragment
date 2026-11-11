@@ -9,7 +9,7 @@ precision highp float;
 LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
 LAYOUT_BINDING(2) uniform sampler2D TEXTURE_2;
 
-// progress 与屏幕宽高比依次由 post_process.json 注入。
+// 演出进度与屏幕宽高比依次由疾病模块动态注册的参数注入。
 uniform vec4 EXTRA_VECTOR1;
 
 void main()

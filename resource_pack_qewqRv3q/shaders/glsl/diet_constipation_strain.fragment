@@ -8,7 +8,7 @@ precision highp float;
 
 LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
 
-// 强度、波纹幅度、水平波纹数量和运动速度依次由 post_process.json 注入。
+// 强度、波纹幅度、水平波纹数量和运动速度依次由疾病模块动态注册的参数注入。
 uniform vec4 EXTRA_VECTOR1;
 
 void main()
