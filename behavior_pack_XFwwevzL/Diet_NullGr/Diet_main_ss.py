@@ -154,7 +154,7 @@ class DietServerSystem(ServerSystem):
             return
         requestId = args['requestId']
         if self.foodNutrition.foodIds is not None:
-            self._sendFoodCatalog(playerId, requestId, self.foodNutrition.buildCatalog())
+            self._sendFoodCatalog(playerId, requestId, args.get('catalogVersion'))
             return
         # 首次打开者共享同一次分帧扫描，同一客户端只保留最新请求。
         self.foodCatalogWaiters[playerId] = requestId
@@ -166,19 +166,28 @@ class DietServerSystem(ServerSystem):
         self.foodCatalogScan = None
         waiters = self.foodCatalogWaiters
         self.foodCatalogWaiters = {}
-        entries = self.foodNutrition.buildCatalog()
+        # 本轮物品注册表刚建立，等待者都需要完整快照。
         for playerId, requestId in waiters.items():
-            self._sendFoodCatalog(playerId, requestId, entries)
+            self._sendFoodCatalog(playerId, requestId, None)
 
-    # 同一请求的分片使用一个修订号，避免大量物品一次发送挤满事件包。
-    def _sendFoodCatalog(self, playerId, requestId, entries):
+    # 命中目录版本时只确认版本和权限，完整快照的各分片共用同一个版本。
+    def _sendFoodCatalog(self, playerId, requestId, clientVersion):
+        canEdit = canEditFoodNutrition(playerId)
+        catalogVersion = self.foodNutrition.catalogVersion
+        if clientVersion == catalogVersion:
+            self.NotifyToClient(playerId, config.foodNutritionResponse, {
+                'kind': 'catalogCurrent', 'requestId': requestId, 'canEdit': canEdit,
+                'catalogVersion': catalogVersion
+            })
+            return
+        entries = self.foodNutrition.buildCatalog()
         chunkSize = config.foodCatalogChunkSize
         totalChunks = max(1, (len(entries) + chunkSize - 1) // chunkSize)
-        canEdit = canEditFoodNutrition(playerId)
         revision = self.foodNutrition.snapshot['revision']
         for index in range(totalChunks):
             self.NotifyToClient(playerId, config.foodNutritionResponse, {
                 'kind': 'catalog', 'requestId': requestId, 'canEdit': canEdit, 'revision': revision,
+                'catalogVersion': catalogVersion,
                 'index': index, 'total': totalChunks, 'entries': entries[index * chunkSize:(index + 1) * chunkSize]
             })
 

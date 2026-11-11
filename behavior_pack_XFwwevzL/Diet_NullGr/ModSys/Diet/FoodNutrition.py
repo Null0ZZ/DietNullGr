@@ -17,6 +17,8 @@ class FoodNutritionRules(object):
         self.itemComp = itemComp
         self.foodIds = None
         self.foodTagsById = {}
+        self.cachedCatalogVersion = None
+        self.catalogEntries = []
         self.snapshot = {'version': 1, 'revision': 0, 'rules': {}}
         self.writeEnabled = True
         rawData = extraDataComp.GetExtraData(config.foodNutritionWorldKey)
@@ -44,7 +46,7 @@ class FoodNutritionRules(object):
             standardFood = itemInfo and (itemInfo['itemType'] == 'food' or itemInfo.get('foodNutrition', 0) > 0)
             if not standardFood and itemName != 'minecraft:milk_bucket':
                 continue
-            # 原始标签跟随世界的物品注册表，联动提供的分类映射在每次读取时再解析。
+            # 原始标签随物品注册表缓存，联动修改分类映射时只需更新目录状态。
             tags = itemInfo.get('tags') if itemInfo else None
             if tags is None:
                 tags = self.itemComp.GetItemTags(itemName, 0)
@@ -52,8 +54,16 @@ class FoodNutritionRules(object):
         self.foodTagsById = foodTagsById
         self.foodIds = sorted(foodTagsById)
 
-    # 判断清单状态时重新读取自动分类，兼容其他模组在目录建立后注册食物规则。
+    # 两个修订号在本世界内各自递增，合计后每次手动保存或联动修改都占一个版本。
+    @property
+    def catalogVersion(self):
+        return self.snapshot['revision'] + Diet.foodGroupRevision
+
+    # 同一目录版本可供多个玩家复用，版本变化后按需重算自动分类和手动覆盖状态。
     def buildCatalog(self):
+        catalogVersion = self.catalogVersion
+        if self.cachedCatalogVersion == catalogVersion:
+            return self.catalogEntries
         entries = []
         for itemName in self.foodIds:
             if itemName in self.snapshot['rules']:
@@ -62,6 +72,8 @@ class FoodNutritionRules(object):
                 autoGroups = Diet.getFoodGroupIds(itemName, 0, self.itemComp, itemTags=self.foodTagsById[itemName])
                 status = 'auto' if autoGroups else 'pending'
             entries.append([itemName, status])
+        self.catalogEntries = entries
+        self.cachedCatalogVersion = catalogVersion
         return entries
 
     # 详情与保存回执使用同一个快照，旧参考值字段保留空值供旧客户端读取。
@@ -72,6 +84,7 @@ class FoodNutritionRules(object):
         return {
             'itemName': itemName,
             'revision': self.snapshot['revision'],
+            'catalogVersion': self.catalogVersion,
             'status': 'manual' if manualUnits is not None else ('auto' if autoGroups else 'pending'),
             'manualUnits': manualUnits,
             'autoGroups': autoGroups,

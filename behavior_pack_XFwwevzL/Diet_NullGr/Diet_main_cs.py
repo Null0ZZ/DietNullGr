@@ -2,6 +2,7 @@
 import mod.client.extraClientApi as clientApi
 import Diet_NullGr.com as com
 import Diet_NullGr.ModSys.Disease.config as diseaseConfig
+import Diet_NullGr.ModSys.Diet.FoodCatalog as FoodCatalog
 import Diet_NullGr.ModSys.Diet.config as config
 import Diet_NullGr.ModSys.Thirst.config as thirstConfig
 
@@ -20,6 +21,7 @@ class DietClientSystem(ClientSystem):
         self.buttonUiNode = None
         self.foodNutritionNode = None
         self.foodNutritionRequestId = 0
+        self.foodCatalog = FoodCatalog.FoodCatalog(self)
         self.pendingOpenDietScreen = False
         self.settingInst = None
         self.settingRegistered = False
@@ -116,6 +118,15 @@ class DietClientSystem(ClientSystem):
             self.foodNutritionNode.RefreshLayout()
 
     def FoodNutritionResponse(self, args):
+        kind = args['kind']
+        if kind in ('catalog', 'catalogCurrent'):
+            self.foodCatalog.ReceiveCatalog(args)
+            return
+        detail = args['detail']
+        if detail is not None:
+            # 发起者收到保存回执，其他玩家收到变更事件。两者都在界面外更新会话缓存。
+            savedChange = kind == 'changed' or (kind == 'write' and args['code'] == 'saved')
+            self.foodCatalog.ApplyDetail(detail, savedChange)
         if self.foodNutritionNode:
             self.foodNutritionNode.ReceiveResponse(args)
 
@@ -237,4 +248,4 @@ class DietClientSystem(ClientSystem):
                 self.settingSyncValues = oldSettingSyncValues
 
     def Destroy(self):
-        pass
+        self.foodCatalog.Destroy()

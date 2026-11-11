@@ -30,6 +30,7 @@ class FoodNutritionUI(ScreenNode):
     def __init__(self, namespace, uiKey, param):
         ScreenNode.__init__(self, namespace, uiKey, param)
         self.clientSystem = clientApi.GetSystem(com.modName, com.csname)
+        self.catalog = self.clientSystem.foodCatalog
         compFactory = clientApi.GetEngineCompFactory()
         levelId = clientApi.GetLevelId()
         self.itemComp = compFactory.CreateItem(levelId)
@@ -38,13 +39,6 @@ class FoodNutritionUI(ScreenNode):
         self.groupRows = []
         self.tiles = []
         self.namespaceRowCounts = {}
-        self.entries = {}
-        self.itemNames = []
-        self.representatives = {}
-        self.catalogChunks = {}
-        self.earlyChanges = {}
-        self.indexing = None
-        self.catalogReady = False
         self.keyword = ''
         self.showConfigured = False
         self.selectedNamespace = ''
@@ -120,15 +114,12 @@ class FoodNutritionUI(ScreenNode):
         self.Create()
 
     def OnActive(self):
-        if self.catalogReady and self.selectedItem is None:
+        if self.controls and self.selectedItem is None:
             self._refreshCatalog()
 
     def Destroy(self):
         self.closed = True
         self._finishRequest()
-        if self.indexing is not None:
-            clientApi.StopCoroutine(self.indexing)
-            self.indexing = None
         if self.clientSystem.foodNutritionNode is self:
             self.clientSystem.foodNutritionNode = None
 
@@ -199,7 +190,7 @@ class FoodNutritionUI(ScreenNode):
             button.SetSize((tileWidth, tileHeight), True)
             icon.SetSize((tileIconSize, tileIconSize))
         self.namespaceLayout = None
-        if self.catalogReady and self.selectedItem is None:
+        if self.catalog.itemNames is not None and self.selectedItem is None:
             self._refreshCatalog()
         else:
             self.UpdateScreen(True)
@@ -221,13 +212,28 @@ class FoodNutritionUI(ScreenNode):
             self.requestTimer = None
         self.request = None
 
-    # 清单失败可在原界面重试；等待分片和物品名称索引期间保持加载提示。
+    # 布局已用会话缓存绘制目录，只有首次加载才显示读取提示。
     def _requestCatalog(self):
-        self.catalogChunks.clear()
         self.controls['catalog/retry'].SetVisible(False)
-        self.controls['catalog/notice'].SetVisible(True)
-        self.controls['catalog/notice'].asLabel().SetText('正在读取世界食物…')
-        self._sendRequest(config.foodCatalogRequest, {}, 20.0)
+        if self.catalog.itemNames is None:
+            self.controls['catalog/notice'].SetVisible(True)
+            self.controls['catalog/notice'].asLabel().SetText('正在读取世界食物…')
+        self.catalog.Request()
+
+    # 缓存状态影响列表筛选；详情与保存各自读取最新权限，避免目录回包改动正在编辑的控件。
+    def CatalogUpdated(self, canEdit=None, refresh=True):
+        if refresh:
+            self.catalogFilter = None
+        if self.selectedItem is None:
+            if canEdit is not None:
+                self.canEdit = canEdit
+            if refresh:
+                self._refreshCatalog()
+
+    # 首次拉取失败后让玩家在原界面重试。
+    def CatalogTimedOut(self):
+        self.controls['catalog/notice'].asLabel().SetText('目录读取超时，请重试')
+        self.controls['catalog/retry'].SetVisible(True)
 
     # 保存超时不能推断服务端失败，先读回当前单项规则再决定是否保留草稿。
     def RequestExpired(self, requestId):
@@ -236,10 +242,7 @@ class FoodNutritionUI(ScreenNode):
         event = self.request[0]
         self.requestTimer = None
         self.request = None
-        if event == config.foodCatalogRequest:
-            self.controls['catalog/notice'].asLabel().SetText('目录读取超时，请重试')
-            self.controls['catalog/retry'].SetVisible(True)
-        elif event == config.foodRuleRequest:
+        if event == config.foodRuleRequest:
             self.controls['detail/feedback'].asLabel().SetText('正在确认保存结果…')
             self._sendRequest(config.foodDetailRequest, {'itemName': self.selectedItem})
         elif self.pendingWrite is not None:
@@ -247,33 +250,21 @@ class FoodNutritionUI(ScreenNode):
         else:
             self.controls['detail/feedback'].asLabel().SetText('详情读取超时，请返回后重试')
 
-    # 目录分片先按编号组装；规则变动与当前详情通过修订号避免回填旧状态。
+    # 会话缓存已先合并状态；详情只接受当前请求的回包，联机变更也要避开未保存草稿。
     def ReceiveResponse(self, args):
         kind = args['kind']
         if self.closed:
             return
         if kind == 'changed':
             detail = args['detail']
-            if not self._applyStatus(detail):
-                return
-            if self.catalogReady and self.selectedItem is None:
-                self._refreshCatalog()
-            elif (self.selectedItem == detail['itemName'] and self.detail is not None and
-                  self.request is None and not self._hasDraft()):
-                self._showDetail(detail, True)
+            if self.selectedItem == detail['itemName'] and self.detail is not None and self.request is None:
+                entry = self.catalog.entries.get(self.selectedItem)
+                if entry is not None and detail['catalogVersion'] >= entry['catalogVersion'] and not self._hasDraft():
+                    self._showDetail(detail, True)
             return
         if self.request is None or self.request[1] != args['requestId']:
             return
         self.canEdit = args['canEdit']
-        if kind == 'catalog':
-            self.catalogChunks[args['index']] = args['entries']
-            if len(self.catalogChunks) == args['total']:
-                rows = [row for index in range(args['total']) for row in self.catalogChunks[index]]
-                self.catalogChunks.clear()
-                self._finishRequest()
-                # 本地化名称和图标也分帧读取，整份索引就绪后搜索才开始显示结果。
-                self.indexing = clientApi.StartCoroutine(self._indexCatalog(rows, args['revision']), self.CatalogIndexed)
-            return
         self._finishRequest()
         detail = args['detail']
         if kind == 'write':
@@ -289,58 +280,13 @@ class FoodNutritionUI(ScreenNode):
                     code = 'conflict'
             self._finishWrite(code, detail)
         elif detail is not None:
-            self._applyStatus(detail)
             self._showDetail(detail, True)
         else:
             self.controls['detail/feedback'].asLabel().SetText('该食物暂不可用，请返回列表')
 
-    # 索引只在目录接收完时构造，搜索和分页不再查询引擎物品信息。
-    def _indexCatalog(self, rows, revision):
-        for index, (itemName, status) in enumerate(rows):
-            if index and index % config.foodCatalogBatchSize == 0:
-                yield
-            info = self.itemComp.GetItemBasicInfo(itemName, 0)
-            label = info['itemName'] if info and info['itemName'] else itemName
-            namespace = itemName.split(':', 1)[0]
-            self.entries[itemName] = {
-                'label': label, 'searchName': FoodNutrition.foodSearchText(label), 'namespace': namespace,
-                'icon': info['id_aux'] if info else 0, 'status': status, 'revision': revision
-            }
-            self.itemNames.append(itemName)
-            if namespace not in self.representatives:
-                self.representatives[namespace] = itemName
-
-    # 索引期间积攒的世界变更在首屏渲染前合并，避免先显示旧的待设置清单。
-    def CatalogIndexed(self):
-        self.indexing = None
-        if self.closed:
-            return
-        self.catalogReady = True
-        for detail in self.earlyChanges.values():
-            self._applyStatus(detail)
-        self.earlyChanges.clear()
-        self._refreshCatalog()
-
-    # 只有同物品较新的状态才覆盖索引，联机保存后的增量与分页互不干扰。
-    def _applyStatus(self, detail):
-        itemName = detail['itemName']
-        if itemName not in self.entries:
-            if not self.catalogReady and (itemName not in self.earlyChanges or
-                                          detail['revision'] > self.earlyChanges[itemName]['revision']):
-                self.earlyChanges[itemName] = detail
-            return False
-        entry = self.entries[itemName]
-        if detail['revision'] < entry['revision']:
-            return False
-        if (entry['status'] == 'pending') != (detail['status'] == 'pending'):
-            self.catalogFilter = None
-        entry['revision'] = detail['revision']
-        entry['status'] = detail['status']
-        return True
-
     # 全文匹配只依赖页签、关键词和待设置归属，切分类直接使用已排序的命中。
     def _refreshCatalog(self):
-        if not self.catalogReady:
+        if self.catalog.itemNames is None:
             return
         previousCounts = self.namespaceCounts
         filterKey = (self.showConfigured, self.keyword)
@@ -353,7 +299,7 @@ class FoodNutritionUI(ScreenNode):
                         selectedColor if selected else inkColor
                     )
             self.searchResults, self.namespaceCounts = FoodNutrition.filterFoodCatalog(
-                self.itemNames, self.entries, self.showConfigured, self.keyword
+                self.catalog.itemNames, self.catalog.entries, self.showConfigured, self.keyword
             )
             # 保存后当前分类可能已空，保留该行直到玩家主动切走。
             namespaces = set(self.namespaceCounts)
@@ -367,7 +313,7 @@ class FoodNutritionUI(ScreenNode):
         self.matches = self.searchResults
         if self.selectedNamespace:
             self.matches = [itemName for itemName in self.searchResults
-                            if self.entries[itemName]['namespace'] == self.selectedNamespace]
+                            if self.catalog.entries[itemName]['namespace'] == self.selectedNamespace]
         matchCount = '{} 种'.format(len(self.matches))
         self.controls['catalog/matchCount'].asLabel().SetText(matchCount)
         self._renderNamespaces(previousCounts)
@@ -407,7 +353,8 @@ class FoodNutritionUI(ScreenNode):
                 row.SetSize((self.namespaceWidth - 8, rowHeight - 2), True)
                 row.SetVisible(True)
                 icon = self.GetBaseUIControl(path + '/icon')
-                icon.SetPropertyBag({'#item_id_aux': self.entries[self.representatives[namespace]]['icon']})
+                representative = self.catalog.representatives[namespace]
+                icon.SetPropertyBag({'#item_id_aux': self.catalog.entries[representative]['icon']})
                 self.GetBaseUIControl(path + '/name').asLabel().SetText(namespace)
                 self.GetBaseUIControl(path + '/count').asLabel().SetText(str(counts.get(namespace, 0)))
                 self._setNamespaceSelected(path, self.selectedNamespace == namespace)
@@ -442,7 +389,7 @@ class FoodNutritionUI(ScreenNode):
             shown = index < len(self.visibleFoods)
             button.SetVisible(shown)
             if shown:
-                entry = self.entries[self.visibleFoods[index]]
+                entry = self.catalog.entries[self.visibleFoods[index]]
                 icon.SetPropertyBag({'#item_id_aux': entry['icon']})
                 label.asLabel().SetText(entry['label'])
         empty = not self.matches
@@ -509,7 +456,7 @@ class FoodNutritionUI(ScreenNode):
         self.selectedItem = self.visibleFoods[index]
         self.detail = None
         self.restorePending = False
-        entry = self.entries[self.selectedItem]
+        entry = self.catalog.entries[self.selectedItem]
         self.controls['title'].asLabel().SetText('设置食物营养')
         self.GetBaseUIControl(windowPath + '/back/caption').asLabel().SetText('‹ 食物列表')
         self.controls['catalog'].SetVisible(False)
@@ -626,8 +573,6 @@ class FoodNutritionUI(ScreenNode):
         pendingWrite = self.pendingWrite
         self.pendingWrite = None
         saved = code in ('saved', 'same')
-        if detail is not None:
-            self._applyStatus(detail)
         self._showDetail(detail if detail is not None else self.detail, saved)
         if saved:
             message = '已恢复默认' if pendingWrite['desiredUnits'] is None else '已保存 · 下次进食生效'

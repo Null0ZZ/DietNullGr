@@ -3,6 +3,7 @@
 import Diet_NullGr.ModSys.Diet.config as config
 
 runtimeFoodGroups = {}
+foodGroupRevision = 0
 
 
 # 将 Diet 原版 0.0-1.0 的营养值限制在合法范围，所有读写入口都经过这里，避免存档值越界。
@@ -192,27 +193,36 @@ def normalizeFoodGroupIds(foodGroupIds):
 
 # 外部模组手动注册物品饮食分类，适合不想改物品 JSON 或需要运行时决定分类的联动。
 def registerFoodGroups(itemName, foodGroupIds):
+    global foodGroupRevision
     normalizedGroupIds = normalizeFoodGroupIds(foodGroupIds)
     if not normalizedGroupIds:
         return False
-    runtimeFoodGroups[itemName] = normalizedGroupIds
+    # 重复注册同一映射仍返回成功，只有映射实际变更才使客户端目录过期。
+    if runtimeFoodGroups.get(itemName) != normalizedGroupIds:
+        runtimeFoodGroups[itemName] = normalizedGroupIds
+        foodGroupRevision += 1
     return True
 
 
 # 移除外部运行时注册的物品分类，只影响联动接口写入的数据，不会删掉本模组内置表。
 def removeRegisteredFood(itemName):
+    global foodGroupRevision
     if itemName not in runtimeFoodGroups:
         return False
     del runtimeFoodGroups[itemName]
+    foodGroupRevision += 1
     return True
 
 
 # 外部模组扩展 tag 到饮食分类的映射，便于一个自定义 tag 批量覆盖多种食物。
 def registerDietTag(tagName, foodGroupIds):
+    global foodGroupRevision
     normalizedGroupIds = normalizeFoodGroupIds(foodGroupIds)
     if not normalizedGroupIds:
         return False
-    config.dietTagGroups[tagName] = normalizedGroupIds
+    if config.dietTagGroups.get(tagName) != normalizedGroupIds:
+        config.dietTagGroups[tagName] = normalizedGroupIds
+        foodGroupRevision += 1
     return True
 
 
